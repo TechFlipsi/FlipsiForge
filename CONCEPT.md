@@ -289,3 +289,107 @@ Kein existierendes Projekt kombiniert alle diese Bereiche:
 ```
 
 **Bisher muss man 4-5 Tools kombinieren:** Mainsail (Drucker) + Spoolman (Filament) + Manyfold (Dateien) + OrcaSlicer (Slicing) + Web-Browser (Modelle suchen). FlipsiForge macht das alles.
+
+## Community Issue-Analyse — Feature-Ideen aus GitHub Issues
+
+Analysiert am 18.07.2026 — offene Issues der Referenz-Projekte, sortiert nach Community-Interest (Reactions).
+
+### Aus Spoolman Issues (Filament-Management)
+
+| Issue | Reactions | Idee | Für FlipsiForge |
+|-------|-----------|------|-----------------|
+| #776 | 👍28 | **OpenPrintTag** — offener NFC-Tag Standard von Prusa. NFC-Tags statt QR-Codes für Filament-Erkennung | ✅ NFC-Support neben QR-Codes. OpenPrintTag ist neu offener Standard |
+| #217 | 👍27 | **Bambu Lab Integration** — Bambu Drucker direkt anbinden | ✅ Bambu Lab Drucker-Support (neben Klipper/Marlin) |
+| #69 | 👍18 | **Auto-populate density** — Dichte-Feld automatisch ausfüllen. Niemand kennt die Dichte seiner Spule | ✅ Material-Datenbank mit Standard-Dichten (PLA=1.24, PETG=1.27, TPU=1.21, ABS=1.04, etc.). Auto-fill beim Anlegen |
+| #552 | 👍11 | **Filament-Bild** — Bild pro Spule speichern (Shop-Foto zur Erkennung) | ✅ Bild pro Filament-Spule (Shop-Foto oder eigenes Foto) |
+| #356 | 👍10 | **Fuzzy Search** — ungenaue Suche bei Filament-Namen | ✅ Fuzzy-Search im gesamten Datei-Manager UND Filament-Tab |
+| #501 | 👍9 | **Auth/Multi-tenancy** — mehrere User mit Zugriffsrechten | ✅ Bereits geplant (Admin/User/Viewer Rollen) — bestätigt! |
+| #739 | 👍8 | **Filter by Color** — Filamente nach Farbe filtern | ✅ Farb-Filter im Filament-Tab |
+| #723 | 👍8 | **NFC-Tags erstellen** — nicht nur QR, auch NFC schreiben | ✅ NFC-Tag-Support (OpenPrintTag + generische NFC) |
+
+### Aus Mainsail Issues (Drucker-UI)
+
+| Issue | Reactions | Idee | Für FlipsiForge |
+|-------|-----------|------|-----------------|
+| #267 | 👍27 | **User Authentication** — Login bei externem Zugriff | ✅ Bereits geplant (Server Mode 3: Remote Access) — bestätigt! |
+| #870 | 👍24 | **G-code Viewer auf Dashboard** — direkt neben Webcam | ✅ G-code Visualizer bereits geplant — auf Dashboard einblendbar |
+| #1648 | 👍20 | **System Load Panel** — CPU/RAM des Drucker-Hosts anzeigen | ✅ Server-Host-Status (CPU, RAM, Disk, Temp) im Drucker-Tab |
+| #990 | 👍7 | **Input Shaper UI** — Input Shaping grafisch konfigurieren statt SSH | ✅ Input Shaper Konfiguration im Drucker-Tab (Klipper) |
+| #2376 | 👍5 | **User-organizable temperature tabs** — Temperaturen selbst gruppieren | ✅ Konfigurierbare Sensor-Gruppen im Drucker-Tab |
+
+### Aus OctoPrint Issues (Drucker-Kontrolle)
+
+| Issue | Reactions | Idee | Für FlipsiForge |
+|-------|-----------|------|-----------------|
+| #937 | 👍16 | **RTSP IP Camera Support** — nicht nur USB-Webcam sondern IP-Kameras (rtsp://) | ✅ RTSP-Kamera-Support (neben USB-Webcam). Viele haben IP-Kameras |
+| #452 | 👍9 | **Timelapse without printing** — Timelapse auch manuell starten (nicht nur bei Druck) | ✅ Manueller Timelapse-Start (Server-Feature) |
+| #1525 | 👍7 | **Temperature Logger** — Temperatur-Historie aufzeichnen | ✅ Temperature Curves bereits geplant — bestätigt! |
+| #1526 | 👍6 | **Render abort on cancel** — Timelapse-Render abbrechen bei Druck-Abbruch | ✅ Timelapse-Render-Abbruch |
+
+### Aus Fluidd Issues (Drucker-UI)
+
+| Issue | Reactions | Idee | Für FlipsiForge |
+|-------|-----------|------|-----------------|
+| #292 | 👍6 | **Farm Status Display** — alle Drucker auf einer Übersichtsseite | ✅ Multi-Drucker Dashboard bereits geplant — bestätigt! |
+| #1773 | 👍3 | **Maintenance Schedule** — Wartungsplan (HEPA-Filter, Carbon, Düsenwechsel) | ✅ Wartungs-Tracker pro Drucker: Filter/Nozzle/Belt-Austausch mit Erinnerung |
+| #249 | 👍6 | **Palette 2 Integration** — Multi-Color-System anbinden | ⚠️ Niedrige Priorität — Nischen-Hardware |
+| #753 | 👍5 | **Drucker als Tabs** — Drucker als Tab-Reiter oben | ✅ Multi-Drucker als Tabs ODER Side-by-Side (User-Wahl) |
+
+### Aus Manyfold Issues (Datei-Manager)
+
+| Issue | Reactions | Idee | Für FlipsiForge |
+|-------|-----------|------|-----------------|
+| #4530 | 👍13 | **Printables Sync** — Modelle von Printables automatisch synchronisieren | ✅ Printables API für Model-Repository + Auto-Sync Option |
+| #4531 | 👍5 | **MakerWorld Sync** — dasselbe für MakerWorld | ✅ MakerWorld API für Model-Repository + Auto-Sync |
+| #456 | 👍6 | **STLs in ZIP anzeigen** — Modelle in ZIP-Archiven durchsuchen ohne zu entpacken | ✅ ZIP-Archiv-Scan (Datei-Manager durchsucht auch ZIPs) |
+| #2214 | 👍4 | **OpenSCAD Customizer** — OpenSCAD .scad Dateien mit parametrischen Werten anpassen | ✅ OpenSCAD-Integration: .scad Dateien erkannt, Parameter-Editor, Customizer |
+| #764 | 👍4 | **Index all files in model directory** — alle Dateien indexieren | ✅ Auto-Scan bereits geplant — bestätigt! |
+| #4254 | 👍3 | **Commenting** — Kommentare/Notizen an Modellen | ✅ Datei-Tags + Notizen pro Datei |
+
+### Aus KlipperScreen Issues (Touch-UI)
+
+| Issue | Reactions | Idee | Für FlipsiForge |
+|-------|-----------|------|-----------------|
+| #1264 | 👍9 | **Queue-Verwaltung** — Druck-Queue starten/stoppen | ✅ Druck-Queue bereits geplant (mit Bestätigung) — bestätigt! |
+| #1554 | 👍5 | **Spoolman-Panel beim Filament-Load** — Spulen-Auswahl beim Laden | ✅ Beim "Load Filament" Macro → Filament-Auswahl aus Filament-Tab |
+| #1097 | 👍3 | **QR-Code Scan Button** — QR scannen im UI | ✅ QR-Code-Scanner in App (Webcam des PCs/Handy) |
+| #822 | 👍2 | **Running as desktop app** — jemand WILL es als Desktop-App | ✅ FlipsiForge IST eine Desktop-App — genau das was sie wollen! |
+
+### Aus OrcaSlicer Issues (Slicer)
+
+| Issue | Reactions | Idee | Für FlipsiForge |
+|-------|-----------|------|-----------------|
+| #6866 | 👍32 | **Connect to printer over USB** — direkter USB-Drucker-Zugriff | ✅ Marlin USB-serial Support bereits geplant |
+| #7106 | 👍37 | **Different filament for walls/infill** — verschiedene Filamente pro Strukturbereich | ⚠️ Slicer-Feature, nicht unsere Zuständigkeit — aber Slicer-Profile-Konfiguration in FlipsiForge könnte das unterstützen |
+
+## Neue Features aus Issue-Analyse (zusätzlich zu bisherigem Konzept)
+
+1. **NFC-Tag Support (OpenPrintTag)** — neben QR-Codes. Prusa hat offenen NFC-Standard angekündigt. Spoolman #776 (28👍). NFC-Tags lesen UND schreiben.
+
+2. **Bambu Lab Drucker-Support** — neben Klipper/Marlin. Spoolman #217 (27👍). Bambu Lab hat eigene API. Viele Bambu-User in der Community.
+
+3. **Material-Datenbank mit Auto-Fill** — Standard-Dichten automatisch eintragen (PLA=1.24, PETG=1.27, TPU=1.21, etc.). Spoolman #69 (18👍). Niemand kennt die Dichte seiner Spule.
+
+4. **Filament-Bild pro Spule** — Shop-Foto oder eigenes Foto. Spoolman #552 (11👍). Zur schnellen Erkennung.
+
+5. **RTSP IP-Kamera Support** — nicht nur USB-Webcam sondern auch IP-Kameras (rtsp://). OctoPrint #937 (16👍). Viele nutzen Überwachungskameras.
+
+6. **Host-System-Status** — CPU/RAM/Disk/Temperatur des Server-Hosts im Dashboard. Mainsail #1648 (20👍).
+
+7. **Wartungs-Tracker pro Drucker** — HEPA-Filter, Carbon-Filter, Düse, Riemen — Austausch-Intervall mit Erinnerung. Fluidd #1773 (3👍).
+
+8. **ZIP-Archiv-Scan** — STLs in ZIPs durchsuchen ohne zu entpacken. Manyfold #456 (6👍).
+
+9. **OpenSCAD-Integration** — .scad Dateien erkennen, Parameter-Editor, Customizer. Manyfold #2214 (4👍). Parametrische Modelle anpassen ohne Coding.
+
+10. **Fuzzy Search** — ungenaue Suche toleriert Tippfehler. Spoolman #356 (10👍). Über den gesamten Datei-Manager.
+
+11. **Datei-Kommentare/Notizen** — Notizen/Notizen an Modellen. Manyfold #4254 (3👍).
+
+12. **Printables/MakerWorld Auto-Sync** — Modelle automatisch synchronisieren wenn neue erscheinen. Manyfold #4530 (13👍) + #4531 (5👍). Blocked in Manyfold weil Printables keine öffentliche API hat — wir prüfen das zum Startzeitpunkt.
+
+13. **Manueller Timelapse-Start** — Timelapse auch ohne laufenden Druck starten. OctoPrint #452 (9👍).
+
+14. **Filament-Auswahl beim Load-Macro** — beim "Load Filament" Macro direkt Spule aus Filament-DB wählen. KlipperScreen #1554 (5👍).
+
+15. **Input Shaper UI** — grafische Input-Shaping-Konfiguration statt SSH. Mainsail #990 (7👍).
