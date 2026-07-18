@@ -26,11 +26,15 @@ FlipsiForge is a cross-platform 3D printing management tool that handles files, 
 - **Bulk-Aktionen** — select multiple files → send to printer / group as project / export
 - **Duplikat-Erkennung** — same STL under different names → warning
 - **Sortierung nach Drucker-Eignung** — "Fits Snapmaker U1 (235×235×275mm)" vs "Fits Neptune 4 Pro"
+- **ZIP-Archiv-Scan** — search STLs inside ZIP archives without extracting. Many models ship as ZIP
+- **OpenSCAD-Integration** — .scad files recognized, parameter editor, customizer. Adjust parametric models without coding
+- **Datei-Kommentare/Notizen** — add notes and comments to any model file
+- **Fuzzy Search** — typo-tolerant search across all files
 
 ### 2. 🖨️ Printer Management — Direct Control
 
-- Connect to Klipper/Moonraker printers (HTTP REST API) and Marlin printers (USB-serial)
-- Multiple printer profiles (Snapmaker U1, Neptune 4 Pro, any Marlin printer)
+- Connect to Klipper/Moonraker printers (HTTP REST API), Marlin printers (USB-serial), and Bambu Lab printers (Bambu API)
+- Multiple printer profiles (Snapmaker U1, Neptune 4 Pro, Bambu Lab, any Marlin printer)
 - Real-time data display:
   - Bed temperature / Hotend temperature (per extruder)
   - Print status (idle, printing, paused, error)
@@ -43,14 +47,17 @@ FlipsiForge is a cross-platform 3D printing management tool that handles files, 
   - Emergency stop
   - Home axes / move axes
   - Control fans
-  - Load/unload filament macros
+  - Load/unload filament macros — with **filament selection from Filament tab** when loading
 - **G-code Terminal** — raw console for manual commands
 - **Macro-Buttons** — configurable buttons for frequent macros (e.g. "Load Filament T0", "Bed Mesh Calibrate")
 - **Druck-Queue** — queue multiple files. Next print starts automatically after previous finishes, **but requires confirmation first** (someone needs to clear the printer bed)
-- **Webcam-Preview** — live camera feed from printer (Moonraker camera endpoint)
-- **Temperature Curves** — live graph for hotend/bed temperature over time
+- **Webcam-Preview** — live camera feed from USB webcam (Moonraker camera) **or RTSP IP cameras** (rtsp://)
+- **Temperature Curves** — live graph for hotend/bed temperature over time. **Temperature Logger** — record history for later analysis
 - **Druck-Historie** — past prints with duration, filament usage, success/failure
 - **Firmware-Info** — Klipper version, MCU info, input shaper data
+- **Input Shaper UI** — graphical input shaping configuration (no SSH needed). Configure X/Y resonance, choose shaper type, see frequency graph
+- **Host-System-Status** — CPU, RAM, disk usage, temperature of the printer host (Raspberry Pi / server)
+- **Wartungs-Tracker** — maintenance schedule per printer: HEPA filter, carbon filter, nozzle, belt replacement intervals with reminders
 - **Slicer-Integration** — OrcaSlicer/PrusaSlicer CLI directly callable from the app. STL → Slice → G-code → Send to printer. One-click workflow
 - **Druck-Profil-Templates** — pre-configured profiles per printer (Snapmaker U1: 60°C bed, 210°C hotend, PLA). New user selects printer → ready-made profile
 
@@ -62,10 +69,14 @@ FlipsiForge is a cross-platform 3D printing management tool that handles files, 
 - Cost tracking per spool (price paid, price per gram)
 - Low-stock alerts
 - Material types: PLA, PETG, TPU, ABS, ASA, PC, Nylon, etc.
-- Color tags with visual swatches
+- Color tags with visual swatches — **filter by color**
 - Usage history (which print used how much)
 - Integration with printer tab (auto-deduct filament on print completion)
+- **Material-Datenbank mit Auto-Fill** — standard densities auto-populated (PLA=1.24, PETG=1.27, TPU=1.21, ABS=1.04, etc.). Nobody knows their spool's density
+- **Filament-Bild** — store a photo per spool (shop photo or own photo) for quick recognition
 - **Spool QR-Code** — generate QR code per spool → scan with phone → instantly found in system
+- **NFC-Tag Support (OpenPrintTag)** — read AND write NFC tags for filament identification. OpenPrintTag is Prusa's new open NFC standard
+- **Fuzzy Search** — typo-tolerant search across filament names AND file manager
 - **Verbrauchs-Vorhersage** — "At current usage, spool lasts ~14 days"
 - **Filament-Empfehlung** — when selecting a file to print → "You have 3 matching spools (PLA Black, PLA Gray, PETG Black)"
 - **Trocknungs-Log** — when/how long/at what temperature was spool dried. Warn about too-moist spools
@@ -81,6 +92,7 @@ FlipsiForge is a cross-platform 3D printing management tool that handles files, 
 - Download directly into file manager — no browser needed
 - Filter by: free/paid, category, print time, difficulty, rating
 - "Makes" gallery — see what others printed with the same model
+- **Auto-Sync** — automatically sync new models from Printables/MakerWorld when they appear
 
 ### 5. 📊 Statistics Dashboard — Print Analytics
 
@@ -106,12 +118,13 @@ FlipsiForge is **one app** with an optional server backend. The desktop app alwa
 
 ```
 FlipsiForge.Core (shared business logic)
-├── FileScanner        — drive scanning, file indexing, thumbnails, STL repair check
-├── PrinterController  — Moonraker REST/WS + Marlin USB-serial, print queue, slicer CLI
-├── FilamentManager    — spool inventory, consumption, cost tracking, drying log
+├── FileScanner        — drive scanning, file indexing, thumbnails, STL repair check, ZIP scan, OpenSCAD
+├── PrinterController  — Moonraker REST/WS + Marlin USB-serial + Bambu API, print queue, slicer CLI, input shaper, maintenance tracker
+├── FilamentManager    — spool inventory, consumption, cost tracking, drying log, NFC/QR, material DB, fuzzy search
 ├── CostCalculator     — print cost calculator (filament + power + wear)
-├── ModelRepository    — Thingiverse / Printables / MakerWorld unified search
+├── ModelRepository    — Thingiverse / Printables / MakerWorld unified search + auto-sync
 ├── StatisticsEngine   — print analytics, consumption charts, success rates
+├── CameraManager      — USB webcam + RTSP IP camera + timelapse recording
 ├── PluginSystem       — community plugins (custom slicers, stats, integrations)
 ├── CloudSync          — Nextcloud (P1) / Google Drive / OneDrive / Dropbox
 └── ServerClient       — connects to FlipsiForge Server (optional)
@@ -154,7 +167,7 @@ FlipsiForge.Server (Optional)   — ASP.NET Core backend, any Linux server
   2. **Web UI** — browser-based interface for devices without the desktop app (phone, tablet, guest PC). Same features, rendered in browser.
 - **Multi-User with Roles** — Admin (full access), User (print only), Viewer (read-only). For families, makerspaces, community spaces
 - **Push Notifications** — print finished/error notifications via **Telegram** (preferred), plus Web-Push, email, and desktop notifications
-- **Timelapse** — webcam snapshots at intervals → timelapse video of print. Stored in dedicated timelapse tab. Server-side feature (PC doesn't need to stay on)
+- **Timelapse** — webcam snapshots at intervals → timelapse video of print. Stored in dedicated timelapse tab. Server-side feature (PC doesn't need to stay on). **Manual start** also possible (timelapse without active print). **Render abort** on print cancel
 - **Druck-Statistiken-Export** — server collects data across all prints → monthly report (success rate, costs, filament usage)
 - **REST API for third parties** — public API so other tools can query filament data, print status, costs. `GET /api/filaments`, `GET /api/printers/status`, etc.
 - **Home Assistant Integration** — HACS custom integration + HA Add-on to run FlipsiForge.Server directly inside Home Assistant. Sensors for filament stock, print status, costs. Full HA dashboard support
@@ -177,6 +190,9 @@ FlipsiForge.Server (Optional)   — ASP.NET Core backend, any Linux server
 | Slicer integration | OrcaSlicer / PrusaSlicer CLI orchestration | One-click STL → G-code → print |
 | Printer protocol (Klipper) | Moonraker REST API + WebSocket | Standard for Klipper-based printers |
 | Printer protocol (Marlin) | USB-serial (System.IO.Ports) | For Arduino-based non-Klipper printers |
+| Printer protocol (Bambu) | Bambu Lab API | For Bambu Lab printers (growing market) |
+| Camera | USB webcam + RTSP IP camera support | Not everyone has USB — many use IP cameras |
+| NFC | OpenPrintTag standard + generic NFC read/write | Prusa's open NFC standard for filament ID |
 | Model repositories | Thingiverse / Printables / MakerWorld REST APIs | Unified search across all platforms |
 | Cloud-Sync | Nextcloud WebDAV (P1) + Google Drive / OneDrive / Dropbox | Optional, default = local-only |
 | Local storage | SQLite (PostgreSQL optional for multi-user server) | Embedded, no server needed |
