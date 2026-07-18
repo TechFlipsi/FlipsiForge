@@ -1758,7 +1758,234 @@ public class TelegramNotifier
 
 ---
 
-## 12. NuGet Package Übersicht
+## 12. KI-Assistent — Filament & Settings Empfehlung
+
+### Konzept
+
+Eine kleine KI-Integration die dem User hilft, die richtigen Einstellungen für seine Datei zu finden. Hybrid-System: regelbasierte Datenbank + LLM für komplexe Empfehlungen.
+
+### Warum kein trainiertes Modell existiert
+
+Stand Juli 2026 gibt es **kein** speziell für 3D-Druck-Einstellungen trainiertes Modell. Aber:
+- **Slicer Copilot** (github.com/pfrankov/slicer-copilot, 11★, Apache-2.0) zeigt dass LLMs das können — er nutzt GPT-4o um .3mf-Projekte zu analysieren und Settings zu optimieren. Funktioniert auch mit lokalem LLM.
+- **LLM-3D Print** (arxiv.org/abs/2408.14307) — wissenschaftliche Studie: LLMs können ohne Fine-Tuning 3D-Druck-Parameter optimieren und Defekte erkennen.
+- **Cura AI Plugins** — Cura hat AI-basierte Empfehlungs-Plugins die Modelle analysieren.
+
+### Architektur: Hybrid-System
+
+```
+┌──────────────────────────────────────────────────┐
+│              KI-Assistent Pipeline                │
+│                                                  │
+│  1. STL analysieren                               │
+│     → Wandstärke, Overhangs, Größe, Detailgrad    │
+│     → Mesh.Statistics (aus FileScanner)           │
+│                                                  │
+│  2. Regelbasierte Empfehlung (schnell, offline)   │
+│     → Material → Standard-Temperatur/Speed        │
+│     → Drucker → Build-Volume-Check                │
+│     → Datei-Größe → Layer-Höhe-Vorschlag          │
+│                                                  │
+│  3. LLM-Empfehlung (optional, komplex)            │
+│     → Geometrie-Analyse ("dünne Wände → PETG")    │
+│     → Ziel-Modus ("Festigkeit" vs "Speed")        │
+│     → Slicer-Profil-Generierung                   │
+│     → Erklärung WARUM                             │
+│                                                  │
+│  4. Output                                        │
+│     → Empfohlene Spule aus Inventar               │
+│     → Komplettes Slicer-Profil (JSON)             │
+│     → Warnungen (falls Settings kritisch)         │
+│     → Begründung (Text)                           │
+└──────────────────────────────────────────────────┘
+```
+
+### Regelbasierte Datenbank (Teil 1 — immer offline verfügbar)
+
+```csharp
+public static readonly Dictionary<string, PrintSettings> MaterialDefaults = new()
+{
+    ["PLA"] = new()
+    {
+        HotendMin = 190, HotendMax = 220, HotendOptimal = 210,
+        BedMin = 40, BedMax = 70, BedOptimal = 60,
+        MaxSpeed = 150, OptimalSpeed = 60,
+        FanPercent = 100,
+        RetractionMm = 0.8m,
+        Notes = "Einfach zu drucken, gut für Anfänger. Keine warping issues."
+    },
+    ["PETG"] = new()
+    {
+        HotendMin = 220, HotendMax = 250, HotendOptimal = 240,
+        BedMin = 60, BedMax = 90, BedOptimal = 80,
+        MaxSpeed = 100, OptimalSpeed = 50,
+        FanPercent = 50,
+        RetractionMm = 1.5m,
+        Notes = "Stärker als PLA, flexibler. Achtung: Stringing bei zu heiß."
+    },
+    ["TPU"] = new()
+    {
+        HotendMin = 210, HotendMax = 240, HotendOptimal = 225,
+        BedMin = 30, BedMax = 60, BedOptimal = 50,
+        MaxSpeed = 40, OptimalSpeed = 25,
+        FanPercent = 50,
+        RetractionMm = 0,
+        Notes = "Flexibel. Sehr langsam drucken. Retraction aus (0mm)."
+    },
+    ["ABS"] = new()
+    {
+        HotendMin = 230, HotendMax = 260, HotendOptimal = 245,
+        BedMin = 90, BedMax = 110, BedOptimal = 100,
+        MaxSpeed = 80, OptimalSpeed = 50,
+        FanPercent = 30,
+        RetractionMm = 1.0m,
+        Notes = "Warping! Geschlossener Drucker empfohlen. Bett heiß."
+    },
+    ["ASA"] = new()
+    {
+        HotendMin = 235, HotendMax = 260, HotendOptimal = 250,
+        BedMin = 90, BedMax = 110, BedOptimal = 100,
+        MaxSpeed = 80, OptimalSpeed = 50,
+        FanPercent = 30,
+        RetractionMm = 1.0m,
+        Notes = "UV-resistent. Wie ABS aber wetterfest. Warping möglich."
+    },
+    ["PC"] = new()
+    {
+        HotendMin = 260, HotendMax = 300, HotendOptimal = 280,
+        BedMin = 100, BedMax = 120, BedOptimal = 110,
+        MaxSpeed = 60, OptimalSpeed = 40,
+        FanPercent = 30,
+        RetractionMm = 1.0m,
+        Notes = "Sehr hitzebeständig. Braucht heißen Drucker. Enclosure Pflicht."
+    },
+    ["PA6"] = new()
+    {
+        HotendMin = 250, HotendMax = 290, HotendOptimal = 270,
+        BedMin = 80, BedMax = 100, BedOptimal = 90,
+        MaxSpeed = 60, OptimalSpeed = 40,
+        FanPercent = 40,
+        RetractionMm = 1.0m,
+        Notes = "Nylon. Muss vor dem Druck getrocknet werden! Zieht Feuchtigkeit."
+    },
+};
+
+public record PrintSettings
+{
+    public int HotendMin { get; init; }
+    public int HotendMax { get; init; }
+    public int HotendOptimal { get; init; }
+    public int BedMin { get; init; }
+    public int BedMax { get; init; }
+    public int BedOptimal { get; init; }
+    public int MaxSpeed { get; init; }       // mm/s
+    public int OptimalSpeed { get; init; }   // mm/s
+    public int FanPercent { get; init; }
+    public decimal RetractionMm { get; init; }
+    public string Notes { get; init; } = "";
+}
+```
+
+### LLM-Empfehlung (Teil 2 — optional, für komplexe Analyse)
+
+```csharp
+public class AIPrintAdvisor
+{
+    private readonly HttpClient _llm;  // Ollama local API or cloud
+    private readonly string _model;    // "gemma4:12b" (local) or "gpt-4o-mini" (cloud)
+
+    public async Task<PrintRecommendation> RecommendAsync(
+        MeshAnalysis mesh,       // Wandstärke, Overhangs, Größe, Detailgrad
+        FilamentSpool filament,   // Ausgewähltes Filament
+        PrinterProfile printer,  // Ausgewählter Drucker
+        PrintGoal goal)           // Strength, Speed, Quality, Prototype
+    {
+        var prompt = $"""
+        Du bist ein 3D-Druck-Experte. Empfiehl Druck-Einstellungen.
+
+        Modell-Analyse:
+        - Minimale Wandstärke: {mesh.MinWallThickness}mm
+        - Maximale Overhang: {mesh.MaxOverhang}°
+        - Build-Volume: {mesh.BoundingBox}
+        - Detailgrad: {mesh.DetailLevel} (high/medium/low)
+        - Triangle Count: {mesh.TriangleCount}
+
+        Filament: {filament.MaterialType} ({filament.Brand} {filament.MaterialName})
+        Dichte: {filament.Density} g/cm³
+        Durchmesser: {filament.DiameterMm}mm
+
+        Drucker: {printer.Name}
+        Build-Volume: {printer.BuildVolumeX}×{printer.BuildVolumeY}×{printer.BuildVolumeZ}mm
+        Düse: {printer.NozzleDiameter}mm
+
+        Ziel: {goal}
+
+        Empfiehl:
+        1. Hotend-Temperatur (°C)
+        2. Bett-Temperatur (°C)
+        3. Layer-Höhe (mm)
+        4. Druckgeschwindigkeit (mm/s)
+        5. Retraction (mm)
+        6. Cooling-Fan (%)
+        7. Infill-Dichte (%) und Pattern
+        8. Begründung für jede Empfehlung
+
+        Antworte als JSON.
+        """;
+
+        var response = await _llm.PostAsJsonAsync("/api/chat", new
+        {
+            model = _model,
+            messages = new[] { new { role = "user", content = prompt } },
+            format = "json",
+            stream = false
+        });
+
+        var result = await response.Content.ReadFromJsonAsync<OllamaResponse>();
+        return ParseRecommendation(result.Message.Content);
+    }
+}
+
+public enum PrintGoal { MaximumStrength, FastPrint, VisualQuality, Prototype }
+```
+
+### Lokale Ausführung (Ollama)
+
+```csharp
+// Läuft komplett offline wenn Ollama installiert ist
+// Modelle: gemma4:12b (sehr gut auf Deutsch), qwen3.5:14b, oder kleiner
+var advisor = new AIPrintAdvisor(
+    new HttpClient { BaseAddress = new("http://localhost:11434") },
+    model: "gemma4:12b"
+);
+
+// Oder Cloud (optional, nur wenn User es will)
+var cloudAdvisor = new AIPrintAdvisor(
+    new HttpClient { BaseAddress = new("https://api.openai.com/v1") },
+    model: "gpt-4o-mini"
+);
+```
+
+### Ziel-Modus → Anpassung
+
+| Ziel | Layer | Speed | Infill | Fan | Notes |
+|------|-------|-------|--------|-----|-------|
+| Maximale Festigkeit | 0.16mm | 40mm/s | 50-80% | 50-80% | Mehr Perimeter, höhere Temp |
+| Schneller Druck | 0.24mm | 100mm/s | 10-15% | 100% | Wenig Perimeter, niedrige Temp |
+| Optische Qualität | 0.12mm | 30mm/s | 15-20% | 100% | Feine Layer, langsam |
+| Prototyp | 0.20mm | 80mm/s | 10% | 100% | Schnell, gut genug zum Testen |
+
+### Referenz-Projekte
+
+| Projekt | Stars | Ansatz |
+|---------|-------|--------|
+| [Slicer Copilot](https://github.com/pfrankov/slicer-copilot) | 11 | LLM (GPT-4o) analysiert .3mf → optimiert Settings. Goal-oriented. Multi-Language. Apache-2.0 |
+| [LLM-3D Print](https://arxiv.org/abs/2408.14307) | — | Wissenschaft: LLMs ohne Fine-Tuning als 3D-Druck-Controller |
+| Cura AI Plugins | — | ML-basierte Profil-Empfehlungen in Cura |
+
+---
+
+## 13. NuGet Package Übersicht
 
 | Need | Package | Version |
 |------|---------|---------|
@@ -1793,7 +2020,7 @@ public class TelegramNotifier
 
 ---
 
-## 13. Bekannte Risiken & Mitigation
+## 14. Bekannte Risiken & Mitigation
 
 | Risiko | Status | Mitigation |
 |--------|--------|------------|
@@ -1810,7 +2037,7 @@ public class TelegramNotifier
 
 ---
 
-## Referenz-Projekte für Implementierung
+## 15. Referenz-Projekte für Implementierung
 
 | Projekt | Was wir lernen |
 |---------|---------------|
