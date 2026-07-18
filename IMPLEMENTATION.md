@@ -2121,6 +2121,227 @@ Jeder Eintrag enthält jetzt **komplette Filament-Eigenschaften** für offline K
 
 All diese Antworten funktionieren **komplett offline** — kein Internet nötig. Wenn Internet verfügbar ist, kann die KI zusätzlich aktuelle Tests/Reviews abrufen.
 
+### Drucker-Wartungs-Empfehlungen (online + offline)
+
+Wartungs-Empfehlungen laufen in zwei Modi:
+
+**Mit Internet:** KI sucht online nach modellspezifischen Wartungs-Tipps für den genauen Drucker (bekannte Probleme, Ersatzteile, Firmware-Updates, Community-Tipps).
+
+**Ohne Internet:** KI gibt allgemeine Wartungs-Empfehlungen die für alle Drucker gelten — basierend auf Druckstunden und Standard-Verschleißteilen.
+
+```csharp
+public class PrinterMaintenanceAdvisor
+{
+    private readonly HttpClient _llm;
+
+    public async Task<MaintenanceRecommendation> GetMaintenanceAsync(
+        PrinterProfile printer,
+        PrintHistory history,
+        bool hasInternet)
+    {
+        if (hasInternet)
+        {
+            // Mit Internet: modellspezifische Suche
+            return await GetOnlineMaintenanceAsync(printer, history);
+        }
+        else
+        {
+            // Ohne Internet: allgemeine Empfehlungen für alle Drucker
+            return GetOfflineMaintenance(printer, history);
+        }
+    }
+
+    // === ONLINE: Modellspezifisch ===
+    private async Task<MaintenanceRecommendation> GetOnlineMaintenanceAsync(
+        PrinterProfile printer, PrintHistory history)
+    {
+        var prompt = $"""
+        Du bist ein 3D-Drucker-Wartungsexperte. Suche nach Wartungs-Empfehlungen
+        für diesen spezifischen Drucker.
+
+        Drucker: {printer.Brand} {printer.Model}
+        Firmware: {printer.FirmwareVersion}
+        Druckstunden gesamt: {history.TotalPrintHours}
+        Materialien verwendet: {history.MaterialsUsed}
+        Letzte Wartung: {printer.LastMaintenanceDate}
+
+        Suche online nach:
+        1. Bekannte Probleme dieses Drucker-Modells
+        2. Empfohlene Ersatzteile/Upgrades für dieses Modell
+        3. Firmware-Updates verfügbar?
+        4. Community-Tipps für Optimierung dieses Modells
+        5. Modellspezifische Wartungs-Intervalle
+
+        Antworte als JSON.
+        """;
+
+        var response = await _llm.PostAsJsonAsync("/api/chat", new
+        {
+            model = _model,
+            messages = new[] { new { role = "user", content = prompt } },
+            format = "json", stream = false
+        });
+        return ParseMaintenance(response);
+    }
+
+    // === OFFLINE: Allgemeine Empfehlungen für alle Drucker ===
+    private MaintenanceRecommendation GetOfflineMaintenance(
+        PrinterProfile printer, PrintHistory history)
+    {
+        var tasks = new List<MaintenanceTask>();
+        var hours = history.TotalPrintHours;
+
+        // Düse — alle 300-500h (abhängig von Material)
+        if (hours > 300)
+        {
+            bool abrasiveUsed = history.MaterialsUsed.Any(m =>
+                m.Contains("CF") || m.Contains("Carbon") || m.Contains("Wood") ||
+                m.Contains("Glass") || m.Contains("Metal"));
+
+            tasks.Add(new MaintenanceTask
+            {
+                Component = "Düse",
+                Action = "Tauschen",
+                Reason = abrasiveUsed
+                    ? $"Nach {hours}h mit schleifendem Filament (CF/Holz) — Verschleiß deutlich schneller"
+                    : $"Nach {hours}h Druckzeit — Düse verschlissen",
+                Priority = hours > 500 ? "Hoch" : "Mittel"
+            });
+        }
+
+        // Bowden-Tube — alle 500h (falls Bowden-Setup)
+        if (hours > 500 && !printer.IsDirectDrive)
+        {
+            tasks.Add(new MaintenanceTask
+            {
+                Component = "Bowden-Tube",
+                Action = "Tauschen oder kürzen",
+                Reason = $"Nach {hours}h — Innenseite raut auf, Reibung steigt",
+                Priority = "Mittel"
+            });
+        }
+
+        // Riemen — alle 1000h prüfen
+        if (hours > 1000)
+        {
+            tasks.Add(new MaintenanceTask
+            {
+                Component = "Zahnriemen (X/Y/Z)",
+                Action = "Spannung prüfen, ggf. nachspannen",
+                Reason = $"Nach {hours}h — Riemen dehnen sich mit der Zeit",
+                Priority = "Mittel"
+            });
+        }
+
+        // Lager — alle 1500h
+        if (hours > 1500)
+        {
+            tasks.Add(new MaintenanceTask
+            {
+                Component = "Linearschienen/Lager",
+                Action = "Reinigen und ölen",
+                Reason = $"Nach {hours}h — Schmiermittel verbraucht, Reibung steigt",
+                Priority = "Mittel"
+            });
+        }
+
+        // Heizbett — Reinigung alle 50 Drucke
+        if (history.TotalPrints > 50)
+        {
+            tasks.Add(new MaintenanceTask
+            {
+                Component = "Heizbett-Oberfläche",
+                Action = "Reinigen (Isopropyl 70%+)",
+                Reason = $"Nach {history.TotalPrints} Drucken — Haftung lässt nach",
+                Priority = "Niedrig"
+            });
+        }
+
+        // Extruder-Zahnrad — alle 800h reinigen
+        if (hours > 800)
+        {
+            tasks.Add(new MaintenanceTask
+            {
+                Component = "Extruder-Zahnrad (Drive Gear)",
+                Action = "Reinigen (Filament-Reste entfernen)",
+                Reason = $"Nach {hours}h — Zahnrad verstopft mit geschmolzenem Filament",
+                Priority = "Mittel"
+            });
+        }
+
+        // PTFE-Tube im Hotend — alle 500h (falls nicht Direct Drive)
+        if (hours > 500 && !printer.IsDirectDrive)
+        {
+            tasks.Add(new MaintenanceTask
+            {
+                Component = "PTFE-Tube (Hotend)",
+                Action = "Prüfen, ggf. kürzen oder tauschen",
+                Reason = $"Nach {hours}h — PTFE schmilzt bei hohen Temperaturen",
+                Priority = "Mittel"
+            });
+        }
+
+        // Lüfter — alle 1000h reinigen
+        if (hours > 1000)
+        {
+            tasks.Add(new MaintenanceTask
+            {
+                Component = "Hotend-Lüfter & Bauteil-Lüfter",
+                Action = "Reinigen (Staub entfernen)",
+                Reason = $"Nach {hours}h — Staub blockiert Luftstrom → Überhitzung",
+                Priority = "Niedrig"
+            });
+        }
+
+        // Firmware-Check
+        tasks.Add(new MaintenanceTask
+        {
+            Component = "Firmware",
+            Action = "Auf Update prüfen (Internet nötig)",
+            Reason = "Regelmäßig Firmware aktualisieren für Bugfixes/Features",
+            Priority = "Niedrig"
+        });
+
+        return new MaintenanceRecommendation
+        {
+            OnlineRequired = false,
+            IsGeneralAdvice = true,
+            Message = "Allgemeine Wartungs-Empfehlungen (ohne Internet). " +
+                     "Verbinde dich mit dem Internet für modellspezifische Tipps " +
+                     $"für deinen {printer.Brand} {printer.Model}.",
+            Tasks = tasks,
+            NextMaintenanceDate = DateTime.UtcNow.AddDays(30)
+        };
+    }
+}
+
+public record MaintenanceRecommendation
+{
+    public bool OnlineRequired { get; init; }
+    public bool IsGeneralAdvice { get; init; }  // true = offline allgemeine Tipps
+    public string Message { get; init; } = "";
+    public List<MaintenanceTask> Tasks { get; init; } = new();
+    public List<KnownIssue> KnownIssues { get; init; } = new();
+    public List<SparePart> RecommendedParts { get; init; } = new();
+    public string? FirmwareUpdateAvailable { get; init; }
+    public DateTime? NextMaintenanceDate { get; init; }
+}
+```
+
+**Allgemeine Wartungs-Intervalle (offline, für alle Drucker):**
+
+| Komponente | Intervall | Aktion | Kriterien |
+|------------|-----------|--------|-----------|
+| Düse | 300-500h | Tauschen | CF/Holz-Filament → schneller (300h), Standard → 500h |
+| Bowden-Tube | 500h | Tauschen/kürzen | Nur bei Bowden-Setup (nicht Direct Drive) |
+| PTFE-Tube (Hotend) | 500h | Prüfen/tauschen | Nur bei Nicht-Direct-Drive |
+| Extruder-Zahnrad | 800h | Reinigen | Filament-Reste entfernen |
+| Riemen (X/Y/Z) | 1000h | Spannung prüfen | Dehnen sich mit der Zeit |
+| Lüfter | 1000h | Reinigen | Staub blockiert Luftstrom |
+| Lager/Linearschienen | 1500h | Reinigen + ölen | Schmiermittel verbraucht |
+| Heizbett | 50 Drucke | Reinigen | Isopropyl 70%+ |
+| Firmware | Regelmäßig | Update prüfen | Internet nötig für Download |
+
 **User-Erweiterung:** User kann eigene Marken/Produkte hinzufügen wenn seine Marke nicht in der Datenbank steht. Eigene Einträge werden als `IsUserAdded = true` markiert und können bearbeitet/gelöscht werden. Vordefinierte Einträge können ebenfalls bearbeitet werden (z.B. wenn ein Hersteller seine Empfehlung ändert).
 
 ```csharp
