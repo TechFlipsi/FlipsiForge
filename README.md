@@ -372,7 +372,11 @@ server:
 | Server backend | ASP.NET Core + Docker (ARM64 + x64) | Runs on any Linux: Pi, NUC, VPS, NAS |
 | Auto-Discovery | mDNS/Bonjour (UDP broadcast) | App finds server automatically, no manual IP |
 | Push notifications | Telegram Bot API (preferred) + Web-Push + email | Print status alerts to phone |
-| Home Assistant | HACS custom integration + HA Add-on | Run server inside HA, sensors for all data |
+| Local AI (LLM) | Gemma 4 E4B/E2B via ONNX Runtime GenAI | Chat, Empfehlungen, Erklärungen — lokal, kein Ollama |
+| Local AI (Search) | all-MiniLM-L6-v2 via ONNX Runtime | Semantic file search — "Drache" finds "dragon" |
+| AI models | Gemma 4 E4B (~3.7GB), E2B (~2.6GB), E2B QAT (~1.3GB) | Auto-select by RAM, manual override, disableable |
+| Server modes | Server Full (AI+WebUI) / Server Lite (monitoring only) | Full for NUC/VPS/Pi5, Lite for Pi 4 (2GB) |
+| Home Assistant | HACS Integration (sensors) + HA Add-on (server install) | HACS always needed, Add-on optional, Full only on strong HA hosts |
 | Plugin system | .NET plugin loading (MEF or assembly load) | Community extensions |
 | i18n | JSON-based localization (13 languages) | Consistent with FlipsiColor/FlipsiSort |
 | Packaging | Installer (.exe + .deb) + Portable (.zip) | New TechFlipsi standard |

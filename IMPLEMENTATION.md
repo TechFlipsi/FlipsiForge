@@ -2099,7 +2099,387 @@ public class TelegramNotifier
 
 ---
 
-## 12. KI-Assistent — Filament & Settings Empfehlung
+## 12. KI-Assistent — Gemma 4 Integration
+
+### Technische Integration: ONNX Runtime GenAI
+
+Die KI läuft über **`Microsoft.ML.OnnxRuntimeGenAI`** — die offizielle GenAI-Erweiterung für ONNX Runtime. Sie implementiert den kompletten Generative-AI-Loop: Tokenizer, Inference, KV-Cache, Sampling, Decoding.
+
+**NuGet-Pakete:**
+```xml
+<ItemGroup>
+  <!-- LLM (Gemma 4 E4B/E2B) — Text-Generierung -->
+  <PackageReference Include="Microsoft.ML.OnnxRuntimeGenAI" Version="0.14.1" />
+  <PackageReference Include="Microsoft.ML.OnnxRuntimeGenAI.Cpu" Version="0.14.1" />
+  <!-- Optional: CUDA für GPU-Beschleunigung (nur Desktop mit NVIDIA) -->
+  <PackageReference Include="Microsoft.ML.OnnxRuntimeGenAI.Cuda" Version="0.14.1"
+                    Condition="'$(Configuration)' == 'Release_Cuda'" />
+  <!-- Embedding (Suche) — Standard ONNX Runtime -->
+  <PackageReference Include="Microsoft.ML.OnnxRuntime" Version="1.22.0" />
+</ItemGroup>
+```
+
+### LocalLlmModel — Gemma 4 LLM Wrapper
+
+```csharp
+using Microsoft.ML.OnnxRuntimeGenAI;
+
+public class LocalLlmModel : IDisposable
+{
+    private readonly Model _model;
+    private readonly Tokenizer _tokenizer;
+    private readonly GeneratorParams _generatorParams;
+
+    public LocalLlmModel(string modelPath)
+    {
+        // Modell laden (config.json + model.onnx + tokenizer.json im Ordner)
+        _model = new Model(modelPath);
+        _tokenizer = new Tokenizer(_model);
+
+        // Standard-Parameter für Text-Generierung
+        _generatorParams = new GeneratorParams(_model);
+        _generatorParams.SetSearchOption("max_length", 1024);
+        _generatorParams.SetSearchOption("temperature", 0.7f);
+        _generatorParams.SetSearchOption("top_p", 0.9f);
+        _generatorParams.SetSearchOption("do_sample", true);
+    }
+
+    // === Einmalige Generierung (für Empfehlungen) ===
+    public string Generate(string prompt, int maxTokens = 500)
+    {
+        var sequences = _tokenizer.Encode(prompt);
+        _generatorParams.SetInputSequences(sequences);
+        _generatorParams.SetSearchOption("max_length", maxTokens);
+
+        using var generator = new Generator(_model, _generatorParams);
+
+        // Token-für-Token generieren
+        while (!generator.IsDone())
+        {
+            generator.ComputeLogits();
+            generator.GenerateNextToken();
+        }
+
+        // Tokens → Text dekodieren
+        var outputTokens = generator.GetSequence(0);
+        return _tokenizer.Decode(outputTokens);
+    }
+
+    // === Streaming-Generierung (für Chat — User sieht Antwort live) ===
+    public async IAsyncEnumerable<string> GenerateStreamAsync(
+        string prompt,
+        int maxTokens = 500,
+        [EnumeratorCancellation] CancellationToken ct = default)
+    {
+        var sequences = _tokenizer.Encode(prompt);
+        _generatorParams.SetInputSequences(sequences);
+        _generatorParams.SetSearchOption("max_length", maxTokens);
+
+        using var generator = new Generator(_model, _generatorParams);
+        var stream = _tokenizer.CreateStream();
+
+        while (!generator.IsDone())
+        {
+            ct.ThrowIfCancellationRequested();
+            generator.ComputeLogits();
+            generator.GenerateNextToken();
+
+            // Generiertes Token sofort als Text zurückgeben (Streaming)
+            var outputTokens = generator.GetSequence(0);
+            var newText = stream.Decode(outputTokens[^1]);
+            if (!string.IsNullOrEmpty(newText))
+                yield return newText;
+        }
+    }
+
+    // === Chat mit System-Prompt (Gemma 4 native System Role) ===
+    public string Chat(string systemPrompt, List<ChatMessage> history, int maxTokens = 500)
+    {
+        // Gemma 4 unterstützt native System Prompts
+        var messages = new List<ChatMessage>
+        {
+            new("system", systemPrompt)
+        };
+        messages.AddRange(history);
+
+        // Chat-Template anwenden (Gemma Format)
+        var prompt = _tokenizer.ApplyChatTemplate(messages);
+
+        return Generate(prompt, maxTokens);
+    }
+
+    public void Dispose()
+    {
+        _generatorParams?.Dispose();
+        _tokenizer?.Dispose();
+        _model?.Dispose();
+    }
+}
+```
+
+### Modell-Auswahl (automatisch + manuell)
+
+```csharp
+public class AiModelSelector
+{
+    // Automatische Auswahl basierend auf verfügbarem RAM
+    public string SelectModelPath()
+    {
+        var ramGb = GetAvailableRamGb();
+
+        // User-Override aus Einstellungen prüfen
+        var userChoice = _settings.AiModel;  // "auto", "e4b", "e2b", "e2b-qat", "off"
+        if (userChoice != "auto")
+            return GetModelPath(userChoice);
+
+        return ramGb switch
+        {
+            >= 8 => "Assets/ai/gemma-4-E4B-it-ONNX/",     // Desktop, ~3.7GB
+            >= 4 => "Assets/ai/gemma-4-E2B-it-ONNX/",     // Mini-PC, ~2.6GB
+            >= 2 => "Assets/ai/gemma-4-E2B-it-qat-ONNX/", // Raspberry Pi, ~1.3GB
+            _    => null  // KI deaktivieren (zu wenig RAM)
+        };
+    }
+
+    private string GetModelPath(string choice) => choice switch
+    {
+        "e4b"     => "Assets/ai/gemma-4-E4B-it-ONNX/",
+        "e2b"     => "Assets/ai/gemma-4-E2B-it-ONNX/",
+        "e2b-qat" => "Assets/ai/gemma-4-E2B-it-qat-ONNX/",
+        "off"     => null,
+        _         => SelectModelPath()  // auto
+    };
+
+    private long GetAvailableRamGb()
+    {
+        // Cross-platform RAM-Erkennung
+        if (OperatingSystem.IsLinux())
+        {
+            var memInfo = File.ReadAllText("/proc/meminfo");
+            var match = Regex.Match(memInfo, @"MemAvailable:\s+(\d+)");
+            return long.Parse(match.Groups[1].Value) / 1024 / 1024;  // KB → GB
+        }
+        else // Windows
+        {
+            return GC.GetGCMemoryInfo().TotalAvailableMemoryBytes / 1024 / 1024 / 1024;
+        }
+    }
+}
+```
+
+### PrinterAssistant — Chat mit Streaming
+
+```csharp
+public class PrinterAssistant
+{
+    private readonly LocalLlmModel _llm;
+    private readonly FlipsiForgeDbContext _db;
+    private readonly List<ChatMessage> _history = new();
+
+    // Chat mit Streaming — User sieht Antwort Wort für Wort
+    public async IAsyncEnumerable<string> ChatStreamAsync(
+        string userMessage,
+        int? activePrinterId,
+        int? activeSpoolId,
+        [EnumeratorCancellation] CancellationToken ct = default)
+    {
+        var systemPrompt = BuildSystemPrompt(activePrinterId, activeSpoolId);
+        _history.Add(new ChatMessage("user", userMessage));
+
+        // Streaming — jeder Token wird sofort an UI gesendet
+        await foreach (var token in _llm.GenerateStreamAsync(
+            _llm.Chat(systemPrompt, _history), ct: ct))
+        {
+            yield return token;
+        }
+
+        // Vollständige Antwort im Verlauf speichern
+        _history.Add(new ChatMessage("assistant", /* full response */));
+    }
+
+    private string BuildSystemPrompt(int? printerId, int? spoolId)
+    {
+        var sb = new StringBuilder();
+        sb.AppendLine("Du bist der FlipsiForge Drucker-Assistent. Hilf dem User bei 3D-Druck-Fragen.");
+        sb.AppendLine("Antworte auf deutsch, klar und praktisch. Nutze die bereitgestellten Daten.");
+        sb.AppendLine();
+
+        // User's Drucker injizieren
+        var printers = _db.Printers.Where(p => p.IsActive).ToList();
+        sb.AppendLine("User's Drucker:");
+        foreach (var p in printers)
+        {
+            sb.AppendLine($"- {p.Brand} {p.Model} | Düse: {p.NozzleDiameter}mm | " +
+                $"Geschlossen: {p.IsEnclosed} | Build: {p.BuildVolumeX}×{p.BuildVolumeY}×{p.BuildVolumeZ}mm");
+        }
+        sb.AppendLine();
+
+        // User's Filament-Inventar injizieren
+        var spools = _db.Spools.Where(s => s.Status == SpoolStatus.Active).ToList();
+        sb.AppendLine("User's Filament-Inventar:");
+        foreach (var s in spools)
+        {
+            sb.AppendLine($"- {s.Brand} {s.MaterialName} ({s.MaterialType}, {s.RemainingWeightG:F0}g übrig)");
+        }
+        sb.AppendLine();
+
+        // Hersteller-Empfehlung aus Marken-DB (falls Spule ausgewählt)
+        if (spoolId.HasValue)
+        {
+            var spool = _db.Spools.Find(spoolId.Value);
+            var brandSpec = _db.FilamentBrandSpecs
+                .FirstOrDefault(b => b.Brand == spool.Brand && b.MaterialType == spool.MaterialType);
+            if (brandSpec != null)
+            {
+                sb.AppendLine($"Aktives Filament: {spool.Brand} {spool.MaterialName}");
+                sb.AppendLine($"Hersteller-Empfehlung: Hotend {brandSpec.HotendOptimal}°C, " +
+                    $"Bett {brandSpec.BedOptimal}°C, Fan {brandSpec.FanPercent}%, " +
+                    $"Speed {brandSpec.SpeedOptimal}mm/s");
+                sb.AppendLine($"Eigenschaften: UV-resistent={brandSpec.IsUVResistant}, " +
+                    $"Lebensmittelecht={brandSpec.IsFoodSafe}, " +
+                    $"Hitzebeständig bis {brandSpec.MaxServiceTempC}°C");
+            }
+        }
+
+        sb.AppendLine();
+        sb.AppendLine("Du kannst Fragen beantworten über:");
+        sb.AppendLine("- Druck-Probleme (Warping, Stringing, Layer-Shift, Unterextrusion)");
+        sb.AppendLine("- Filament-Empfehlungen (welches Material wofür)");
+        sb.AppendLine("- Temperaturen und Speed-Einstellungen");
+        sb.AppendLine("- Wartung (Düse, Riemen, Lager)");
+        sb.AppendLine("- Slicer-Einstellungen (Layer, Infill, Support, Retraction)");
+        sb.AppendLine();
+        sb.AppendLine("Nutze die User's Daten für personalisierte Antworten.");
+
+        return sb.ToString();
+    }
+}
+```
+
+### Chat-UI (Avalonia) mit Streaming
+
+```xml
+<!-- Drucker-Assistent Chat Panel mit Streaming -->
+<Grid RowDefinitions="Auto,*,Auto">
+    <!-- Header -->
+    <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="8">
+        <TextBlock Text="🤖 Drucker-Assistent" FontWeight="Bold" />
+        <TextBlock Text="{Binding AiModelLabel}" Margin="8,0,0,0"
+                   Classes="ai-model-badge" />
+    </StackPanel>
+
+    <!-- Chat-Verlauf (scrollt automatisch) -->
+    <ScrollViewer Grid.Row="1" x:Name="ChatScroll">
+        <ItemsControl ItemsSource="{Binding ChatMessages}">
+            <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                    <Border Classes="{Binding RoleClass}" Margin="8,4">
+                        <StackPanel>
+                            <TextBlock Text="{Binding RoleLabel}" FontWeight="Bold"
+                                       Classes="chat-role" />
+                            <TextBlock Text="{Binding Content}" TextWrapping="Wrap" />
+                        </StackPanel>
+                    </Border>
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
+    </ScrollViewer>
+
+    <!-- Eingabe + Send-Button -->
+    <DockPanel Grid.Row="2" Margin="8">
+        <Button Content="➤" Command="{Binding SendChatCommand}"
+                DockPanel.Dock="Right" IsEnabled="{Binding !IsGenerating}" />
+        <TextBox Text="{Binding ChatInput}"
+                 Watermark="Frage an den Drucker-Assistenten..."
+                 IsEnabled="{Binding !IsGenerating}"
+                 KeyDown="OnEnterSend" />
+    </DockPanel>
+</Grid>
+```
+
+```csharp
+// ViewModel — Streaming Chat
+public partial class PrinterAssistantViewModel : ObservableObject
+{
+    [ObservableProperty] private string _chatInput = "";
+    [ObservableProperty] private bool _isGenerating;
+    [ObservableProperty] private string _aiModelLabel = "Gemma 4 E4B";  // Badge
+
+    public ObservableCollection<ChatMessageViewModel> ChatMessages { get; } = new();
+
+    [RelayCommand]
+    private async Task SendChatAsync()
+    {
+        if (string.IsNullOrWhiteSpace(ChatInput) || IsGenerating)
+            return;
+
+        var userMsg = ChatInput;
+        ChatInput = "";
+        IsGenerating = true;
+
+        // User-Nachricht anzeigen
+        ChatMessages.Add(new ChatMessageViewModel("user", userMsg));
+
+        // KI-Antwort mit Streaming — User sieht Antwort live entstehen
+        var assistantMsg = new ChatMessageViewModel("assistant", "");
+        ChatMessages.Add(assistantMsg);
+
+        try
+        {
+            await foreach (var token in _assistant.ChatStreamAsync(
+                userMsg, ActivePrinterId, ActiveSpoolId))
+            {
+                assistantMsg.Content += token;  // Token-für-Token
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            // User hat abgebrochen
+        }
+        finally
+        {
+            IsGenerating = false;
+        }
+    }
+}
+```
+
+### Embedding-Modell für Suche (all-MiniLM-L6-v2)
+
+```csharp
+using Microsoft.ML.OnnxRuntime;
+
+public class LocalEmbeddingModel : IDisposable
+{
+    private readonly InferenceSession _session;
+
+    public LocalEmbeddingModel(string modelPath = "Assets/ai/all-MiniLM-L6-v2-q8.onnx")
+    {
+        _session = new InferenceSession(modelPath);
+    }
+
+    public float[] Embed(string text)
+    {
+        // Tokenisierung (einfacher WordPiece Tokenizer)
+        var tokens = Tokenize(text);
+        var inputIds = new DenseTensor<long>(tokens, new[] { 1, tokens.Length });
+        var attentionMask = new DenseTensor<long>(
+            Enumerable.Repeat(1L, tokens.Length).ToArray(),
+            new[] { 1, tokens.Length });
+
+        var inputs = new List<NamedOnnxValue>
+        {
+            NamedOnnxValue.CreateFromTensor("input_ids", inputIds),
+            NamedOnnxValue.CreateFromTensor("attention_mask", attentionMask)
+        };
+
+        using var results = _session.Run(inputs);
+        return results.First().AsTensor<float>().ToArray();
+    }
+
+    public void Dispose() => _session?.Dispose();
+}
+```
 
 ### Konzept
 
