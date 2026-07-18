@@ -948,47 +948,72 @@ public class FormatFilterBar
 </StackPanel>
 ```
 
-### 3.10 KI-Suche (Semantic Search)
+### 3.10 KI-Suche (immer Dateinamen + KI kombiniert)
 
-Normale Suche durchsucht Dateinamen. KI-Suche versteht Bedeutung — "Drache" findet alle Drachen-Modelle egal wie sie heißen.
+Suche läuft **immer beides gleichzeitig** — Dateinamen-Suche (sofort, offline) + KI-Suche (lokal, versteht Bedeutung). Kein entweder/oder, kein Umschalten. User tippt "Drache" → sieht sofort alle Treffer in einer Liste.
 
 ```csharp
 public class FileSearchService
 {
-    private readonly HttpClient _llm;  // Ollama oder Cloud
+    private readonly HttpClient _llm;  // Ollama lokal — IMMER lokal, kein Cloud-Zwang
     private readonly string _model;
 
-    // === Modus 1: Normale Suche (Fuzzy, offline) ===
-    public IEnumerable<ScannedFile> NormalSearch(string query, IEnumerable<ScannedFile> files)
-    {
-        if (string.IsNullOrWhiteSpace(query))
-            return files;
-
-        // FuzzySharp durchsucht Dateinamen, Tags, Notizen
-        return Process.ExtractAllBy(query, files.ToList(),
-            f => $"{f.FileName} {f.Tags} {f.Notes}", cutoff: 60)
-            .Select(r => r.Value);
-    }
-
-    // === Modus 2: KI-Suche (Semantic, versteht Bedeutung) ===
-    public async Task<IEnumerable<ScannedFile>> AiSearchAsync(
+    // === Einzige Such-Methode: immer Dateinamen + KI kombiniert ===
+    public async Task<SearchResults> SearchAsync(
         string query,
         IEnumerable<ScannedFile> files)
     {
         if (string.IsNullOrWhiteSpace(query))
-            return files;
+            return new SearchResults { AllFiles = files.ToList() };
 
-        // Dateinamen + Tags + Notizen als Liste vorbereiten
         var fileList = files.ToList();
-        var fileDescriptions = fileList.Select(f =>
-            $"{f.FileName} | Tags: {f.Tags} | Notizen: {f.Notes}").ToList();
 
-        // KI fragen: welche Dateien passen zum Suchbegriff?
+        // 1. Dateinamen-Suche (sofort, offline, Fuzzy) — läuft synchron
+        var filenameHits = Process.ExtractAllBy(query, fileList,
+            f => $"{f.FileName} {f.Tags} {f.Notes}", cutoff: 60)
+            .Select(r => (r.Value, r.Score, Source: "filename"))
+            .ToList();
+
+        // 2. KI-Suche (lokal, versteht Bedeutung) — läuft parallel im Hintergrund
+        var aiTask = Task.Run(() => AiSearchAsync(query, fileList));
+
+        // Dateinamen-Treffer sofort anzeigen (UI kann schon rendern)
+        // KI-Treffer kommen nach sobald Ollama antwortet (1-3 Sekunden)
+
+        var aiHits = await aiTask;
+
+        // 3. Ergebnisse zusammenführen — Dateinamen-Treffer zuerst, dann KI-Treffer
+        // Dateien die in BEIDEN Listen sind → nur einmal anzeigen (höchste Relevanz)
+        var seen = new HashSet<string>();
+        var combined = new List<SearchResult>();
+
+        foreach (var (file, score, source) in filenameHits.OrderByDescending(x => x.Score))
+        {
+            if (seen.Add(file.Path))
+                combined.Add(new SearchResult(file, score, source));
+        }
+
+        foreach (var (file, score, source) in aiHits.OrderByDescending(x => x.Score))
+        {
+            if (seen.Add(file.Path))
+                combined.Add(new SearchResult(file, score, source));
+        }
+
+        return new SearchResults { Files = combined };
+    }
+
+    // KI-Suche — versteht Bedeutung, Synonyme, Sprachen
+    private async Task<List<(ScannedFile Value, int Score, string Source)>> AiSearchAsync(
+        string query, List<ScannedFile> files)
+    {
+        var fileDescriptions = files.Select((f, i) =>
+            $"{i}: {f.FileName} | Tags: {f.Tags} | Notizen: {f.Notes}").ToList();
+
         var prompt = $"""
         Ein User sucht nach: "{query}"
 
         Hier sind alle 3D-Druck-Dateien in seiner Sammlung:
-        {string.Join("\n", fileDescriptions.Select((d, i) => $"{i}: {d}"))}
+        {string.Join("\n", fileDescriptions)}
 
         Welche Dateien passen zur Suche? Berücksichtige:
         - Dateinamen (auch wenn sie anders heißen — "dragon" = "Drache")
@@ -1001,87 +1026,73 @@ public class FileSearchService
         Sortiere nach Relevanz (beste Treffer zuerst).
         """;
 
-        var response = await _llm.PostAsJsonAsync("/api/chat", new
+        try
         {
-            model = _model,
-            messages = new[] { new { role = "user", content = prompt } },
-            format = "json", stream = false
-        });
+            var response = await _llm.PostAsJsonAsync("/api/chat", new
+            {
+                model = _model,
+                messages = new[] { new { role = "user", content = prompt } },
+                format = "json", stream = false
+            });
 
-        var result = await response.Content.ReadFromJsonAsync<OllamaResponse>();
-        var indices = ParseIndices(result.Message.Content);
+            var result = await response.Content.ReadFromJsonAsync<OllamaResponse>();
+            var indices = ParseIndices(result.Message.Content);
 
-        return indices.Select(i => fileList[i]);
-    }
-
-    // === KI-Suche mit Geometrie (optional, fortgeschritten) ===
-    // Wenn Thumbnails generiert wurden, kann KI auch Geometrie analysieren
-    // z.B. "rundes Modell" → findet alle runden/kreisförmigen Objekte
-    public async Task<IEnumerable<ScannedFile>> AiSearchWithGeometryAsync(
-        string query,
-        IEnumerable<ScannedFile> files,
-        Dictionary<int, MeshAnalysis> meshData)  // optional: Geometrie-Daten
-    {
-        var fileList = files.ToList();
-        var descriptions = fileList.Select((f, i) =>
+            return indices.Select(i => (files[i], 100 - i * 5, "ai")).ToList();
+        }
+        catch
         {
-            var mesh = meshData.GetValueOrDefault(i);
-            var geomInfo = mesh != null
-                ? $" | Geometrie: {mesh.BoundingBox}, {mesh.TriangleCount} triangles, " +
-                  $"Wandstärke min {mesh.MinWallThickness}mm"
-                : "";
-            return $"{i}: {f.FileName} | Tags: {f.Tags}{geomInfo}";
-        }).ToList();
-
-        var prompt = $"""
-        User sucht: "{query}"
-
-        Dateien mit Geometrie-Daten:
-        {string.Join("\n", descriptions)}
-
-        Berücksichtige neben Namen/Tags auch die Geometrie:
-        - "kleines Modell" → kleine Bounding-Box
-        - "detailreich" → viele Triangles
-        - "dünn" → geringe Wandstärke
-        - "rund" → viele Kurven (hohe Triangle-Dichte bei kleiner Box)
-
-        Gib passende Indizes als JSON-Array zurück, sortiert nach Relevanz.
-        """;
-
-        // ... LLM call same as above
+            // Wenn Ollama nicht läuft → nur Dateinamen-Suche (graceful degradation)
+            return new List<(ScannedFile, int, string)>();
+        }
     }
+}
+
+public record SearchResults
+{
+    public List<ScannedFile>? AllFiles { get; init; }  // wenn keine Suche aktiv
+    public List<SearchResult>? Files { get; init; }     // Suchergebnisse
+}
+
+public record SearchResult(ScannedFile File, int Score, string Source)
+{
+    public bool IsFilenameMatch => Source == "filename";
+    public bool IsAiMatch => Source == "ai";
 }
 ```
 
+**UI Verhalten:**
+1. User tippt "Drache" in Suchfeld
+2. **Sofort** (0ms): Dateinamen-Treffer erscheinen — `drache.stl`, `drachen_burg.stl`
+3. **Nach 1-3 Sekunden**: KI-Treffer werden ergänzt — `dragon_v2.stl`, `mythical_creature.3mf`, `wyvern_print.gcode`
+4. Treffer aus Dateinamen-Suche werden oben angezeigt (höhere Konfidenz), KI-Treffer darunter
+5. Badge pro Treffer: "Dateiname" oder "KI-Empfehlung" damit User weiß woher der Treffer kommt
+
+**Graceful Degradation:** Wenn Ollama nicht installiert/nicht läuft → nur Dateinamen-Suche. KI-Suche schlägt leise fehl, User merkt nichts — sieht trotzdem die Dateinamen-Treffer.
+
 **Beispiel KI-Suche:**
 
-| Eingabe | Normale Suche findet | KI-Suche findet zusätzlich |
-|---------|---------------------|---------------------------|
-| "Drache" | `drache.stl` (exakt) | `dragon_v2.stl`, `mythical_creature.3mf`, `chinese_dragon.stl`, `wyvern_print.gcode` |
+| Eingabe | Dateinamen-Suche findet (sofort) | KI-Suche findet zusätzlich (1-3s) |
+|---------|----------------------------------|-------------------------------------|
+| "Drache" | `drache.stl`, `drachen_burg.stl` | `dragon_v2.stl`, `mythical_creature.3mf`, `chinese_dragon.stl`, `wyvern_print.gcode` |
 | "Auto" | `auto.stl` | `car_body.stl`, `bmw_m3.3mf`, `vehicle_chassis.stl`, `truck_wheel.stl` |
 | "Düse" | `düse.stl` | `nozzle_v6.stl`, `hotend_block.stl`, `extruder_tip.stl` |
 | "Handy" | `handy.stl` | `phone_stand.stl`, `smartphone_holder.3mf`, `iphone_case.stl` |
 | "klein" | — (kein Match) | Alle Modelle mit kleiner Bounding-Box (KI analysiert Geometrie) |
 
-**Lokal oder Cloud:**
+**Lokal (immer):**
 ```csharp
-// Lokal (Ollama) — offline, kostenlos
+// IMMER lokal — Ollama, kein Cloud, kein Internet nötig
 var search = new FileSearchService(
     new HttpClient { BaseAddress = new("http://localhost:11434") },
-    model: "gemma4:12b"
-);
-
-// Cloud (optional, schneller bei großen Sammlungen)
-var cloudSearch = new FileSearchService(
-    new HttpClient { BaseAddress = new("https://api.openai.com/v1") },
-    model: "gpt-4o-mini"
+    model: "gemma4:12b"  // oder was lokal läuft
 );
 ```
 
 **Performance bei großen Sammlungen:**
-- < 500 Dateien: KI durchsucht alle in einem Prompt (schnell)
+- < 500 Dateien: KI durchsucht alle in einem Prompt (1-3s)
 - 500-2000 Dateien: Batch-Verarbeitung (500 pro Prompt, Ergebnisse zusammenführen)
-- > 2000 Dateien: Embedding-basierte Vektorsuche (nomic-embed-text lokal, ähnlich Honcho) — Dateien werden als Vektoren indexiert, KI-Suche wird zur Ähnlichkeitssuche
+- > 2000 Dateien: Embedding-basierte Vektorsuche (nomic-embed-text lokal) — Dateien werden als Vektoren indexiert, KI-Suche wird zur Ähnlichkeitssuche (sofort nach Indexierung)
 
 ---
 

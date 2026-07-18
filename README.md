@@ -24,11 +24,12 @@ FlipsiForge is a cross-platform 3D printing management tool that handles files, 
   - Klick auf ein Format → zeigt nur Dateien dieses Typs
   - Klick auf "Alle" → zeigt wieder alles
   - Live aktualisiert beim Scannen
-- **Suche** — zwei Modi:
-  - **Normale Suche** — durchsucht Dateinamen, Tags, Notizen (Fuzzy-tolerant)
-  - **KI-Suche (optional)** — versteht Bedeutung, nicht nur Text. "Drache" eingeben → findet alle Drachen-Modelle, egal ob sie "dragon_v2.stl", "mythical_creature.3mf" oder "chinese_dragon_print.stl" heißen. KI analysiert Dateinamen + Tags + (optional) Thumbnail/Geometrie
-  - Umschaltbar zwischen normaler und KI-Suche (Toggle oder separate Eingabe)
-  - KI-Suche läuft lokal (Ollama) oder Cloud — gleiche Architektur wie KI-Assistent
+- **Suche** — immer Dateinamen-Suche + KI-Suche kombiniert (nicht entweder/oder):
+  - **Dateinamen-Suche** (Fuzzy, offline, sofort) — durchsucht Dateinamen, Tags, Notizen nach dem Suchbegriff
+  - **KI-Suche** (lokal, automatisch mit am Start) — versteht Bedeutung, findet Synonyme, andere Sprachen. "Drache" findet auch `dragon_v2.stl`, `mythical_creature.3mf`, `wyvern_print.gcode`
+  - Beide laufen parallel, Ergebnisse werden zusammengeführt (Dateinamen-Treffer zuerst, dann KI-Treffer)
+  - KI läuft immer lokal (Ollama) — kein Cloud-Zwang, kein Internet nötig
+  - User tippt "Drache" → sieht sofort Dateinamen-Treffer + KI-Treffer in einer Liste
 - **STL Repair Check** — scan files for defects (non-manifold edges, holes) before printing. Warning when model is broken
 - **G-code Visualizer** — load G-code file → 3D layer-by-layer visualization. See exactly what will be printed
 - **Datei-Versionierung** — edited STLs keep old versions (v1, v2, v3 with dates). No one loses the original by accident
