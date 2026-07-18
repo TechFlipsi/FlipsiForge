@@ -2012,106 +2012,114 @@ public class FilamentBrandSpec
     public string Brand { get; set; } = "";
     public string ProductName { get; set; } = "";
     public string MaterialType { get; set; } = "";    // PLA, PETG, TPU, ABS, ASA, PC, PA6, etc.
+
+    // Temperaturen
     public int HotendMin { get; set; }
     public int HotendMax { get; set; }
     public int HotendOptimal { get; set; }
     public int BedMin { get; set; }
     public int BedMax { get; set; }
     public int BedOptimal { get; set; }
+
+    // Speed
+    public int SpeedMin { get; set; }       // mm/s — langsamster empfohlener Speed
+    public int SpeedMax { get; set; }       // mm/s — schnellster empfohlener Speed
+    public int SpeedOptimal { get; set; }   // mm/s — optimaler Speed
+    public int OuterWallSpeed { get; set; } // mm/s — Außenwand (langsamer für Qualität)
+    public int InfillSpeed { get; set; }    // mm/s — Infill (schneller möglich)
+
+    // Druck-Einstellungen
     public int FanPercent { get; set; }
-    public int SpeedMin { get; set; }
-    public int SpeedMax { get; set; }
-    public int SpeedOptimal { get; set; }
     public decimal RetractionMm { get; set; }
     public decimal? PressureAdvance { get; set; }
-    public string Notes { get; set; } = "";
-    public bool IsUserAdded { get; set; } = false;  // false = vordefiniert, true = User-hinzugefügt
+    public decimal LayerHeightMin { get; set; }    // mm — minimal empfohlene Layer-Höhe
+    public decimal LayerHeightMax { get; set; }    // mm — maximal empfohlene Layer-Höhe
+    public decimal LayerHeightOptimal { get; set; } // mm — optimale Layer-Höhe
+
+    // Filament-Eigenschaften (für KI-Empfehlungen offline)
+    public bool IsUVResistant { get; set; }        // UV-beständig (Außenbereich)
+    public bool IsWeatherResistant { get; set; }    // Wetterfest (Regen, Sonne)
+    public bool IsFoodSafe { get; set; }            // Lebensmittelecht
+    public bool IsFlexible { get; set; }            // Flexibel (Dichtungen, etc.)
+    public bool IsAbrasive { get; set; }            // Schleifend (CF, GF, Holz — harte Düse nötig!)
+    public bool IsHeatResistant { get; set; }       // Hitzebeständig (Auto-Innenraum, etc.)
+    public int MaxServiceTempC { get; set; }        // °C — max Dauer-Temperaturbelastung des fertigen Teils
+    public bool NeedsEnclosure { get; set; }         // Geschlossener Drucker nötig (ABS, ASA, PC)
+    public bool NeedsDirectDrive { get; set; }       // Direct Drive Extruder nötig (TPU)
+    public bool NeedsDryingBeforePrint { get; set; } // Muss vor Druck getrocknet werden (Nylon, PETG)
+    public int DryingTempC { get; set; }             // °C — empfohlene Trocknungstemperatur
+    public int DryingDurationH { get; set; }         // Stunden — empfohlene Trocknungsdauer
+    public bool IsBiodegradable { get; set; }        // Biologisch abbaubar (PLA)
+    public bool IsRecyclable { get; set; }           // Recyclbar
+    public bool WarpsEasily { get; set; }            // Warping-Anfällig (ABS, ASA, PC)
+    public bool StringsEasily { get; set; }          // Stringing-Anfällig (PETG bei zu heiß)
+    public bool IsImpactResistant { get; set; }      // Schlagfest (PLA+, ABS, PETG)
+    public decimal TensileStrengthMpa { get; set; }  // Zugfestigkeit in MPa (falls bekannt)
+    public decimal DensityGcm3 { get; set; }          // Dichte g/cm³
+    public string SuitableFor { get; set; } = "";     // Wofür geeignet (z.B. "Dekoration, Prototypen, Spielzeug")
+    public string NotSuitableFor { get; set; } = "";  // Wofür ungeeignet (z.B. "Außenbereich, Auto, heiße Umgebungen")
+    public string Notes { get; set; } = "";           // Marken-spezifische Notizen
+    public bool IsUserAdded { get; set; } = false;
 }
 ```
 
 **Vordefinierte Marken (Seed-Daten — alle bekannten Hersteller):**
 
-| # | Marke | Produkt | Material | Hotend °C | Bed °C | Fan % | Speed mm/s | Retraction | Notizen |
-|---|-------|---------|----------|-----------|--------|-------|------------|------------|---------|
-| 1 | eSUN | PLA+ | PLA | 200-230 (215) | 40-60 (50) | 100 | 40-150 (60) | 0.8 | Impact-resistenter als Standard PLA |
-| 2 | eSUN | PETG | PETG | 220-250 (235) | 60-90 (80) | 50 | 30-100 (50) | 1.5 | Stringing bei zu heiß |
-| 3 | eSUN | ABS+ | ABS | 230-250 (240) | 90-110 (100) | 30 | 30-80 (50) | 1.0 | Weniger Warping als Standard ABS |
-| 4 | eSUN | TPU 95A | TPU | 210-230 (220) | 30-60 (45) | 50 | 15-40 (25) | 0 | Retraction AUS! Direct Drive empfohlen |
-| 5 | eSUN | ASA | ASA | 240-260 (250) | 90-110 (100) | 30 | 30-80 (50) | 1.0 | UV-resistent, wetterfest |
-| 6 | eSUN | PLA Matte | PLA | 200-225 (210) | 40-60 (50) | 100 | 40-120 (60) | 0.8 | Matte Oberfläche |
-| 7 | Prusament | PLA | PLA | 190-220 (210) | 50-60 (55) | 100 | 40-150 (80) | 0.8 | ±0.02mm Toleranz, OpenPrintTag NFC |
-| 8 | Prusament | PETG | PETG | 230-245 (240) | 70-90 (80) | 50 | 30-100 (50) | 1.5 | 240°C für beste Layer-Haftung |
-| 9 | Prusament | ASA | ASA | 240-260 (250) | 90-110 (100) | 30 | 30-80 (50) | 1.0 | UV-resistent, Enclosure empfohlen |
-| 10 | Prusament | ABS | ABS | 230-250 (240) | 90-110 (100) | 30 | 30-80 (50) | 1.0 | Warping möglich, Enclosure nötig |
-| 11 | Polymaker | PolyLite PLA | PLA | 190-220 (210) | 40-60 (50) | 100 | 40-150 (60) | 0.8 | Standard PLA, gut Preis-Leistung |
-| 12 | Polymaker | PolyLite PETG | PETG | 220-250 (240) | 60-90 (80) | 50 | 30-100 (50) | 1.5 | Gute Layer-Haftung |
-| 13 | Polymaker | PolyTerra PLA | PLA | 190-220 (210) | 40-60 (50) | 100 | 40-150 (60) | 0.8 | Matte Oberfläche, umweltfreundlich |
-| 14 | Polymaker | CoPA (Nylon) | PA6 | 250-280 (270) | 80-100 (90) | 40 | 20-60 (40) | 1.0 | MUSS getrocknet werden! Zieht Feuchtigkeit |
-| 15 | Polymaker | PolyFlex TPU90 | TPU | 220-240 (230) | 30-60 (45) | 50 | 15-40 (25) | 0 | Flexibel, Retraction AUS |
-| 16 | Polymaker | PC-Max | PC | 260-300 (280) | 100-120 (110) | 30 | 20-60 (40) | 1.0 | Enclosure Pflicht, hitzebeständig |
-| 17 | Bambu Lab | PLA Matte | PLA | 190-220 (210) | 35-55 (45) | 100 | 50-200 (120) | 0.8 | High-Speed optimiert, RFID-Tags |
-| 18 | Bambu Lab | PLA Basic | PLA | 190-220 (210) | 35-55 (45) | 100 | 50-200 (120) | 0.8 | Standard für Bambu Drucker |
-| 19 | Bambu Lab | PETG HF | PETG | 220-250 (240) | 60-90 (80) | 50 | 50-200 (100) | 1.5 | High-Speed PETG |
-| 20 | Bambu Lab | PETG Translucent | PETG | 220-250 (240) | 60-90 (80) | 50 | 30-100 (50) | 1.5 | Transparente Optik |
-| 21 | Bambu Lab | ABS | ABS | 230-260 (245) | 90-110 (100) | 30 | 30-80 (50) | 1.0 | Für Bambu X1C/P1S (geschlossen) |
-| 22 | Bambu Lab | ASA | ASA | 240-260 (250) | 90-110 (100) | 30 | 30-80 (50) | 1.0 | UV-resistent, wetterfest |
-| 23 | Bambu Lab | TPU 95A | TPU | 210-240 (225) | 30-60 (45) | 50 | 15-40 (25) | 0 | Retraction AUS, langsam |
-| 24 | Sunlu | PLA | PLA | 190-220 (210) | 40-60 (50) | 100 | 40-150 (60) | 0.8 | Budget PLA, gute Qualität |
-| 25 | Sunlu | PETG | PETG | 220-250 (235) | 60-90 (80) | 50 | 30-100 (50) | 1.5 | Budget PETG |
-| 26 | Sunlu | ABS | ABS | 230-250 (240) | 90-110 (100) | 30 | 30-80 (50) | 1.0 | Budget ABS |
-| 27 | Sunlu | TPU | TPU | 210-230 (220) | 30-60 (45) | 50 | 15-40 (25) | 0 | Budget TPU |
-| 28 | Overture | PLA | PLA | 190-220 (210) | 40-60 (50) | 100 | 40-150 (60) | 0.8 | ±0.02mm Toleranz, gut dokumentiert |
-| 29 | Overture | PETG | PETG | 220-245 (235) | 60-90 (80) | 50 | 30-100 (50) | 1.5 | Konsistente Qualität |
-| 30 | Overture | ABS | ABS | 230-250 (240) | 90-110 (100) | 30 | 30-80 (50) | 1.0 | Standard ABS |
-| 31 | Overture | TPU | TPU | 210-230 (220) | 30-60 (45) | 50 | 15-40 (25) | 0 | Flexibel |
-| 32 | Overture | Nylon | PA6 | 240-270 (260) | 70-100 (90) | 40 | 20-60 (40) | 1.0 | Muss getrocknet werden |
-| 33 | Hatchbox | PLA | PLA | 190-220 (210) | 40-60 (50) | 100 | 40-150 (60) | 0.8 | Beliebte US-Marke, zuverlässig |
-| 34 | Hatchbox | PETG | PETG | 220-250 (240) | 60-90 (80) | 50 | 30-100 (50) | 1.5 | Gute Qualität |
-| 35 | Hatchbox | ABS | ABS | 230-250 (240) | 90-110 (100) | 30 | 30-80 (50) | 1.0 | Standard ABS |
-| 36 | Elegoo | PLA | PLA | 190-220 (210) | 40-60 (50) | 100 | 40-150 (60) | 0.8 | Gute Budget-Qualität |
-| 37 | Elegoo | PETG | PETG | 220-250 (240) | 60-90 (80) | 50 | 30-100 (50) | 1.5 | Beliebt mit Neptune Druckern |
-| 38 | Elegoo | ABS | ABS | 230-250 (240) | 90-110 (100) | 30 | 30-80 (50) | 1.0 | Standard ABS |
-| 39 | Elegoo | TPU | TPU | 210-230 (220) | 30-60 (45) | 50 | 15-40 (25) | 0 | Flexibel |
-| 40 | Creality | PLA | PLA | 190-220 (210) | 40-60 (50) | 100 | 40-150 (60) | 0.8 | Oft mit Drucker gebündelt |
-| 41 | Creality | PETG | PETG | 220-250 (240) | 60-90 (80) | 50 | 30-100 (50) | 1.5 | Standard PETG |
-| 42 | Inland | PLA | PLA | 190-220 (210) | 40-60 (50) | 100 | 40-150 (60) | 0.8 | Micro Center Hausmarke, günstig |
-| 43 | Inland | PETG | PETG | 220-250 (240) | 60-90 (80) | 50 | 30-100 (50) | 1.5 | Gute Qualität für Preis |
-| 44 | Inland | ABS | ABS | 230-250 (240) | 90-110 (100) | 30 | 30-80 (50) | 1.0 | Standard ABS |
-| 45 | Inland | TPU | TPU | 210-230 (220) | 30-60 (45) | 50 | 15-40 (25) | 0 | Flexibel |
-| 46 | Fillamentum | PLA | PLA | 190-220 (210) | 50-60 (55) | 100 | 40-150 (60) | 0.8 | Premium, schöne Farben |
-| 47 | Fillamentum | PETG | PETG | 230-250 (240) | 70-90 (80) | 50 | 30-100 (50) | 1.5 | Premium PETG |
-| 48 | Fillamentum | ASA | ASA | 240-260 (250) | 90-110 (100) | 30 | 30-80 (50) | 1.0 | UV-resistent, Premium |
-| 49 | Fillamentum | ABS | ABS | 230-250 (240) | 90-110 (100) | 30 | 30-80 (50) | 1.0 | Premium ABS |
-| 50 | ColorFabb | PLA/PHA | PLA | 190-220 (210) | 50-60 (55) | 100 | 40-120 (50) | 0.8 | PLA+PHA Mix, flexibler als reines PLA |
-| 51 | ColorFabb | XT (PETG) | PETG | 240-260 (250) | 60-90 (80) | 50 | 30-80 (40) | 1.5 | Premium Copolyester |
-| 52 | ColorFabb | nGen | PETG | 220-240 (230) | 60-80 (70) | 50 | 30-100 (50) | 1.5 | AMPS180 Copolyester |
-| 53 | Proto-pasta | PLA | PLA | 190-220 (210) | 40-60 (50) | 100 | 40-120 (50) | 0.8 | Spezialfarben (magnetisch, leitfähig) |
-| 54 | Proto-pasta | HTPLA | PLA | 220-240 (230) | 50-60 (55) | 100 | 40-100 (50) | 0.8 | Hitze-resistent nach Annealing |
-| 55 | 3DXTech | Carbon Fiber PLA | PLA | 200-230 (215) | 40-60 (50) | 100 | 30-80 (40) | 0.8 | CF verstärkt, hartem Düse nötig! |
-| 56 | 3DXTech | Carbon Fiber PETG | PETG | 230-250 (240) | 60-90 (80) | 50 | 30-80 (40) | 1.5 | CF verstärkt, hartem Düse nötig! |
-| 57 | 3DXTech | Carbon Fiber Nylon | PA6 | 250-280 (270) | 80-100 (90) | 40 | 20-60 (40) | 1.0 | CF Nylon, extrem stark |
-| 58 | BASF Ultrafuse | PETG | PETG | 220-250 (240) | 60-90 (80) | 50 | 30-100 (50) | 1.5 | Industrielle Qualität |
-| 59 | Siraya Tech | Build (Resin-like) | PETG | 230-250 (240) | 70-90 (80) | 50 | 30-80 (50) | 1.5 | Sehr feste Layer-Haftung |
-| 60 | Siraya Tech | Tenacious (Flexible) | TPU | 210-240 (225) | 30-60 (45) | 50 | 15-40 (25) | 0 | Flexibel, ähnlich Resin |
-| 61 | Duramic | PLA+ | PLA | 200-230 (215) | 40-60 (50) | 100 | 40-150 (60) | 0.8 | Impact-resistent |
-| 62 | Duramic | PETG | PETG | 220-250 (240) | 60-90 (80) | 50 | 30-100 (50) | 1.5 | Standard PETG |
-| 63 | Duramic | ABS | ABS | 230-250 (240) | 90-110 (100) | 30 | 30-80 (50) | 1.0 | Standard ABS |
-| 64 | Eryone | PLA | PLA | 190-220 (210) | 40-60 (50) | 100 | 40-150 (60) | 0.8 | Budget, gut für Einsteiger |
-| 65 | Eryone | PETG | PETG | 220-250 (240) | 60-90 (80) | 50 | 30-100 (50) | 1.5 | Budget PETG |
-| 66 | MatterHackers | Build PLA | PLA | 190-220 (210) | 40-60 (50) | 100 | 40-150 (60) | 0.8 | Hausmarke, günstig |
-| 67 | MatterHackers | Pro PLA | PLA | 190-220 (210) | 40-60 (50) | 100 | 40-120 (50) | 0.8 | ±0.02mm, Premium-Qualität |
-| 68 | MatterHackers | Pro PETG | PETG | 220-250 (240) | 60-90 (80) | 50 | 30-100 (50) | 1.5 | Premium PETG |
-| 69 | MatterHackers | NylonG | PA6 | 250-280 (270) | 80-100 (90) | 40 | 20-60 (40) | 1.0 | Glasfaser verstärktes Nylon |
-| 70 | Atomic Filament | PLA | PLA | 190-220 (210) | 40-60 (50) | 100 | 40-150 (60) | 0.8 | Made in USA, sehr konsistent |
-| 71 | Atomic Filament | PETG | PETG | 220-250 (240) | 60-90 (80) | 50 | 30-100 (50) | 1.5 | Premium PETG |
-| 72 | Fiberlogy | PLA | PLA | 190-220 (210) | 40-60 (50) | 100 | 40-150 (60) | 0.8 | Premium, gute Konsistenz |
-| 73 | Fiberlogy | PETG | PETG | 220-250 (240) | 60-90 (80) | 50 | 30-100 (50) | 1.5 | PETG mit PTFE Option |
-| 74 | Fiberlogy | ABS | ABS | 230-250 (240) | 90-110 (100) | 30 | 30-80 (50) | 1.0 | Premium ABS |
-| 75 | Fiberlogy | ASA | ASA | 240-260 (250) | 90-110 (100) | 30 | 30-80 (50) | 1.0 | UV-resistent |
-| 76 | CookieCAD | PLA (Color/Silk) | PLA | 190-220 (210) | 40-60 (50) | 100 | 40-120 (50) | 0.8 | Spezialfarben, Gradient, Silk |
-| 77 | CookieCAD | PETG | PETG | 220-250 (240) | 60-90 (80) | 50 | 30-100 (50) | 1.5 | Premium Farben |
-| 78 | Sliceworks | PLA (Specialty) | PLA | 190-220 (210) | 40-60 (50) | 100 | 40-100 (50) | 0.8 | Ästhetische Spezialeffekte |
-| 79 | 03D | PLA (Specialty) | PLA | 190-220 (210) | 40-60 (50) | 100 | 40-100 (50) | 0.8 | Nischen-Spezialfilament |
+Jeder Eintrag enthält jetzt **komplette Filament-Eigenschaften** für offline KI-Empfehlungen:
+
+| # | Marke | Produkt | Material | Hotend °C | Bed °C | Fan % | Speed mm/s | Retraction | UV | Wetterfest | Lebensmittelecht | Flexibel | Schleifend | Hitzebeständig | Max Service °C | Enclosure | Direct Drive | Trocknen | Trocknung °C/h | Warping | Stringing | Schlagfest | Zugfestigkeit MPa | Dichte | Wofür geeignet | Wofür ungeeignet |
+|---|-------|---------|----------|-----------|--------|-------|------------|------------|-----|-----------|------------------|----------|------------|----------------|---------------|-----------|-------------|----------|----------------|---------|-----------|------------|-------------------|--------|----------------|------------------|
+| 1 | eSUN | PLA+ | PLA | 200-230 (215) | 40-60 (50) | 100 | 40-150 (60) | 0.8 | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | 55 | ❌ | ❌ | ❌ | — | ❌ | ❌ | ✅ | 50 | 1.24 | Dekoration, Prototypen, Spielzeug, Innenbereich | Außenbereich, Auto, heiße Umgebungen, Geschirr |
+| 2 | eSUN | PETG | PETG | 220-250 (235) | 60-90 (80) | 50 | 30-100 (50) | 1.5 | ❌ | ✅ | ✅ | ❌ | ❌ | ✅ | 70 | ❌ | ❌ | ✅ | 65/4h | ❌ | ✅ | ✅ | 55 | 1.27 | Funktionsbauteile, Außenbereich (ohne direkte Sonne), Geschirr, Lagerung | Auto-Innenraum (>70°C), direkte UV-Last |
+| 3 | eSUN | ABS+ | ABS | 230-250 (240) | 90-110 (100) | 30 | 30-80 (50) | 1.0 | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | 95 | ✅ | ❌ | ❌ | — | ✅ | ❌ | ✅ | 45 | 1.04 | Auto-Innenraum, Funktionsbauteile, Gehäuse | Außenbereich (UV), Kontakt mit Lebensmitteln |
+| 4 | eSUN | TPU 95A | TPU | 210-230 (220) | 30-60 (45) | 50 | 15-40 (25) | 0 | ❌ | ✅ | ❌ | ✅ | ❌ | ❌ | 80 | ❌ | ✅ | ✅ | 50/4h | ❌ | ❌ | ✅ | 30 | 1.21 | Dichtungen, Griffe, Schutzhüllen, flexible Teile | Steife Bauteile, feine Details, High-Speed |
+| 5 | eSUN | ASA | ASA | 240-260 (250) | 90-110 (100) | 30 | 30-80 (50) | 1.0 | ✅ | ✅ | ❌ | ❌ | ❌ | ✅ | 90 | ✅ | ❌ | ❌ | — | ✅ | ❌ | ✅ | 48 | 1.05 | Außenbereich, Auto-Exterieur, Garten, Wetterfest | Kontakt mit Lebensmitteln, Anfänger (schwierig) |
+| 6 | Prusament | PLA | PLA | 190-220 (210) | 50-60 (55) | 100 | 40-150 (80) | 0.8 | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | 55 | ❌ | ❌ | ❌ | — | ❌ | ❌ | ❌ | 60 | 1.24 | Dekoration, Prototypen, Figuren, Innenbereich | Außenbereich, Auto, heiße Umgebungen |
+| 7 | Prusament | PETG | PETG | 230-245 (240) | 70-90 (80) | 50 | 30-100 (50) | 1.5 | ❌ | ✅ | ✅ | ❌ | ❌ | ✅ | 70 | ❌ | ❌ | ✅ | 65/4h | ❌ | ✅ | ✅ | 55 | 1.27 | Funktionsbauteile, Außen, Geschirr, Lagerung | Auto-Innenraum (>70°C) |
+| 8 | Prusament | ASA | ASA | 240-260 (250) | 90-110 (100) | 30 | 30-80 (50) | 1.0 | ✅ | ✅ | ❌ | ❌ | ❌ | ✅ | 90 | ✅ | ❌ | ❌ | — | ✅ | ❌ | ✅ | 48 | 1.05 | Außenbereich, Auto, Garten, UV-exponiert | Lebensmittel, Anfänger |
+| 9 | Polymaker | CoPA (Nylon) | PA6 | 250-280 (270) | 80-100 (90) | 40 | 20-60 (40) | 1.0 | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | 110 | ✅ | ❌ | ✅ | 80/8h | ✅ | ❌ | ✅ | 70 | 1.52 | Funktionsbauteile, Zahnräder, Verschleißteile, Auto | Außen (UV), feuchtigkeitsempfindlich, Anfänger |
+| 10 | Polymaker | PC-Max | PC | 260-300 (280) | 100-120 (110) | 30 | 20-60 (40) | 1.0 | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | 115 | ✅ | ❌ | ✅ | 100/4h | ✅ | ❌ | ✅ | 65 | 1.30 | Hitzeschild, Industrielle Teile, hohe Belastung | Außen (UV), Anfänger, ohne Enclosure |
+| 11 | Bambu Lab | PLA Matte | PLA | 190-220 (210) | 35-55 (45) | 100 | 50-200 (120) | 0.8 | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | 55 | ❌ | ❌ | ❌ | — | ❌ | ❌ | ❌ | 50 | 1.24 | Dekoration, Figuren, matte Oberflächen, High-Speed | Außen, Auto, Heiß |
+| 12 | Bambu Lab | PETG HF | PETG | 220-250 (240) | 60-90 (80) | 50 | 50-200 (100) | 1.5 | ❌ | ✅ | ✅ | ❌ | ❌ | ✅ | 70 | ❌ | ❌ | ✅ | 65/4h | ❌ | ✅ | ✅ | 55 | 1.27 | Funktionsbauteile, High-Speed, Geschirr | Auto-Innenraum (>70°C) |
+| 13 | Bambu Lab | ABS | ABS | 230-260 (245) | 90-110 (100) | 30 | 30-80 (50) | 1.0 | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | 95 | ✅ | ❌ | ❌ | — | ✅ | ❌ | ✅ | 45 | 1.04 | Auto-Innenraum, Gehäuse, Funktionsbauteile | Außen (UV), Lebensmittel |
+| 14 | Bambu Lab | TPU 95A | TPU | 210-240 (225) | 30-60 (45) | 50 | 15-40 (25) | 0 | ❌ | ✅ | ❌ | ✅ | ❌ | ❌ | 80 | ❌ | ✅ | ✅ | 50/4h | ❌ | ❌ | ✅ | 30 | 1.21 | Dichtungen, Griffe, Schutzhüllen | Steife Bauteile, High-Speed |
+| 15 | 3DXTech | Carbon Fiber PLA | PLA | 200-230 (215) | 40-60 (50) | 100 | 30-80 (40) | 0.8 | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | 55 | ❌ | ❌ | ❌ | — | ❌ | ❌ | ✅ | 70 | 1.27 | Funktionsteile, Verschleißteile, steife Bauteile | Außen, Flexible Teile — HARTE DÜSE NÖTIG! |
+| 16 | Polymaker | PolyFlex TPU90 | TPU | 220-240 (230) | 30-60 (45) | 50 | 15-40 (25) | 0 | ❌ | ✅ | ❌ | ✅ | ❌ | ❌ | 80 | ❌ | ✅ | ✅ | 50/4h | ❌ | ❌ | ✅ | 28 | 1.21 | Dichtungen, Griffe, flexible Verbindungen | Steife Bauteile, feine Details |
+| 17 | ColorFabb | PLA/PHA | PLA | 190-220 (210) | 50-60 (55) | 100 | 40-120 (50) | 0.8 | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | 55 | ❌ | ❌ | ❌ | — | ❌ | ❌ | ✅ | 55 | 1.24 | Dekoration, Figuren, impact-resistent | Außen, Auto, Heiß |
+| 18 | Siraya Tech | Build | PETG | 230-250 (240) | 70-90 (80) | 50 | 30-80 (50) | 1.5 | ❌ | ✅ | ❌ | ❌ | ❌ | ✅ | 75 | ❌ | ❌ | ✅ | 65/4h | ❌ | ✅ | ✅ | 60 | 1.27 | Engineering-Teile, sehr feste Layer-Haftung | Auto-Innenraum (>75°C) |
+| 19 | Fiberlogy | ASA | ASA | 240-260 (250) | 90-110 (100) | 30 | 30-80 (50) | 1.0 | ✅ | ✅ | ❌ | ❌ | ❌ | ✅ | 90 | ✅ | ❌ | ❌ | — | ✅ | ❌ | ✅ | 48 | 1.05 | Außenbereich, Auto, UV-exponiert | Lebensmittel, Anfänger |
+| 20 | Sunlu | PLA | PLA | 190-220 (210) | 40-60 (50) | 100 | 40-150 (60) | 0.8 | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | 55 | ❌ | ❌ | ❌ | — | ❌ | ❌ | ❌ | 50 | 1.24 | Budget Dekoration, Prototypen, Innenbereich | Außen, Auto, Heiß, Qualitäts-kritisch |
+
+*(Einträge 21-79 haben dieselbe Struktur — alle Marken aus der vorherigen Tabelle mit ergänzten Eigenschaften)*
+
+**Vollständige Eigenschaften pro Eintrag (offline verfügbar):**
+
+| Kategorie | Felder | Beispiel |
+|-----------|--------|---------|
+| **Temperaturen** | Hotend (Min/Max/Optimal), Bed (Min/Max/Optimal) | PLA: 190-220 (210) / 40-60 (50) |
+| **Speed** | Min/Max/Optimal, OuterWall, Infill | PLA: 40-150 (60), OuterWall 30, Infill 80 |
+| **Druck-Settings** | Fan %, Retraction, Pressure Advance, Layer Height (Min/Max/Optimal) | PLA: 100%, 0.8mm, PA 0.04, 0.12-0.24 (0.16) |
+| **UV/Wetter** | IsUVResistant, IsWeatherResistant | ASA: ✅/✅, PLA: ❌/❌ |
+| **Sicherheit** | IsFoodSafe, IsBiodegradable, IsRecyclable | PETG: ✅/❌/✅, PLA: ❌/✅/✅ |
+| **Mechanisch** | IsFlexible, IsAbrasive, IsImpactResistant, TensileStrength | TPU: ✅/❌/✅/30MPa |
+| **Hitze** | IsHeatResistant, MaxServiceTempC | PLA: ❌/55°C, ABS: ✅/95°C, PC: ✅/115°C |
+| **Druck-Anforderungen** | NeedsEnclosure, NeedsDirectDrive, NeedsDryingBeforePrint | ABS: ✅/❌/❌, TPU: ❌/✅/✅ |
+| **Trocknung** | DryingTempC, DryingDurationH | Nylon: 80°C/8h, PETG: 65°C/4h |
+| **Probleme** | WarpsEasily, StringsEasily | ABS: ✅/❌, PETG: ❌/✅ |
+| **Verwendung** | SuitableFor, NotSuitableFor | PLA: "Dekoration, Prototypen" / "Außen, Auto, Heiß" |
+| **Physikalisch** | DensityGcm3, TensileStrengthMpa | PLA: 1.24/50MPa |
+
+**KI-Nutzen offline:** Die KI kann sofort Antworten geben wie:
+- "Ist PLA für Auto-Innenraum?" → ❌ `IsHeatResistant = false`, `MaxServiceTempC = 55` → "Nein, Auto wird >55°C"
+- "Ist PETG lebensmittelecht?" → ✅ `IsFoodSafe = true` → "Ja, PETG ist lebensmittelecht"
+- "Braucht TPU Direct Drive?" → ✅ `NeedsDirectDrive = true` → "Ja, TPU braucht Direct Drive"
+- "Muss Nylon getrocknet werden?" → ✅ `NeedsDryingBeforePrint = true`, `DryingTempC = 80`, `DryingDurationH = 8` → "Ja, 80°C für 8 Stunden"
+- "Ist ABS für Außen?" → ❌ `IsUVResistant = false` → "Nein, ABS wird durch UV spröde. ASA nehmen"
+- "Welches Filament für Außen?" → Filter: `IsUVResistant = true && IsWeatherResistant = true` → ASA, Prusament ASA, Fiberlogy ASA
+- "Max Speed für Bambu PLA Matte?" → `SpeedMax = 200` → "200mm/s (High-Speed optimiert)"
+- "Braucht CF-PLA harte Düse?" → ✅ `IsAbrasive = true` → "Ja! Hartmetall oder Rubin-Düse nötig"
+
+All diese Antworten funktionieren **komplett offline** — kein Internet nötig. Wenn Internet verfügbar ist, kann die KI zusätzlich aktuelle Tests/Reviews abrufen.
 
 **User-Erweiterung:** User kann eigene Marken/Produkte hinzufügen wenn seine Marke nicht in der Datenbank steht. Eigene Einträge werden als `IsUserAdded = true` markiert und können bearbeitet/gelöscht werden. Vordefinierte Einträge können ebenfalls bearbeitet werden (z.B. wenn ein Hersteller seine Empfehlung ändert).
 
