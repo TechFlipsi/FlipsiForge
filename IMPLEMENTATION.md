@@ -2267,22 +2267,182 @@ public class AIPrintAdvisor
 public enum PrintGoal { MaximumStrength, FastPrint, VisualQuality, Prototype }
 ```
 
-### Lokale Ausführung (Ollama)
+### Lokale KI — kein Ollama, kein externer Service
 
 ```csharp
-// Läuft komplett offline wenn Ollama installiert ist
-// Modelle: gemma4:12b (sehr gut auf Deutsch), qwen3.5:14b, oder kleiner
-var advisor = new AIPrintAdvisor(
-    new HttpClient { BaseAddress = new("http://localhost:11434") },
-    model: "gemma4:12b"
+// IMMER lokal — ONNX Runtime, mit App gebündelt
+// Zwei Modelle eingebettet:
+// 1. Embedding-Modell für Suche: all-MiniLM-L6-v2 quantized (~23MB)
+// 2. LLM für KI-Assistent + Chat: Gemma 4 2B quantized INT4 (~2-4GB via ONNX)
+// Beide werden mit der App ausgeliefert, kein Download, kein Ollama, kein Internet
+
+// === Such-KI (Embedding) ===
+var search = new FileSearchService(
+    embedder: new LocalEmbeddingModel("Assets/ai/all-MiniLM-L6-v2-q8.onnx")
 );
 
-// Oder Cloud (optional, nur wenn User es will)
-var cloudAdvisor = new AIPrintAdvisor(
-    new HttpClient { BaseAddress = new("https://api.openai.com/v1") },
-    model: "gpt-4o-mini"
+// === KI-Assistent + Chat (Gemma 4 2B LLM) ===
+var advisor = new PrinterAssistant(
+    llm: new LocalLlmModel("Assets/ai/gemma4-2b-int4.onnx")
 );
 ```
+
+**Warum Gemma 4 2B und nicht größer:**
+- 2B reicht für unsere Aufgaben — alle Daten werden im Prompt mitgeliefert
+- KI muss nur schlussfolgern ("PLA max 55°C + Auto = ungeeignet → nimm ABS")
+- Kein komplexes Reasoning nötig — wir liefern Filament-DB, Drucker-Info, etc.
+- INT4 quantisiert = ~2GB, lädt in ~3-5 Sekunden beim App-Start
+- Cross-platform via ONNX (Windows + Linux, ARM64 + x64)
+
+**Warum ONNX und nicht Ollama:**
+- Kein extra Service der laufen muss (Ollama = separater Prozess)
+- Kein Port, keine Konfiguration, kein Installationsaufwand für User
+- Modell wird mit App gebündelt (.onnx Datei in Assets/)
+- FlipsiSort und FlipsiColor machen es ähnlich — KI ist eingebettet, nicht extern
+- ONNX Runtime ist cross-platform (Windows + Linux), NuGet verfügbar
+- Gesamtgröße: ~2-4GB (Gemma 2B INT4) + ~23MB (Embedding) = akzeptabel für Desktop-App
+
+**NuGet:** `Microsoft.ML.OnnxRuntime` (cross-platform, ARM64 + x64)
+**Modelle:** `Assets/ai/gemma4-2b-int4.onnx` (LLM) + `Assets/ai/all-MiniLM-L6-v2-q8.onnx` (Embedding)
+
+### Drucker-Assistent Chat (Gemma 4 2B lokal)
+
+Ein Chat-Interface direkt in der Software. User stellt Fragen, KI antwortet — kontext-bewusst mit allen Software-Daten.
+
+```csharp
+public class PrinterAssistant
+{
+    private readonly LocalLlmModel _llm;  // Gemma 4 2B via ONNX, lokal
+    private readonly FlipsiForgeDbContext _db;
+    private readonly List<ChatMessage> _history = new();  // Chat-Verlauf
+
+    public async Task<string> ChatAsync(
+        string userMessage,
+        int? activePrinterId,
+        int? activeSpoolId)
+    {
+        // System-Prompt mit allen Software-Daten injizieren
+        var systemPrompt = BuildSystemPrompt(activePrinterId, activeSpoolId);
+
+        _history.Add(new ChatMessage("user", userMessage));
+
+        var fullPrompt = systemPrompt + "\n\n" +
+            string.Join("\n", _history.Select(m => $"{m.Role}: {m.Content}")) +
+            "\nassistant: ";
+
+        // Gemma 4 2B generiert Antwort lokal
+        var response = await _llm.GenerateAsync(fullPrompt, maxTokens: 500);
+
+        _history.Add(new ChatMessage("assistant", response));
+        return response;
+    }
+
+    private string BuildSystemPrompt(int? printerId, int? spoolId)
+    {
+        var sb = new StringBuilder();
+        sb.AppendLine("Du bist der FlipsiForge Drucker-Assistent. Hilf dem User bei 3D-Druck-Fragen.");
+        sb.AppendLine("Antworte auf deutsch, klar und praktisch. Nutze die bereitgestellten Daten.");
+        sb.AppendLine();
+
+        // User's Drucker injizieren
+        var printers = _db.Printers.Where(p => p.IsActive).ToList();
+        sb.AppendLine("User's Drucker:");
+        foreach (var p in printers)
+        {
+            sb.AppendLine($"- {p.Brand} {p.Model} | Düse: {p.NozzleDiameter}mm | " +
+                $"Geschlossen: {p.IsEnclosed} | Build: {p.BuildVolumeX}×{p.BuildVolumeY}×{p.BuildVolumeZ}mm");
+        }
+        sb.AppendLine();
+
+        // User's Filament-Inventar injizieren
+        var spools = _db.Spools.Where(s => s.Status == SpoolStatus.Active).ToList();
+        sb.AppendLine("User's Filament-Inventar:");
+        foreach (var s in spools)
+        {
+            sb.AppendLine($"- {s.Brand} {s.MaterialName} ({s.MaterialType}, {s.RemainingWeightG:F0}g übrig)");
+        }
+        sb.AppendLine();
+
+        // Aktiver Drucker (falls einer ausgewählt)
+        if (printerId.HasValue)
+        {
+            var printer = _db.Printers.Find(printerId.Value);
+            sb.AppendLine($"Aktiv ausgewählter Drucker: {printer.Brand} {printer.Model}");
+        }
+
+        // Aktive Spule (falls eine ausgewählt)
+        if (spoolId.HasValue)
+        {
+            var spool = _db.Spools.Find(spoolId.Value);
+            sb.AppendLine($"Aktiv ausgewähltes Filament: {spool.Brand} {spool.MaterialName} ({spool.MaterialType})");
+            // Hersteller-Empfehlung aus Marken-DB
+            var brandSpec = _db.FilamentBrandSpecs
+                .FirstOrDefault(b => b.Brand == spool.Brand && b.MaterialType == spool.MaterialType);
+            if (brandSpec != null)
+            {
+                sb.AppendLine($"Hersteller-Empfehlung: Hotend {brandSpec.HotendOptimal}°C, " +
+                    $"Bett {brandSpec.BedOptimal}°C, Fan {brandSpec.FanPercent}%, " +
+                    $"Speed {brandSpec.SpeedOptimal}mm/s");
+            }
+        }
+
+        sb.AppendLine();
+        sb.AppendLine("Du kannst Fragen beantworten über:");
+        sb.AppendLine("- Druck-Probleme (Warping, Stringing, Layer-Shift, Unterextrusion, etc.)");
+        sb.AppendLine("- Filament-Empfehlungen (welches Material wofür)");
+        sb.AppendLine("- Temperaturen und Speed-Einstellungen");
+        sb.AppendLine("- Wartung (Düse, Riemen, Lager, etc.)");
+        sb.AppendLine("- Slicer-Einstellungen (Layer, Infill, Support, Retraction)");
+        sb.AppendLine("- Allgemeine 3D-Druck-Tipps");
+        sb.AppendLine();
+        sb.AppendLine("Nutze die User's Daten für personalisierte Antworten.");
+
+        return sb.ToString();
+    }
+}
+
+public record ChatMessage(string Role, string Content);
+```
+
+**Chat-UI (Avalonia):**
+```xml
+<!-- Drucker-Assistent Chat Panel -->
+<Grid RowDefinitions="*,Auto">
+    <!-- Chat-Verlauf -->
+    <ScrollViewer Grid.Row="0">
+        <ItemsControl ItemsSource="{Binding ChatMessages}">
+            <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                    <Border Classes="{Binding RoleClass}" Margin="8">
+                        <StackPanel>
+                            <TextBlock Text="{Binding RoleLabel}" Classes="chat-role" />
+                            <TextBlock Text="{Binding Content}" TextWrapping="Wrap" />
+                        </StackPanel>
+                    </Border>
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
+    </ScrollViewer>
+
+    <!-- Eingabe -->
+    <DockPanel Grid.Row="1" Margin="8">
+        <Button Content="Send" Command="{Binding SendChatCommand}" DockPanel.Dock="Right" />
+        <TextBox Text="{Binding ChatInput}" Watermark="Frage an den Drucker-Assistenten..."
+                 KeyDown="OnEnterSend" />
+    </DockPanel>
+</Grid>
+```
+
+**Beispiel-Chats:**
+
+| User fragt | KI antwortet (mit Kontext aus Software-Daten) |
+|------------|----------------------------------------------|
+| "Warum löst sich mein Druck vom Bett?" | "Mögliche Ursachen: 1) Bett zu kalt — dein Neptune 4 Pro hat 80°C eingestellt, für ABS sollten 100°C sein. 2) Bett-Oberfläche verschmutzt — mit Isopropyl reinigen. 3) Brim verwenden. 4) ABS neigt zu Warping (siehe Filament-DB). Tipp: Geschlossener Drucker hilft, deiner ist offen." |
+| "Welche Temperatur für PETG?" | "Laut Filament-Marken-DB: PETG optimal bei 235-240°C Hotend, 80°C Bett. Du hast eSUN PETG Schwarz (750g übrig) und Prusament PETG (1000g). Prusament empfiehlt 240°C für beste Layer-Haftung." |
+| "Stringing bei PETG" | "PETG ist stringing-anfällig (siehe Filament-DB: StringsEasily=true). Lösungen: 1) Retraction erhöhen (1.5mm empfohlen). 2) Hotend-Temperatur senken (nicht über 245°C). 3) Travel-Speed erhöhen. 4) Z-Hop aktivieren." |
+| "Wie kalibriere ich Pressure Advance?" | "Pressure Advance (PA) kompensiert Filament-Druck beim Beschleunigen. Kalibrierung: 1) Drucken Sie eine PA-Tower (jede Schicht anderen PA-Wert). 2) Finde die Schicht mit sauberster Linie. 3) Wert in printer.cfg eintragen. Tipp: eSUN PETG PA ~0.04, PLA ~0.02." |
+| "Warum rattert mein Drucker?" | "Mögliche Ursachen: 1) Riemen zu locker — nachspannen (nach 1000h empfohlen). 2) Geschwindigkeit zu hoch. 3) Input Shaping nicht kalibriert. 4) Lager verschmutzt. Dein Neptune 4 Pro hat Input Shaping (X:86.4Hz, Y:62.0Hz) — prüfe ob aktiv." |
+| "Was ist besser PLA oder PETG für Außen?" | "Für Außenbereich: ASA ist ideal (UV-resistent, wetterfest). PETG ist OK für Außen ohne direkte Sonne (wetterfest aber nicht UV-resistent). PLA ist ungeeignet (wird bei 55°C weich, nicht UV-resistent). Du hast Prusament ASA Orange (1000g) — nimm die." |
 
 ### Mitgelieferte Offline-Datenbanken (für KI ohne Internet)
 
