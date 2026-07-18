@@ -1993,116 +1993,248 @@ var cloudAdvisor = new AIPrintAdvisor(
 );
 ```
 
-### Mitgelieferte Drucker-Datenbank (offline)
+### Mitgelieferte Offline-Datenbanken (für KI ohne Internet)
 
-Damit die KI auch ohne Internet Tipps geben kann, wird eine Drucker-Datenbank mitgeliefert:
+Damit die KI auch ohne Internet Tipps geben kann, werden zwei Datenbanken mitgeliefert:
+
+#### Filament-Marken-Datenbank
+
+Empfohlene Druck-Einstellungen pro Hersteller und Material — direkt von den Hersteller-Spec-Sheets:
 
 ```csharp
-public static readonly Dictionary<string, PrinterSpec> KnownPrinters = new()
+public static readonly List<FilamentBrandSpec> FilamentBrandDatabase = new()
 {
-    ["Snapmaker U1"] = new()
+    new("eSUN", "PLA+", "PLA")
     {
-        BuildVolume = (235, 235, 275),
-        NozzleDiameter = 0.4m,
-        IsEnclosed = false,
-        MaxHotendTemp = 300,
-        MaxBedTemp = 110,
-        Protocol = "Klipper/Moonraker",
-        Notes = "Multi-Color (4 Extruder), Klipper-basiert, offen"
+        HotendTemp = (200, 230, 215),
+        BedTemp = (40, 60, 50),
+        Fan = 100,
+        Speed = (40, 150, 60),
+        Retraction = 0.8m,
+        Notes = "eSUN PLA+ ist impact-resistenter als Standard PLA"
     },
-    ["Elegoo Neptune 4 Pro"] = new()
+    new("eSUN", "PETG", "PETG")
     {
-        BuildVolume = (225, 225, 265),
-        NozzleDiameter = 0.4m,
-        IsEnclosed = false,
-        MaxHotendTemp = 300,
-        MaxBedTemp = 110,
-        Protocol = "Klipper/Moonraker",
-        Notes = "Dual-Zone Heizbett, Input Shaping, offen"
+        HotendTemp = (220, 250, 235),
+        BedTemp = (60, 90, 80),
+        Fan = 50,
+        Speed = (30, 100, 50),
+        Retraction = 1.5m,
+        Notes = "Stringing möglich bei zu heiß. Retraction höher als PLA"
     },
-    ["Bambu Lab X1C"] = new()
+    new("eSUN", "ABS+", "ABS")
     {
-        BuildVolume = (256, 256, 256),
-        NozzleDiameter = 0.4m,
-        IsEnclosed = true,
-        MaxHotendTemp = 300,
-        MaxBedTemp = 120,
-        Protocol = "Bambu MQTT",
-        Notes = "Geschlossen, AMS Multi-Color, LiDAR, Kamera eingebaut"
+        HotendTemp = (230, 250, 240),
+        BedTemp = (90, 110, 100),
+        Fan = 30,
+        Speed = (30, 80, 50),
+        Retraction = 1.0m,
+        Notes = "ABS+ weniger Warping als Standard ABS"
     },
-    ["Bambu Lab P1S"] = new()
+    new("eSUN", "TPU 95A", "TPU")
     {
-        BuildVolume = (256, 256, 256),
-        NozzleDiameter = 0.4m,
-        IsEnclosed = true,
-        MaxHotendTemp = 300,
-        MaxBedTemp = 100,
-        Protocol = "Bambu MQTT",
-        Notes = "Geschlossen, AMS kompatibel"
+        HotendTemp = (210, 230, 220),
+        BedTemp = (30, 60, 45),
+        Fan = 50,
+        Speed = (15, 40, 25),
+        Retraction = 0,
+        Notes = "Retraction AUS! Sehr langsam drucken. Direct Drive empfohlen"
     },
-    ["Bambu Lab A1"] = new()
+    new("Prusament", "PLA", "PLA")
     {
-        BuildVolume = (256, 256, 256),
-        NozzleDiameter = 0.4m,
-        IsEnclosed = false,
-        MaxHotendTemp = 300,
-        MaxBedTemp = 100,
-        Protocol = "Bambu MQTT",
-        Notes = "Offen, AMS Lite kompatibel"
+        HotendTemp = (190, 220, 210),
+        BedTemp = (50, 60, 55),
+        Fan = 100,
+        Speed = (40, 150, 80),
+        Retraction = 0.8m,
+        Notes = "Sehr konsistente Qualität, Durchmesser-Toleranz ±0.02mm"
     },
-    ["Prusa MK4"] = new()
+    new("Prusament", "PETG", "PETG")
     {
-        BuildVolume = (250, 210, 220),
-        NozzleDiameter = 0.4m,
-        IsEnclosed = false,
-        MaxHotendTemp = 290,
-        MaxBedTemp = 120,
-        Protocol = "PrusaLink",
-        Notes = "Offen, MMU3 Multi-Color optional"
+        HotendTemp = (230, 245, 240),
+        BedTemp = (70, 90, 80),
+        Fan = 50,
+        Speed = (30, 100, 50),
+        Retraction = 1.5m,
+        Notes = "Prusa empfiehlt 240°C für beste Layer-Haftung"
     },
-    ["Creality Ender 3 V3"] = new()
+    new("Prusament", "ASA", "ASA")
     {
-        BuildVolume = (220, 220, 250),
-        NozzleDiameter = 0.4m,
-        IsEnclosed = false,
-        MaxHotendTemp = 260,
-        MaxBedTemp = 100,
-        Protocol = "Klipper/Moonraker",
-        Notes = "Budget, offen, Klipper vorinstalliert"
+        HotendTemp = (240, 260, 250),
+        BedTemp = (90, 110, 100),
+        Fan = 30,
+        Speed = (30, 80, 50),
+        Retraction = 1.0m,
+        Notes = "UV-resistent. Wie ABS aber wetterfest. Enclosure empfohlen"
     },
-    ["Voron 2.4"] = new()
+    new("Polymaker", "PolyLite PLA", "PLA")
     {
-        BuildVolume = (350, 350, 350),
-        NozzleDiameter = 0.4m,
-        IsEnclosed = true,
-        MaxHotendTemp = 300,
-        MaxBedTemp = 120,
-        Protocol = "Klipper/Moonraker",
-        Notes = "DIY CoreXY, geschlossen, sehr schnell"
+        HotendTemp = (190, 220, 210),
+        BedTemp = (40, 60, 50),
+        Fan = 100,
+        Speed = (40, 150, 60),
+        Retraction = 0.8m,
+        Notes = "Standard PLA, gut Preis-Leistung"
     },
-    ["Qidi Tech X-Plus 3"] = new()
+    new("Polymaker", "PolyLite PETG", "PETG")
     {
-        BuildVolume = (280, 280, 270),
-        NozzleDiameter = 0.4m,
-        IsEnclosed = true,
-        MaxHotendTemp = 300,
-        MaxBedTemp = 120,
-        Protocol = "Klipper/Moonraker",
-        Notes = "Geschlossen, Klipper, IFS"
+        HotendTemp = (220, 250, 240),
+        BedTemp = (60, 90, 80),
+        Fan = 50,
+        Speed = (30, 100, 50),
+        Retraction = 1.5m,
+        Notes = "Gute Layer-Haftung, etwas spröder als eSUN PETG"
     },
+    new("Polymaker", "CoPA (Nylon)", "PA6")
+    {
+        HotendTemp = (250, 280, 270),
+        BedTemp = (80, 100, 90),
+        Fan = 40,
+        Speed = (20, 60, 40),
+        Retraction = 1.0m,
+        Notes = "MUSS vor Druck getrocknet werden! Zieht Feuchtigkeit aus Luft"
+    },
+    new("Bambu Lab", "PLA Matte", "PLA")
+    {
+        HotendTemp = (190, 220, 210),
+        BedTemp = (35, 55, 45),
+        Fan = 100,
+        Speed = (50, 200, 120),
+        Retraction = 0.8m,
+        Notes = "Optimiert für Bambu Drucker, sehr schnell möglich"
+    },
+    new("Bambu Lab", "PETG HF", "PETG")
+    {
+        HotendTemp = (220, 250, 240),
+        BedTemp = (60, 90, 80),
+        Fan = 50,
+        Speed = (50, 200, 100),
+        Retraction = 1.5m,
+        Notes = "High-Speed PETG, optimiert für Bambu X1C/P1S"
+    },
+    new("Sunlu", "PLA", "PLA")
+    {
+        HotendTemp = (190, 220, 210),
+        BedTemp = (40, 60, 50),
+        Fan = 100,
+        Speed = (40, 150, 60),
+        Retraction = 0.8m,
+        Notes = "Budget PLA, gute Qualität für den Preis"
+    },
+    new("Overture", "PETG", "PETG")
+    {
+        HotendTemp = (220, 245, 235),
+        BedTemp = (60, 90, 80),
+        Fan = 50,
+        Speed = (30, 100, 50),
+        Retraction = 1.5m,
+        Notes = "Gut dokumentiert, konsistente Qualität"
+    },
+    // ... weitere Marken folgen
 };
 
-public record PrinterSpec
+public record FilamentBrandSpec(
+    string Brand,
+    string ProductName,
+    string MaterialType)
 {
-    public (int X, int Y, int Z) BuildVolume { get; init; }
-    public decimal NozzleDiameter { get; init; }
-    public bool IsEnclosed { get; init; }
-    public int MaxHotendTemp { get; init; }
-    public int MaxBedTemp { get; init; }
-    public string Protocol { get; init; } = "";
+    public (int Min, int Max, int Optimal) HotendTemp { get; init; }
+    public (int Min, int Max, int Optimal) BedTemp { get; init; }
+    public int Fan { get; init; }
+    public (int Min, int Max, int Optimal) Speed { get; init; }
+    public decimal Retraction { get; init; }
     public string Notes { get; init; } = "";
 }
 ```
+
+#### Slicer-Einstellungs-Datenbank (OrcaSlicer / PrusaSlicer)
+
+Optimierungs-Tipps und empfohlene Profileinstellungen für verschiedene Szenarien:
+
+```csharp
+public static readonly Dictionary<string, SlicerOptimization> SlicerTips = new()
+{
+    ["FineDetail"] = new()
+    {
+        LayerHeight = 0.12m,
+        WallLineCount = 3,
+        InfillDensity = 20,
+        InfillPattern = "cubic",
+        Speed = 30,
+        OuterWallSpeed = 20,
+        Notes = "Für Modelle mit feinen Details. Langsam für saubere Oberfläche"
+    },
+    ["Strength"] = new()
+    {
+        LayerHeight = 0.16m,
+        WallLineCount = 4,
+        InfillDensity = 60,
+        InfillPattern = "gyroid",
+        Speed = 50,
+        OuterWallSpeed = 35,
+        Notes = "Gyroid Infill ist stärker als Grid bei weniger Material"
+    },
+    ["Speed"] = new()
+    {
+        LayerHeight = 0.24m,
+        WallLineCount = 2,
+        InfillDensity = 10,
+        InfillPattern = "lines",
+        Speed = 100,
+        OuterWallSpeed = 70,
+        Notes = "Schnellster Druck. Gut für Prototypen"
+    },
+    ["OverhangSupport"] = new()
+    {
+        LayerHeight = 0.16m,
+        OverhangThreshold = 45,
+        SupportType = "tree",
+        SupportDensity = 15,
+        Notes = "Tree-Support nutzt weniger Material als normal Support"
+    },
+    ["TPU_Flex"] = new()
+    {
+        LayerHeight = 0.20m,
+        Speed = 25,
+        Retraction = 0,
+        Fan = 50,
+        PressureAdvance = 0.05m,
+        Notes = "Retraction AUS! Pressure Advance niedrig. Direct Drive nötig"
+    },
+    ["ABS_ASA"] = new()
+    {
+        LayerHeight = 0.20m,
+        Speed = 50,
+        Fan = 30,
+        ChamberTemp = 40,
+        Brim = true,
+        Notes = "Brim für bessere Haftung. Enclosure nötig! Fan niedrig"
+    },
+};
+
+public record SlicerOptimization
+{
+    public decimal LayerHeight { get; init; }
+    public int WallLineCount { get; init; }
+    public int InfillDensity { get; init; }
+    public string InfillPattern { get; init; } = "";
+    public int Speed { get; init; }
+    public int OuterWallSpeed { get; init; }
+    public int OverhangThreshold { get; init; }
+    public string SupportType { get; init; } = "";
+    public int SupportDensity { get; init; }
+    public decimal Retraction { get; init; }
+    public int Fan { get; init; }
+    public int ChamberTemp { get; init; }
+    public bool Brim { get; init; }
+    public decimal PressureAdvance { get; init; }
+    public string Notes { get; init; } = "";
+}
+```
+
+#### Drucker-Info (vom User-Profil, nicht fixierte Liste)
+
+Die KI nutzt die Drucker-Informationen die der User selbst in FlipsiForge angelegt hat (Build-Volume, Düse, Enclosed-Status). Keine fixierte Drucker-Liste — es gibt Tausende Modelle. Der User gibt beim Anlegen an ob sein Drucker geschlossen ist oder nicht (z.B. Snapmaker U1: "Enclosure separat kaufbar" → User kann `IsEnclosed = true` setzen wenn er die Haube hat).
 
 ### KI Daten-Zugriff — Was in den Prompt injiziert wird
 
@@ -2110,9 +2242,10 @@ public record PrinterSpec
 |-------------|--------|----------------|
 | STL-Mesh-Analyse | Wandstärke, Overhangs, Bounding-Box, Detailgrad, Triangle Count | Nach Datei-Scan |
 | Filament-Inventar | Alle aktiven Spulen mit Marke, Material, Farbe, Restgewicht, Durchmesser | Immer (lokale DB) |
-| Material-Datenbank | Standard-Temperaturen/Speed/Fan für 7 Materialien | Immer (eingebaut) |
-| Drucker-Datenbank | 8+ Standard-Drucker mit Build-Volume, Max-Temp, Enclosed, Protokoll | Immer (eingebaut) |
-| User's Drucker-Profil | Build-Volume, Düse, Enclosed, Max-Temp | Immer (lokale DB) |
+| Filament-Marken-Datenbank | Hersteller-Empfehlungen: eSUN, Prusament, Polymaker, Bambu, Sunlu, Overture (Temp/Speed/Fan/Retraction pro Produkt) | Immer (eingebaut, offline) |
+| Slicer-Einstellungs-Datenbank | OrcaSlicer/PrusaSlicer Optimierungs-Tipps: FineDetail, Strength, Speed, OverhangSupport, TPU, ABS/ASA | Immer (eingebaut, offline) |
+| Material-Standard-DB | Standard-Temperaturen/Speed/Fan für 7 Materialtypen (PLA, PETG, TPU, ABS, ASA, PC, PA6) | Immer (eingebaut) |
+| User's Drucker-Profil | Build-Volume, Düse, Enclosed (User gibt an), Max-Temp | Immer (vom User angelegt) |
 | Druck-Historie | Erfolgsrate pro Material/Drucker, vergangene Einstellungen | Nach ersten Drucken |
 | Verwendungszweck | User-Text-Eingabe ("Auto-Innenraum", "Außen", etc.) | Optional, wenn eingegeben |
 | Ziel-Modus | Strength/Speed/Quality/Prototype | Optional, wenn gewählt |
