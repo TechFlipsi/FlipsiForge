@@ -99,7 +99,9 @@ FlipsiForge.Server (Optional)   — ASP.NET Core backend, runs on Raspberry Pi /
 
 - **ASP.NET Core** web server — runs on Raspberry Pi (ARM64), mini PCs, or any Linux server
 - **No GUI** — pure backend, manages data and printer connections
-- **Web UI** accessible via browser from any device (phone, tablet, PC without desktop app)
+- **Two access methods:**
+  1. **Gateway API** (REST + WebSocket) — the Desktop App connects to this. The app talks to the server like a client: fetch filaments, send print jobs, get live printer data, sync settings. Real-time WebSocket for live temperature/progress updates.
+  2. **Web UI** — browser-based interface for devices without the desktop app (phone, tablet, guest PC). Same features, rendered in browser.
 - Same SQLite database (or PostgreSQL for multi-user setups)
 - Printer connections live on the server — server controls printers 24/7
 - STL thumbnails generated server-side (software rendering — no GPU required)
