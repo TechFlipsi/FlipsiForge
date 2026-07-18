@@ -219,11 +219,26 @@ FlipsiForge.Server (Optional)   — ASP.NET Core backend, any Linux server
 
 ## TechFlipsi Ecosystem Integration
 
-- **Design language**: Dark Void + Ember theme (matching techflipsi.kirchweger.de)
+- **Design language**: Dark Void + Ember theme — identisch zur TechFlipsi Homepage (techflipsi.kirchweger.de)
+- **Logo**: "TECH" weiß + "FLIPSI" orange — selbes Logo wie Homepage
 - **Branding**: TechFlipsi family product
 - **Software-Standard**: Avalonia UI + Installer/Portable + GPL-3.0 + 13 Sprachen i18n
-- **Website cross-link**: Will be featured on techflipsi.kirchweger.de/geraete.html
-- **Community**: Public repo, Issues/PRs welcome (like FlipsiColor)
+- **Website cross-link**: techflipsi.kirchweger.de/geraete.html
+- **Community**: Öffentlich, Issues/PRs willkommen (wie FlipsiColor)
+
+### Design System (wie techflipsi.kirchweger.de)
+
+| Element | Wert |
+|---------|------|
+| Hintergrund | `#050507` (Void) |
+| Akzentfarbe | `#ff6600` (Ember) |
+| Akzent-Glow | `rgba(255, 102, 0, 0.4)` |
+| Akzent-Soft | `rgba(255, 102, 0, 0.15)` |
+| Schrift Body | `Inter` |
+| Schrift Headings | `Space Grotesk` |
+| Karten/Surface | Dark surface mit Border + Hover-Glow |
+| Logo | "TECH" weiß + "FLIPSI" orange (`.flip` class) |
+| Buttons | `.cta-button` mit Arrow SVG Icon |
 
 ## Roadmap (Planned)
 
