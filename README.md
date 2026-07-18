@@ -150,7 +150,7 @@ Eine kleine KI-Integration die dem User hilft die richtigen Einstellungen zu fin
 - **Fehler-Prävention** — warnt vor Problemen: "Hotend-Temperatur zu hoch für dieses Filament", "Bett-Temperatur außerhalb des empfohlenen Bereichs", "Layer-Höhe zu groß für 0.2mm Düse", "ABS braucht geschlossenen Drucker — deiner ist offen"
 - **Ziel-Modus** — User wählt Ziel: "Maximale Festigkeit", "Schneller Druck", "Optische Qualität", "Prototyp". KI passt Einstellungen entsprechend an
 - **Erklärung** — KI erklärt WARUM sie jede Einstellung empfiehlt. Nicht nur Werte, sondern Begründung
-- **Drucker-Datenbank (offline)** — mitgelieferte Datenbank mit Standard-Drucker-Profilen (Snapmaker U1, Neptune 4 Pro, Bambu Lab X1C, Prusa MK4, Creality Ender 3, Voron 2.4, etc.) — KI kann Tipps geben auch ohne Internet
+- **Drucker-Datenbank (offline)** — KEINE fixierte Drucker-Liste (es gibt Tausende). Stattdessen: **Filament-Marken-Datenbank** (eSUN, Prusament, Polymaker, Bambu, Sunlu, Overture — mit Hersteller-Empfehlungen für Temp/Speed/Fan/Retraction pro Produkt) + **Slicer-Einstellungs-Datenbank** (OrcaSlicer/PrusaSlicer Optimierungs-Tipps: FineDetail, Strength, Speed, OverhangSupport, TPU, ABS/ASA). Drucker-Info kommt vom User-Profil (Build-Volume, Düse, Enclosed — User gibt an ob seine Haube montiert ist)
 - **Vollständiger Daten-Zugriff** — KI hat Zugriff auf: Filament-Inventar, Drucker-Profile, Druck-Historie, Material-Datenbank, Drucker-Datenbank. Alles wird in den Prompt injiziert
 - **Lokales Modell** — läuft offline, kein Cloud-Zwang. Entweder kleines fein-getuntes Modell oder regelbasiertes System mit LLM als Fallback
 
