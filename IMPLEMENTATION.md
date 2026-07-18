@@ -2291,26 +2291,33 @@ var serverAdvisor = new PrinterAssistant(
 
 **Zwei Gemma 4 Modelle je nach Plattform:**
 
-| Modell | Größe | Effektive Parameter | Plattform | RAM Bedarf |
-|--------|-------|---------------------|-----------|------------|
-| **Gemma 4 E4B-it** (Desktop) | ~3.7GB | 4.5B | Windows/Linux PC | ~6-8GB RAM |
-| **Gemma 4 E2B-it** (Server) | ~2.6GB | 2.3B | Raspberry Pi 4/5, Mini-PC | ~4GB RAM |
-| all-MiniLM-L6-v2 (Suche) | ~23MB | — | Alle Plattformen | ~100MB |
+| Stufe | Modell | Größe | RAM Bedarf | Plattform | Features |
+|-------|--------|-------|------------|-----------|---------|
+| **1. Desktop** | Gemma 4 E4B-it | ~3.7GB | ~6-8GB | Windows/Linux PC | Chat, Empfehlungen, Erklärungen, Function Calling |
+| **2. Mini-PC** | Gemma 4 E2B-it | ~2.6GB | ~4GB | Pi 5 (8GB), NUC, VPS | Chat, Empfehlungen, Erklärungen |
+| **3. Raspberry Pi** | Gemma 4 E2B-it QAT | ~1.3GB | ~2GB | Pi 4 (2-4GB) | Chat (leicht verzögert), Empfehlungen |
+| **4. Pi Zero / Minimal** | Regelbasiert (kein LLM) | 0MB | ~0MB | Pi Zero, alte Hardware | Nur Empfehlungen aus Filament-DB, kein Chat |
+| Suche (alle Stufen) | all-MiniLM-L6-v2 | ~23MB | ~100MB | Alle Plattformen | Semantic Search |
+
+**Stufe 4 (regelbasiert)** nutzt nur die Filament-Marken-Datenbank + Slicer-Einstellungs-Datenbank — die geben schon alle Temperaturen/Speed/Fan-Werte. Kein Chat, keine Erklärungen, aber Empfehlungen funktionieren. Falls jemand FlipsiForge.Server auf absoluter Minimal-Hardware betreibt.
 
 **Modell-Auswahl automatisch:**
-- Desktop-App erkennt verfügbaren RAM → wählt E4B (≥8GB RAM) oder E2B (<8GB RAM)
-- Server-Modus → immer E2B (Raspberry Pi hat typisch 4-8GB RAM)
-- User kann in Einstellungen manuell wählen: "Leicht (E2B)" oder "Voll (E4B)"
+- App/Server prüft verfügbaren RAM beim Start
+- ≥8GB RAM → Stufe 1 (E4B, Desktop)
+- 4-8GB RAM → Stufe 2 (E2B, Mini-PC)
+- 2-4GB RAM → Stufe 3 (E2B QAT, Raspberry Pi)
+- <2GB RAM → Stufe 4 (regelbasiert, kein LLM)
+- User kann in Einstellungen manuell wählen: "Voll (E4B)", "Leicht (E2B)", "Minimal (E2B QAT)", "Ohne KI (regellos)"
 
 **Download der Modelle:**
-- Beide als ONNX auf HuggingFace verfügbar:
-  - `onnx-community/gemma-4-E4B-it-ONNX` (~3.7GB)
-  - `onnx-community/gemma-4-E2B-it-ONNX` (~2.6GB)
+- Alle als ONNX auf HuggingFace verfügbar (Apache 2.0):
+  - `onnx-community/gemma-4-E4B-it-ONNX` (~3.7GB) — Desktop
+  - `onnx-community/gemma-4-E2B-it-ONNX` (~2.6GB) — Mini-PC / Pi 5
+  - `onnx-community/gemma-4-E2B-it-qat-mobile-ONNX` (~1.3GB) — Raspberry Pi 4 (QAT = noch kleiner)
+  - `onnx-community/gemma-4-E4B-it-qat-mobile-ONNX` — alternative QAT-Version für E4B
 - Lizenz: Apache 2.0 (frei nutzbar, auch kommerziell)
 - Beide unterstützen: Text, Image, Audio (multimodal), 128K Context, 140+ Sprachen
-- QAT (Quantization-Aware Training) Versionen verfügbar für noch kleinere Größe:
-  - `onnx-community/gemma-4-E2B-it-qat-mobile-ONNX` (noch kleiner)
-  - `onnx-community/gemma-4-E4B-it-qat-mobile-ONNX`
+- QAT (Quantization-Aware Training) Versionen sind speziell für Edge/Mobile-Geräte optimiert
 
 **Warum Gemma 4 E4B für Desktop und E2B für Server:**
 - E4B = 4.5B effektive Parameter → bessere Antworten, mehr Reasoning-Tiefe
