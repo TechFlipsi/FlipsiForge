@@ -167,13 +167,13 @@ Drei KI-Funktionen in einer Integration:
   - Filament-Marken-Datenbank (Hersteller-Empfehlungen)
   - Slicer-Einstellungs-Datenbank (Optimierungs-Tipps)
   - Material-Standard-DB (Temperaturen, Eigenschaften)
-- **Lokal eingebettet** — 4-Stufen-System je nach Hardware:
+- **Lokal eingebettet** — 3-Stufen-System je nach Hardware:
   - **Stufe 1 (Desktop):** Gemma 4 E4B (~3.7GB, ≥8GB RAM) — voller Chat + Empfehlungen
   - **Stufe 2 (Mini-PC):** Gemma 4 E2B (~2.6GB, 4-8GB RAM) — voller Chat + Empfehlungen
   - **Stufe 3 (Raspberry Pi):** Gemma 4 E2B QAT (~1.3GB, 2-4GB RAM) — Chat (leicht verzögert)
-  - **Stufe 4 (Minimal):** Regelbasiert (0MB, <2GB RAM) — nur Empfehlungen aus Filament-DB, kein Chat
   - App wählt automatisch basierend auf verfügbarem RAM. User kann manuell überschreiben
   - Via ONNX Runtime, kein Ollama, kein externer Service, kein Internet nötig
+  - Minimal-Anforderung Server: Raspberry Pi 4 (2GB RAM). Pi Zero wird nicht unterstützt
 - **Optional:** Externe KI-Anbieter in Einstellungen konfigurierbar (OpenAI, Anthropic, etc.)
 - **Chat-Verlauf** — Gespräche werden gespeichert, User kann später weitermachen
 - **Schnell-Aktionen** — KI kann direkt Aktionen vorschlagen:
