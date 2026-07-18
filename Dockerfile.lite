@@ -1,0 +1,10 @@
+# FlipsiForge Server — Lite (reine Überwachung, keine KI, keine Web-UI)
+FROM flipsiforge/server:full AS base
+
+# Lite-Modus aktivieren
+ENV FLIPSIFORGE_MODE=Lite
+ENV FLIPSIFORGE_AI=false
+ENV FLIPSIFORGE_WEBUI=false
+
+# Lite braucht weniger Ressourcen — ~200MB RAM
+ENTRYPOINT ["dotnet", "FlipsiForge.Server.dll"]

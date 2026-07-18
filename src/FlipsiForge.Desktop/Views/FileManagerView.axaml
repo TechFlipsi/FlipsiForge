@@ -1,0 +1,38 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="FlipsiForge.Desktop.Views.FileManagerView"
+             Background="#050507">
+
+    <Grid RowDefinitions="Auto,Auto,*" Margin="8">
+        <!-- Format-Filter Badges -->
+        <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="8" Margin="0,0,0,8">
+            <Button Content="Alle" Background="#1a1a2e" Foreground="#ff6600"
+                    BorderBrush="#ff6600" BorderThickness="1" Padding="12,4" />
+            <Button Content="STL: 0" Background="#1a1a2e" Foreground="#aaa"
+                    BorderBrush="#333" BorderThickness="1" Padding="12,4" />
+            <Button Content="3MF: 0" Background="#1a1a2e" Foreground="#aaa"
+                    BorderBrush="#333" BorderThickness="1" Padding="12,4" />
+            <Button Content="G-code: 0" Background="#1a1a2e" Foreground="#aaa"
+                    BorderBrush="#333" BorderThickness="1" Padding="12,4" />
+            <Button Content="OBJ: 0" Background="#1a1a2e" Foreground="#aaa"
+                    BorderBrush="#333" BorderThickness="1" Padding="12,4" />
+        </StackPanel>
+
+        <!-- Suche -->
+        <TextBox Grid.Row="1" Watermark="Suche... (Dateiname + 🤖 KI-Suche automatisch)"
+                 Background="#1a1a2e" Foreground="#fff" BorderBrush="#333"
+                 Margin="0,0,0,8" />
+
+        <!-- Datei-Liste (Platzhalter) -->
+        <Border Grid.Row="2" Background="#0a0a0f" BorderBrush="#222" BorderThickness="1" CornerRadius="4">
+            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="8">
+                <TextBlock Text="📁" FontSize="48" HorizontalAlignment="Center" Opacity="0.3" />
+                <TextBlock Text="Keine Dateien gefunden" Foreground="#666" HorizontalAlignment="Center" />
+                <TextBlock Text="Scanne Laufwerke oder füge Ordner hinzu" Foreground="#444"
+                           FontSize="12" HorizontalAlignment="Center" />
+                <Button Content="+ Ordner durchsuchen" Background="#ff6600" Foreground="#050507"
+                        Padding="16,6" Margin="0,8,0,0" />
+            </StackPanel>
+        </Border>
+    </Grid>
+</UserControl>
