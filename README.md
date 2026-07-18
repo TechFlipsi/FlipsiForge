@@ -80,8 +80,9 @@ FlipsiForge.Server (Optional)   — ASP.NET Core backend, runs on Raspberry Pi /
 
 ### Mode 2: Server-Connected
 
-- User sets up a FlipsiForge Server (e.g. on a Raspberry Pi in the home network)
-- In the Desktop App: Settings → Server → enter server URL
+- User sets up a FlipsiForge Server (e.g. on a Raspberry Pi, NUC, VPS, or any Linux machine in the home network)
+- **Auto-Discovery**: App and Server find each other automatically via mDNS/Bonjour (UDP broadcast). No manual IP entry needed — app shows "FlipsiForge Server found on 192.168.x.x" → click to connect.
+- Manual connection also possible (Settings → Server → enter URL for remote/VPN setups)
 - App switches to server mode — filaments, printer profiles, settings, and print history are fetched from the server
 - Multiple PCs can connect to the same server — all stay in sync automatically
 - UI is **identical** to standalone mode — the user doesn't notice the difference
@@ -97,7 +98,7 @@ FlipsiForge.Server (Optional)   — ASP.NET Core backend, runs on Raspberry Pi /
 
 ### FlipsiForge.Server (Headless Backend)
 
-- **ASP.NET Core** web server — runs on Raspberry Pi (ARM64), mini PCs, or any Linux server
+- **ASP.NET Core** web server — runs on **any Linux server** (Raspberry Pi, NUC, VPS, old laptop, NAS with Docker). ARM64 + x64.
 - **No GUI** — pure backend, manages data and printer connections
 - **Two access methods:**
   1. **Gateway API** (REST + WebSocket) — the Desktop App connects to this. The app talks to the server like a client: fetch filaments, send print jobs, get live printer data, sync settings. Real-time WebSocket for live temperature/progress updates.
@@ -123,7 +124,8 @@ FlipsiForge.Server (Optional)   — ASP.NET Core backend, runs on Raspberry Pi /
 | Local storage | SQLite | Embedded, no server needed |
 | i18n | JSON-based localization (13 languages) | Consistent with FlipsiColor/FlipsiSort |
 | Packaging | Installer (.exe + .deb) + Portable (.zip) | New TechFlipsi standard |
-| Server | ASP.NET Core + Docker image (ARM64 + x64) | Headless mode for Raspberry Pi |
+| Server | ASP.NET Core + Docker (ARM64 + x64) | Runs on any Linux: Raspberry Pi, NUC, VPS, NAS |
+| Auto-Discovery | mDNS/Bonjour (UDP broadcast) | App finds server automatically, no manual IP |
 | License | GPL-3.0 | Consistent with all TechFlipsi projects |
 
 ## TechFlipsi Ecosystem Integration
