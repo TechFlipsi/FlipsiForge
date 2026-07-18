@@ -174,6 +174,7 @@ Drei KI-Funktionen in einer Integration:
   - App wählt automatisch basierend auf verfügbarem RAM. User kann manuell überschreiben
   - Via ONNX Runtime, kein Ollama, kein externer Service, kein Internet nötig
   - Minimal-Anforderung Server: Raspberry Pi 4 (2GB RAM). Pi Zero wird nicht unterstützt
+  - **KI komplett ausschaltbar** in Einstellungen — Dateinamen-Suche (Fuzzy) und Filament-DB Auto-Fill funktionieren auch ohne KI
 - **Optional:** Externe KI-Anbieter in Einstellungen konfigurierbar (OpenAI, Anthropic, etc.)
 - **Chat-Verlauf** — Gespräche werden gespeichert, User kann später weitermachen
 - **Schnell-Aktionen** — KI kann direkt Aktionen vorschlagen:
@@ -361,6 +362,43 @@ FlipsiForge.Server (Optional)   — ASP.NET Core backend, any Linux server
 ## License
 
 GPL-3.0 — same as all TechFlipsi projects.
+
+## System Requirements
+
+### Desktop App (Windows + Linux)
+
+| Komponente | Minimum | Empfohlen |
+|------------|---------|-----------|
+| **OS** | Windows 10 (64-bit) / Linux (x64) | Windows 11 / Ubuntu 22.04+ |
+| **RAM** | 4GB (ohne KI) | 8GB+ (mit KI Stufe 1 E4B) |
+| **CPU** | Dual-core 2GHz | Quad-core 2.5GHz+ |
+| **Disk** | 500MB (ohne KI) | 4GB+ (mit KI Modellen) |
+| **GPU** | Nicht erforderlich | Nicht erforderlich (ONNX läuft auf CPU) |
+| **.NET** | .NET 10 (wird mit Installer gebündelt) | — |
+
+**KI-Modell je nach RAM:**
+- ≥8GB RAM → Gemma 4 E4B (~3.7GB) — voller Chat + Empfehlungen
+- 4-8GB RAM → Gemma 4 E2B (~2.6GB) — voller Chat + Empfehlungen
+- 2-4GB RAM → Gemma 4 E2B QAT (~1.3GB) — Chat (leicht verzögert)
+- KI ausschaltbar → 0MB extra RAM, nur Dateinamen-Suche + Filament-DB Auto-Fill
+
+### Server (Headless, Linux)
+
+| Komponente | Minimum | Empfohlen |
+|------------|---------|-----------|
+| **OS** | Linux (ARM64 oder x64) | Ubuntu 22.04+ / Debian 12+ |
+| **RAM** | 2GB (Pi 4, KI aus) | 4GB+ (mit KI) |
+| **CPU** | ARM64 (Pi 4) oder x64 | Pi 5 / NUC / VPS |
+| **Disk** | 500MB (ohne KI) | 3GB+ (mit KI E2B QAT) |
+| **Docker** | Optional (Docker Image verfügbar) | Empfohlen für einfache Installation |
+| **Netzwerk** | LAN (mDNS Auto-Discovery) | — |
+
+**Server KI-Modell je nach RAM:**
+- 4-8GB RAM → Gemma 4 E2B (~2.6GB)
+- 2-4GB RAM → Gemma 4 E2B QAT (~1.3GB)
+- KI ausschaltbar → 0MB extra RAM
+
+**Nicht unterstützt:** Raspberry Pi Zero, Pi 1/2/3 (zu wenig RAM/CPU)
 
 ## Author
 
