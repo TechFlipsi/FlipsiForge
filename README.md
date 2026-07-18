@@ -70,10 +70,13 @@ FlipsiForge is a cross-platform 3D printing management tool that handles files, 
 ### 3. 🧶 Filament Management — Custom Spool Tracking
 
 - **Custom-built system** (not Spoolman — adaptable to community needs)
+- **Add / Edit / Remove spools** — full CRUD. Add new spool, edit details, remove when empty/sold/trashed. Removing a spool keeps usage history (optional) or purges all data
 - Track filament inventory (brand, type, color, weight, remaining)
-- Spool lifecycle: new → in-use → empty
-- Cost tracking per spool (price paid, price per gram)
-- Low-stock alerts
+- **Filament size specification** — diameter (1.75mm, 2.85mm, 3.00mm) + spool dimensions (width, outer diameter, inner diameter, hub diameter) for AMS/box compatibility
+- **Weight tracking** — nominal weight (advertised, e.g. 1000g), actual weight (measured), consumed weight (auto-deducted on print), remaining weight (calculated). Empty spool weight for weigh-to-calculate-remaining
+- Spool lifecycle: new → in-use → empty → archived
+- Cost tracking per spool (price paid, price per gram, price per kg)
+- Low-stock alerts (configurable threshold)
 - Material types: PLA, PETG, TPU, ABS, ASA, PC, Nylon, etc.
 - Color tags with visual swatches — **filter by color**
 - Usage history (which print used how much)
@@ -89,6 +92,8 @@ FlipsiForge is a cross-platform 3D printing management tool that handles files, 
 - **Trocknungs-Timer** — mark spool as "in dryer" with countdown
 - **Material-Empfehlung** — "For this model, PLA or PETG recommended, not TPU" based on geometry/wall thickness
 - **Verbrauch pro Kategorie** — statistics: "This year 2.3kg PLA vs 800g PETG consumed" with charts
+- **Spool-Status** — active, in dryer, in storage, empty, archived. Filter by status
+- **Multi-pack support** — add multiple identical spools at once (e.g. "5× Prusament PLA Galaxy Black, 1000g each")
 
 ### 4. 🌐 Model Repository — Online Model Discovery
 
