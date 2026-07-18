@@ -136,9 +136,44 @@ FlipsiForge is a cross-platform 3D printing management tool that handles files, 
 - Auto-filled from selected file + filament + printer profile
 - Manual override possible
 
-### 7. 🤖 KI-Assistent — Filament & Settings Empfehlung
+### 7. 🤖 KI-Assistent — Filament, Settings, Wartung & Drucker-Chat
 
-Eine kleine KI-Integration die dem User hilft die richtigen Einstellungen zu finden:
+Drei KI-Funktionen in einer Integration:
+
+**A) Filament & Settings Empfehlung** (wie oben beschrieben)
+- Filament-Empfehlung mit Inventar-Check
+- Druck-Einstellungs-Empfehlung (Temp, Speed, Layer, Fan, Retraction)
+- Slicer-Profil-Generierung
+- Ziel-Modus (Festigkeit, Speed, Qualität, Prototyp)
+- Verwendungszweck-Eingabe ("Auto-Innenraum", "Außen", etc.)
+
+**B) Drucker-Wartungs-Empfehlungen** (online + offline)
+- Mit Internet: modellspezifisch (bekannte Probleme, Ersatzteile, Firmware)
+- Ohne Internet: allgemeine Wartungs-Tipps für alle Drucker
+
+**C) Drucker-Assistent Chat** — User kann direkt in der Software schreiben
+- **Chat-Interface** in der App — User stellt Fragen, KI antwortet
+- Beispiele:
+  - "Warum löst sich mein Druck vom Bett?" → KI: "Bett zu kalt, Filament-Typ prüfen, Bett reinigen, Brim verwenden..."
+  - "Welche Temperatur für PETG auf dem Neptune 4 Pro?" → KI: nutzt Filament-DB, antwortet mit Hersteller-Empfehlung
+  - "Mein Druck hat Stringing, was kann ich tun?" → KI: "Retraction erhöhen, Temperatur senken, PETG stringing-Anfällig..."
+  - "Wie reinige ich die Düse?" → KI: Schritt-für-Schritt Anleitung
+  - "Was ist Pressure Advance?" → KI: Erklärung + wie man es kalibriert
+  - "Warum rattert mein Drucker?" → KI: Mögliche Ursachen (Riemen, Geschwindigkeit, Input Shaping)
+- **Kontext-bewusst** — KI hat Zugriff auf alle Software-Daten:
+  - User's Drucker (Marke, Modell, Firmware, Enclosed)
+  - User's Filament-Inventar (was hat er, wie viel)
+  - Druck-Historie (was hat er gedruckt, Erfolgsrate)
+  - Filament-Marken-Datenbank (Hersteller-Empfehlungen)
+  - Slicer-Einstellungs-Datenbank (Optimierungs-Tipps)
+  - Material-Standard-DB (Temperaturen, Eigenschaften)
+- **Lokal eingebettet** — Gemma 4 2B via ONNX Runtime, kein Ollama, kein Internet nötig
+- **Optional:** Externe KI-Anbieter in Einstellungen konfigurierbar (OpenAI, Anthropic, etc.)
+- **Chat-Verlauf** — Gespräche werden gespeichert, User kann später weitermachen
+- **Schnell-Aktionen** — KI kann direkt Aktionen vorschlagen:
+  - "Diese Spule zum Drucker laden" (aus Chat → Drucker-Tab)
+  - "Diese Einstellungen als Slicer-Profil exportieren"
+  - "Wartung als Erinnerung speichern"
 
 - **Verwendungszweck (optional, Text-Eingabe)** — User beschreibt wofür das Modell gedacht ist:
   - "Auto-Innenraum" → hitzebeständig, UV-stabil → ASA oder ABS
