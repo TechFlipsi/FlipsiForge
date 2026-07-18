@@ -1,8 +1,8 @@
 # FlipsiForge 🔧
 
-> **3D Printer Management Desktop App** — Part of the TechFlipsi ecosystem.
+> **3D Printer Management Software** — Part of the TechFlipsi ecosystem.
 
-FlipsiForge is a cross-platform desktop application for 3D printing enthusiasts who want one unified tool to manage their files, printers, and filament — without juggling five different tools.
+FlipsiForge is a cross-platform 3D printing management tool that handles files, printers, and filament in one unified application. Available as a **desktop app** (Windows + Linux) and a **headless server** (Raspberry Pi, mini PCs, any Linux server).
 
 ## Status
 
@@ -54,6 +54,40 @@ A single, well-structured desktop application that handles three core pillars of
 - Usage history (which print used how much)
 - Integration with printer tab (auto-deduct filament on print completion)
 
+## Architecture — Shared Core
+
+FlipsiForge is designed with a **shared core architecture** from day one, enabling both a desktop app and a headless server variant:
+
+```
+FlipsiForge.Core (shared business logic)
+├── FileScanner        — drive scanning, file indexing, thumbnails
+├── PrinterController  — Moonraker REST/WS + Marlin USB-serial
+├── FilamentManager    — spool inventory, consumption, cost tracking
+├── CostCalculator     — print cost calculator (filament + power + wear)
+└── CloudSync          — Nextcloud (P1) / Google Drive / OneDrive / Dropbox
+
+FlipsiForge (Desktop)       — Avalonia UI 12, uses Core
+FlipsiForge.Server (Headless) — ASP.NET Core web server + web UI, uses Core
+```
+
+### Desktop App
+
+- Avalonia UI 12 (.NET 10) — Windows + Linux
+- Installer + Portable
+- Full GUI with STL rendering, multi-printer dashboard, webcam preview
+
+### Server Variant (Headless)
+
+- **ASP.NET Core** web server — runs on Raspberry Pi (ARM64), mini PCs, or any Linux server
+- **Web UI** accessible via browser from any device on the network (phone, tablet, another PC)
+- Same SQLite database, same printer connections, same filament system
+- STL thumbnails generated server-side (software rendering — no GPU required)
+- Scans USB drives / network mounts instead of local filesystem
+- Printer can be controlled directly from the Pi it's connected to
+- Multi-user: multiple people in the same network share one filament database
+- 24/7 print monitoring without keeping a desktop PC running
+- .NET 10 runs natively on ARM64 (Raspberry Pi 4/5, 64-bit)
+
 ## Tech Stack
 
 | Component | Choice | Reason |
@@ -68,6 +102,7 @@ A single, well-structured desktop application that handles three core pillars of
 | Local storage | SQLite | Embedded, no server needed |
 | i18n | JSON-based localization (13 languages) | Consistent with FlipsiColor/FlipsiSort |
 | Packaging | Installer (.exe + .deb) + Portable (.zip) | New TechFlipsi standard |
+| Server | ASP.NET Core + Docker image (ARM64 + x64) | Headless mode for Raspberry Pi |
 | License | GPL-3.0 | Consistent with all TechFlipsi projects |
 
 ## TechFlipsi Ecosystem Integration
@@ -80,15 +115,16 @@ A single, well-structured desktop application that handles three core pillars of
 
 | Phase | Scope |
 |-------|-------|
-| v0.1.0 | File scanner + grid/list view + STL thumbnails |
+| v0.1.0 | File scanner + grid/list view + STL thumbnails (Desktop) |
 | v0.2.0 | Printer tab (Moonraker + Marlin, live data, basic controls) |
 | v0.3.0 | Filament inventory tracking (custom system) |
 | v0.4.0 | Druck-Kosten-Rechner + cross-tab integration |
 | v0.5.0 | Cloud-Sync (Nextcloud P1) + settings + multi-PC |
 | v0.6.0 | Multi-printer dashboard + webcam + notifications |
 | v0.7.0 | i18n (13 languages) |
-| v0.8.0 | Cloud-Sync extension (Google Drive, OneDrive, Dropbox) |
-| v1.0.0 | Installer (Windows .exe + Linux .deb) + Portable (.zip) |
+| v0.8.0 | FlipsiForge.Server — headless ASP.NET Core + web UI (Raspberry Pi) |
+| v0.9.0 | Cloud-Sync extension (Google Drive, OneDrive, Dropbox) |
+| v1.0.0 | Installer (Windows .exe + Linux .deb) + Portable (.zip) + Server Docker image |
 
 ## License
 

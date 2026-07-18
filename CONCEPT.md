@@ -51,9 +51,10 @@ Ein PC-Programm passend zur TechFlipsi Homepage. Schwerpunkt: 3D-Drucker-Managem
 - **Trocknungs-Timer**: Spule als "im Trockner" markieren mit Countdown
 - **Eigenes System**: Vollständig selbst gebaut, anpassbar auf Community-Feedback
 
-### Übergreifend
+## Übergreifend
 - **🔥 Druck-Kosten-Rechner** (Sir bestätigt: MUSS rein!) — Filament-Gewicht × Preis/gram + Stromkosten (Drucker-Watt × Dauer × Strompreis) + Verschleiß = Gesamtkosten
 - **Cloud-Sync** (optional): Nextcloud (Priorität 1), Google Drive, OneDrive, Dropbox. Sync von Einstellungen + Filament-Stand + Datei-Ablage. Default = lokal ohne Cloud.
+- **Server-Variante (Headless)**: ASP.NET Core Web Server für Raspberry Pi / Linux Server. Web-UI für Browser-Zugriff (Handy, Tablet, PC). Multi-User im selben Netzwerk. 24/7 Druck-Überwachung ohne PC. Docker Image (ARM64 + x64). Shared Core mit Desktop-App.
 - **Projekt-Gruppen**: Dateien + Filament + Drucker zu einem "Projekt" zusammenfassen
 - **Export/Backup**: Gesamte Datenbank exportieren (JSON/CSV)
 - **Dark/Light Theme**: Dark Void + Ember als Default (TechFlipsi-Style)
@@ -79,15 +80,16 @@ Ein PC-Programm passend zur TechFlipsi Homepage. Schwerpunkt: 3D-Drucker-Managem
 
 | Phase | Scope |
 |-------|-------|
-| v0.1.0 | File scanner + grid/list view + STL thumbnails |
+| v0.1.0 | File scanner + grid/list view + STL thumbnails (Desktop) |
 | v0.2.0 | Printer tab (Moonraker + Marlin, live data, basic controls) |
 | v0.3.0 | Filament inventory tracking (eigenes System) |
 | v0.4.0 | Druck-Kosten-Rechner + Cross-tab integration |
 | v0.5.0 | Cloud-Sync (Nextcloud P1) + Settings + Multi-PC |
 | v0.6.0 | Multi-Drucker Dashboard + Webcam + Notifications |
 | v0.7.0 | i18n (13 languages) |
-| v0.8.0 | Cloud-Sync Erweiterung (Google Drive, OneDrive, Dropbox) |
-| v1.0.0 | Installer (Windows .exe + Linux .deb) + Portable (.zip) |
+| v0.8.0 | FlipsiForge.Server — Headless ASP.NET Core + Web-UI (Raspberry Pi) |
+| v0.9.0 | Cloud-Sync Erweiterung (Google Drive, OneDrive, Dropbox) |
+| v1.0.0 | Installer (Windows .exe + Linux .deb) + Portable (.zip) + Server Docker image |
 
 ## TechFlipsi Ecosystem Integration
 
