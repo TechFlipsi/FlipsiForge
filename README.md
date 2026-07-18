@@ -410,23 +410,42 @@ server:
 | App-Icon | `apple-touch-icon.png` / `favicon.ico` — abgeleitet vom Logo-Emblem |
 | Buttons | `.cta-button` mit Arrow SVG Icon |
 
-## Roadmap (Planned)
+## Roadmap
 
-| Phase | Scope |
-|-------|-------|
-| v0.1.0 | File scanner + grid/list view + STL thumbnails + STL repair check |
-| v0.2.0 | Printer tab (Moonraker + Marlin, live data, basic controls) + G-code visualizer |
-| v0.3.0 | Filament inventory tracking (custom system) + QR codes + drying log |
-| v0.4.0 | Druck-Kosten-Rechner + Slicer-Integration (OrcaSlicer/PrusaSlicer CLI) |
-| v0.5.0 | Model Repository tab (Thingiverse + Printables + MakerWorld unified search) |
-| v0.6.0 | Statistics Dashboard + Druck-Queue with confirmation + Druck-Profil-Templates |
-| v0.7.0 | Cloud-Sync (Nextcloud P1) + Datei-Versionierung + Projekt-Export |
-| v0.8.0 | Plugin-System + i18n (13 languages) |
-| v0.9.0 | Built-in Server: FlipsiForge.Server + App server-connect + Auto-Discovery + Web-UI + Docker |
-| v0.10.0 | Server features: Timelapse + Push-Notifications (Telegram) + Multi-User/Roles + REST API |
-| v0.11.0 | Home Assistant Integration (HACS + HA Add-on) |
-| v0.12.0 | Cloud-Sync extension (Google Drive, OneDrive, Dropbox) + QR-Code Drucker-Zugang |
-| v1.0.0 | Installer (Windows .exe + Linux .deb) + Portable (.zip) + Server Docker image (ARM64 + x64) |
+### Phase 1: Grundgerüst (aktuell — v0.1.0-pre)
+- ✅ Projekt-Struktur (Core, Desktop, Server)
+- ✅ FlipsiForge.Core — Models, DbContext, Filament-Marken-Datenbank (41 Einträge)
+- ✅ FlipsiForge.Desktop — Avalonia UI 12, 7 Tabs scaffolded
+- ✅ FlipsiForge.Server — ASP.NET Core Minimal API (Full/Lite)
+- ✅ Docker (Full + Lite)
+- ✅ Linux Build getestet
+- ⬜ Drucker-Protokolle (Moonraker, Marlin, Bambu, PrusaLink, OctoPrint)
+- ⬜ Datei-Scanner (Auto-Scan Laufwerke)
+- ⬜ Drucker/Filament CRUD in Desktop UI
+
+### Phase 2: KI-Integration
+- ⬜ Gemma 4 E4B/E2B via ONNX Runtime GenAI (Chat + Empfehlungen)
+- ⬜ KI-Suche (Embeddings + Dateinamen kombiniert)
+- ⬜ Drucker-Assistent Chat (Streaming)
+- ⬜ Wartungs-Empfehlungen (online + offline)
+- ⬜ Slicer-Profil-Generierung
+
+### Phase 3: Home Assistant
+- ⬜ HACS Integration (Python custom component — Sensoren für Filament, Drucker, Kosten)
+- ⬜ HA Add-on Full (Docker Container, nur auf starken HA-Hosts — NUC/VM)
+- ⬜ HA Add-on Lite (Docker Container, OK auf Raspberry Pi)
+- HACS und HA Add-on werden erst nach dem Grundgerüst (Phase 1 + 2) umgesetzt
+
+### Phase 4: Erweiterte Features
+- ⬜ Web-UI für Server Full
+- ⬜ Push-Notifications (Telegram)
+- ⬜ Cloud-Sync (Nextcloud)
+- ⬜ NFC/QR Code Support
+- ⬜ 3D Rendering (Silk.NET)
+- ⬜ G-code Visualizer (SkiaSharp)
+- ⬜ Model Repository Search (Thingiverse/Printables/MakerWorld)
+- ⬜ Plugin System
+- ⬜ i18n (13 Sprachen)
 
 ## License
 
