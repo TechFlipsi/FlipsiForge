@@ -186,7 +186,7 @@ Ein PC-Programm passend zur TechFlipsi Homepage. Schwerpunkt: 3D-Drucker-Managem
 ## TechFlipsi Ecosystem Integration
 
 - **Design**: Dark Void (`#050507`) + Ember (`#ff6600`) — identisch zur TechFlipsi Homepage
-- **Logo**: "TECH" weiß + "FLIPSI" orange — selbes Logo wie techflipsi.kirchweger.de
+- **Logo**: `logo-emblem.png` — 3D-Drucker-Extruder druckt Wireframe-Würfel (Neon-Orange auf Schwarz, kreisförmig). Bild-Logo von techflipsi.kirchweger.de. App-Icon abgeleitet davon (`apple-touch-icon.png`, `favicon.ico`)
 - **Schriften**: Inter (Body) + Space Grotesk (Headings) — wie Homepage
 - **Branding**: TechFlipsi family product
 - **Software-Standard**: Avalonia UI + Installer/Portable + GPL-3.0 + 13 Sprachen i18n
