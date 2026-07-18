@@ -1896,10 +1896,15 @@ public class AIPrintAdvisor
 
     public async Task<PrintRecommendation> RecommendAsync(
         MeshAnalysis mesh,       // Wandstärke, Overhangs, Größe, Detailgrad
-        FilamentSpool filament,   // Ausgewähltes Filament
+        FilamentSpool filament,   // Ausgewähltes Filament (oder null wenn keins gewählt)
         PrinterProfile printer,  // Ausgewählter Drucker
-        PrintGoal goal)           // Strength, Speed, Quality, Prototype
+        PrintGoal goal,           // Strength, Speed, Quality, Prototype
+        string? useCase,          // Optional: "Auto-Innenraum", "Außen", "Dekoration", etc.
+        List<FilamentSpool> inventory)  // Komplettes Filament-Inventar
     {
+        var inventoryText = FormatInventory(inventory);
+        var useCaseText = string.IsNullOrWhiteSpace(useCase) ? "nicht angegeben" : useCase;
+
         var prompt = $"""
         Du bist ein 3D-Druck-Experte. Empfiehl Druck-Einstellungen.
 
@@ -1910,25 +1915,37 @@ public class AIPrintAdvisor
         - Detailgrad: {mesh.DetailLevel} (high/medium/low)
         - Triangle Count: {mesh.TriangleCount}
 
-        Filament: {filament.MaterialType} ({filament.Brand} {filament.MaterialName})
-        Dichte: {filament.Density} g/cm³
-        Durchmesser: {filament.DiameterMm}mm
+        Verwendungszweck: {useCaseText}
+        (z.B. "Auto-Innenraum" → hitzebeständig/UV-stabil, "Außen" → wetterfest,
+        "Dekoration" → optische Qualität, "Funktionsbauteil" → fest/verschleißfest,
+        "flexible Dichtung" → flexibel, "Prototyp" → schnell/billig)
+
+        Filament (vom User gewählt): {filament?.MaterialType ?? "keins"} ({filament?.Brand} {filament?.MaterialName})
+
+        Verfügbares Filament-Inventar:
+        {inventoryText}
 
         Drucker: {printer.Name}
         Build-Volume: {printer.BuildVolumeX}×{printer.BuildVolumeY}×{printer.BuildVolumeZ}mm
         Düse: {printer.NozzleDiameter}mm
+        Geschlossen: {printer.IsEnclosed} (ja/nein — wichtig für ABS/ASA!)
 
         Ziel: {goal}
 
-        Empfiehl:
-        1. Hotend-Temperatur (°C)
-        2. Bett-Temperatur (°C)
-        3. Layer-Höhe (mm)
-        4. Druckgeschwindigkeit (mm/s)
-        5. Retraction (mm)
-        6. Cooling-Fan (%)
-        7. Infill-Dichte (%) und Pattern
-        8. Begründung für jede Empfehlung
+        Aufgabe:
+        1. Ist das gewählte Filament geeignet für diesen Verwendungszweck?
+        2. Wenn nicht: Welches aus dem Inventar wäre besser? (mit Begründung)
+        3. Wenn kein passendes im Inventar: Welches sollte gekauft werden?
+        4. Empfiehl:
+           - Hotend-Temperatur (°C)
+           - Bett-Temperatur (°C)
+           - Layer-Höhe (mm)
+           - Druckgeschwindigkeit (mm/s)
+           - Retraction (mm)
+           - Cooling-Fan (%)
+           - Infill-Dichte (%) und Pattern
+        5. Begründung für jede Empfehlung
+        6. Warnungen (z.B. "ABS braucht geschlossenen Drucker — deiner ist offen")
 
         Antworte als JSON.
         """;
@@ -1943,6 +1960,16 @@ public class AIPrintAdvisor
 
         var result = await response.Content.ReadFromJsonAsync<OllamaResponse>();
         return ParseRecommendation(result.Message.Content);
+    }
+
+    private string FormatInventory(List<FilamentSpool> inventory)
+    {
+        if (inventory == null || !inventory.Any())
+            return "  (Inventar leer — kein Filament vorhanden)";
+
+        return string.Join("\n", inventory
+            .Where(s => s.Status == SpoolStatus.Active)
+            .Select(s => $"  - {s.Brand} {s.MaterialName} ({s.MaterialType}, {s.ColorHex}, {s.RemainingWeightG:F0}g übrig, {s.DiameterMm}mm)"));
     }
 }
 
@@ -1964,6 +1991,177 @@ var cloudAdvisor = new AIPrintAdvisor(
     new HttpClient { BaseAddress = new("https://api.openai.com/v1") },
     model: "gpt-4o-mini"
 );
+```
+
+### Mitgelieferte Drucker-Datenbank (offline)
+
+Damit die KI auch ohne Internet Tipps geben kann, wird eine Drucker-Datenbank mitgeliefert:
+
+```csharp
+public static readonly Dictionary<string, PrinterSpec> KnownPrinters = new()
+{
+    ["Snapmaker U1"] = new()
+    {
+        BuildVolume = (235, 235, 275),
+        NozzleDiameter = 0.4m,
+        IsEnclosed = false,
+        MaxHotendTemp = 300,
+        MaxBedTemp = 110,
+        Protocol = "Klipper/Moonraker",
+        Notes = "Multi-Color (4 Extruder), Klipper-basiert, offen"
+    },
+    ["Elegoo Neptune 4 Pro"] = new()
+    {
+        BuildVolume = (225, 225, 265),
+        NozzleDiameter = 0.4m,
+        IsEnclosed = false,
+        MaxHotendTemp = 300,
+        MaxBedTemp = 110,
+        Protocol = "Klipper/Moonraker",
+        Notes = "Dual-Zone Heizbett, Input Shaping, offen"
+    },
+    ["Bambu Lab X1C"] = new()
+    {
+        BuildVolume = (256, 256, 256),
+        NozzleDiameter = 0.4m,
+        IsEnclosed = true,
+        MaxHotendTemp = 300,
+        MaxBedTemp = 120,
+        Protocol = "Bambu MQTT",
+        Notes = "Geschlossen, AMS Multi-Color, LiDAR, Kamera eingebaut"
+    },
+    ["Bambu Lab P1S"] = new()
+    {
+        BuildVolume = (256, 256, 256),
+        NozzleDiameter = 0.4m,
+        IsEnclosed = true,
+        MaxHotendTemp = 300,
+        MaxBedTemp = 100,
+        Protocol = "Bambu MQTT",
+        Notes = "Geschlossen, AMS kompatibel"
+    },
+    ["Bambu Lab A1"] = new()
+    {
+        BuildVolume = (256, 256, 256),
+        NozzleDiameter = 0.4m,
+        IsEnclosed = false,
+        MaxHotendTemp = 300,
+        MaxBedTemp = 100,
+        Protocol = "Bambu MQTT",
+        Notes = "Offen, AMS Lite kompatibel"
+    },
+    ["Prusa MK4"] = new()
+    {
+        BuildVolume = (250, 210, 220),
+        NozzleDiameter = 0.4m,
+        IsEnclosed = false,
+        MaxHotendTemp = 290,
+        MaxBedTemp = 120,
+        Protocol = "PrusaLink",
+        Notes = "Offen, MMU3 Multi-Color optional"
+    },
+    ["Creality Ender 3 V3"] = new()
+    {
+        BuildVolume = (220, 220, 250),
+        NozzleDiameter = 0.4m,
+        IsEnclosed = false,
+        MaxHotendTemp = 260,
+        MaxBedTemp = 100,
+        Protocol = "Klipper/Moonraker",
+        Notes = "Budget, offen, Klipper vorinstalliert"
+    },
+    ["Voron 2.4"] = new()
+    {
+        BuildVolume = (350, 350, 350),
+        NozzleDiameter = 0.4m,
+        IsEnclosed = true,
+        MaxHotendTemp = 300,
+        MaxBedTemp = 120,
+        Protocol = "Klipper/Moonraker",
+        Notes = "DIY CoreXY, geschlossen, sehr schnell"
+    },
+    ["Qidi Tech X-Plus 3"] = new()
+    {
+        BuildVolume = (280, 280, 270),
+        NozzleDiameter = 0.4m,
+        IsEnclosed = true,
+        MaxHotendTemp = 300,
+        MaxBedTemp = 120,
+        Protocol = "Klipper/Moonraker",
+        Notes = "Geschlossen, Klipper, IFS"
+    },
+};
+
+public record PrinterSpec
+{
+    public (int X, int Y, int Z) BuildVolume { get; init; }
+    public decimal NozzleDiameter { get; init; }
+    public bool IsEnclosed { get; init; }
+    public int MaxHotendTemp { get; init; }
+    public int MaxBedTemp { get; init; }
+    public string Protocol { get; init; } = "";
+    public string Notes { get; init; } = "";
+}
+```
+
+### KI Daten-Zugriff — Was in den Prompt injiziert wird
+
+| Datenquelle | Inhalt | Wann verfügbar |
+|-------------|--------|----------------|
+| STL-Mesh-Analyse | Wandstärke, Overhangs, Bounding-Box, Detailgrad, Triangle Count | Nach Datei-Scan |
+| Filament-Inventar | Alle aktiven Spulen mit Marke, Material, Farbe, Restgewicht, Durchmesser | Immer (lokale DB) |
+| Material-Datenbank | Standard-Temperaturen/Speed/Fan für 7 Materialien | Immer (eingebaut) |
+| Drucker-Datenbank | 8+ Standard-Drucker mit Build-Volume, Max-Temp, Enclosed, Protokoll | Immer (eingebaut) |
+| User's Drucker-Profil | Build-Volume, Düse, Enclosed, Max-Temp | Immer (lokale DB) |
+| Druck-Historie | Erfolgsrate pro Material/Drucker, vergangene Einstellungen | Nach ersten Drucken |
+| Verwendungszweck | User-Text-Eingabe ("Auto-Innenraum", "Außen", etc.) | Optional, wenn eingegeben |
+| Ziel-Modus | Strength/Speed/Quality/Prototype | Optional, wenn gewählt |
+
+**Beispiel-Prompt-Injection:**
+```
+Verfügbares Filament-Inventar:
+  - Prusament PLA Galaxy Black (PLA, #1a1a1a, 850g übrig, 1.75mm)
+  - eSUN PETG Schwarz (PETG, #0a0a0a, 750g übrig, 1.75mm)
+  - Prusament ABS Orange (ABS, #ff6600, 1000g übrig, 1.75mm)
+
+User's Drucker: Snapmaker U1
+Build-Volume: 235×235×275mm
+Düse: 0.4mm
+Geschlossen: nein
+Max Hotend: 300°C
+Max Bed: 110°C
+
+Verwendungszweck: Auto-Innenraum
+Ziel: Maximale Festigkeit
+```
+
+**KI Antwort (Beispiel):**
+```json
+{
+  "filamentOk": false,
+  "reason": "PLA ist für Auto-Innenraum ungeeignet — wird bei 50-60°C weich",
+  "recommendedFilament": "ABS Orange (Prusament)",
+  "alternatives": ["PETG Schwarz (eSUN) — hitzebeständiger als PLA, flexibler als ABS"],
+  "buyRecommendation": null,
+  "settings": {
+    "hotend": 245,
+    "bed": 100,
+    "layerHeight": 0.16,
+    "speed": 50,
+    "retraction": 1.0,
+    "fan": 30,
+    "infill": 60,
+    "infillPattern": "gyroid"
+  },
+  "warnings": [
+    "⚠️ ABS braucht geschlossenen Drucker — Snapmaker U1 ist offen! Warping möglich.",
+    "⚠️ ABS erzeugt giftige Dämpfe — gut belüften!"
+  ],
+  "explanation": "ABS ist ideal für Auto-Innenraum (hitzebeständig bis ~100°C). " +
+    "PETG wäre die Alternative da flexibler. PLA fällt aus. " +
+    " Bett 100°C für Haftung, Fan 30% gegen Warping, " +
+    "Layer 0.16mm für Festigkeit, Infill 60% gyroid für maximale Stabilität."
+}
 ```
 
 ### Ziel-Modus → Anpassung
