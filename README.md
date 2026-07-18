@@ -412,32 +412,30 @@ server:
 
 ## Roadmap
 
-### Phase 1: Grundgerüst (aktuell — v0.1.0-pre)
+### Phase 1: Grundgerüst + KI (aktuell — v0.1.0-pre)
 - ✅ Projekt-Struktur (Core, Desktop, Server)
 - ✅ FlipsiForge.Core — Models, DbContext, Filament-Marken-Datenbank (41 Einträge)
 - ✅ FlipsiForge.Desktop — Avalonia UI 12, 7 Tabs scaffolded
 - ✅ FlipsiForge.Server — ASP.NET Core Minimal API (Full/Lite)
 - ✅ Docker (Full + Lite)
 - ✅ Linux Build getestet
-- ⬜ Drucker-Protokolle (Moonraker, Marlin, Bambu, PrusaLink, OctoPrint)
-- ⬜ Datei-Scanner (Auto-Scan Laufwerke)
-- ⬜ Drucker/Filament CRUD in Desktop UI
-
-### Phase 2: KI-Integration
 - ⬜ Gemma 4 E4B/E2B via ONNX Runtime GenAI (Chat + Empfehlungen)
 - ⬜ KI-Suche (Embeddings + Dateinamen kombiniert)
 - ⬜ Drucker-Assistent Chat (Streaming)
 - ⬜ Wartungs-Empfehlungen (online + offline)
-- ⬜ Slicer-Profil-Generierung
+- ⬜ Drucker-Protokolle (Moonraker, Marlin, Bambu, PrusaLink, OctoPrint)
+- ⬜ Datei-Scanner (Auto-Scan Laufwerke)
+- ⬜ Drucker/Filament CRUD in Desktop UI
 
-### Phase 3: Home Assistant
+### Phase 2: Home Assistant
 - ⬜ HACS Integration (Python custom component — Sensoren für Filament, Drucker, Kosten)
 - ⬜ HA Add-on Full (Docker Container, nur auf starken HA-Hosts — NUC/VM)
 - ⬜ HA Add-on Lite (Docker Container, OK auf Raspberry Pi)
-- HACS und HA Add-on werden erst nach dem Grundgerüst (Phase 1 + 2) umgesetzt
+- HACS und HA Add-on werden erst nach Phase 1 (Grundgerüst + KI) umgesetzt
 
-### Phase 4: Erweiterte Features
+### Phase 3: Erweiterte Features
 - ⬜ Web-UI für Server Full
+- ⬜ Slicer-Profil-Generierung
 - ⬜ Push-Notifications (Telegram)
 - ⬜ Cloud-Sync (Nextcloud)
 - ⬜ NFC/QR Code Support
