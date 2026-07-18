@@ -40,6 +40,7 @@ FlipsiForge is a cross-platform 3D printing management tool that handles files, 
   - **PrusaLink** (Prusa MK3/MK4/MK3.5/SL1) — REST API (OpenAPI spec from Prusa)
   - **OctoPrint** (any printer with OctoPrint host) — REST API + WebSocket
 - Multiple printer profiles — any brand, any model
+- **Add / Remove printers** — add new printers, remove old ones when sold/replaced. Removing a printer keeps its print history (optional) but disconnects all active connections. Settings/data can be fully purged or archived
 - Real-time data display:
   - Bed temperature / Hotend temperature (per extruder)
   - Print status (idle, printing, paused, error)

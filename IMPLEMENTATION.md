@@ -302,6 +302,7 @@ public interface IPrinterProtocol
     Task SendGcodeAsync(string command);
     Task UploadFileAsync(string localPath);
     IObservable<PrinterStatus> SubscribeToStatusUpdates();
+    Task DisconnectAsync();  // Clean disconnect when removing a printer
 }
 
 public class MoonrakerClient : IPrinterProtocol
@@ -1103,6 +1104,79 @@ public class FlipsiForgeDbContext : DbContext
             e.HasIndex(s => new { s.Brand, s.MaterialType });
             e.Property(s => s.PurchasePricePerKg).HasColumnType("decimal(10,2)");
         });
+
+        // PrinterProfile — supports add/remove with optional history retention
+        mb.Entity<PrinterProfile>(e =>
+        {
+            e.HasIndex(p => p.Name);
+            e.Property(p => p.Protocol).HasConversion<string>();
+        });
+
+        // PrintJob → PrinterProfile: cascade delete or restrict (keep history)
+        mb.Entity<PrintJob>(e =>
+        {
+            e.HasOne(j => j.Printer)
+                .WithMany()
+                .OnDelete(DeleteBehavior.Restrict); // Keep print history when printer removed
+        });
+    }
+}
+```
+
+### Printer Management (Add / Remove)
+
+```csharp
+public class PrinterManager
+{
+    private readonly FlipsiForgeDbContext _db;
+
+    public async Task<PrinterProfile> AddPrinterAsync(PrinterConfig config)
+    {
+        var profile = new PrinterProfile
+        {
+            Name = config.Name,
+            Protocol = config.Protocol,  // Moonraker, Marlin, Bambu, PrusaLink, OctoPrint
+            Host = config.Host,
+            Port = config.Port,
+            ApiKey = config.ApiKey,
+            BuildVolumeX = config.BuildVolumeX,
+            BuildVolumeY = config.BuildVolumeY,
+            BuildVolumeZ = config.BuildVolumeZ,
+            CreatedAt = DateTime.UtcNow
+        };
+        _db.Printers.Add(profile);
+        await _db.SaveChangesAsync();
+        return profile;
+    }
+
+    public async Task RemovePrinterAsync(int printerId, bool keepHistory = true)
+    {
+        var printer = await _db.Printers.FindAsync(printerId);
+        if (printer == null) return;
+
+        // 1. Disconnect active connections (WebSocket, USB-serial, MQTT)
+        if (_activeConnections.TryGetValue(printerId, out var conn))
+        {
+            await conn.DisconnectAsync();
+            _activeConnections.Remove(printerId);
+        }
+
+        // 2. Handle print history
+        if (keepHistory)
+        {
+            // Keep PrintJob records (OnDelete.Restrict) — printer reference becomes null
+            printer.IsActive = false;
+            printer.RemovedAt = DateTime.UtcNow;
+        }
+        else
+        {
+            // Full purge — delete printer + all related print history
+            var jobs = _db.PrintJobs.Where(j => j.PrinterId == printerId);
+            _db.PrintJobs.RemoveRange(jobs);
+            _db.Printers.Remove(printer);
+        }
+
+        await _db.SaveChangesAsync();
     }
 }
 ```

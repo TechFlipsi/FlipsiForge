@@ -74,7 +74,8 @@ Ein PC-Programm passend zur TechFlipsi Homepage. Schwerpunkt: 3D-Drucker-Managem
 - Suchen & Filtern
 
 ### Tab 2: 🖨️ Drucker-Verwaltung
-- Klipper/Moonraker (REST + WebSocket) + Marlin (USB-serial)
+- Klipper/Moonraker (REST + WebSocket) + Marlin (USB-serial) + Bambu Lab (MQTT+FTP) + PrusaLink (REST) + OctoPrint (REST+WebSocket)
+- **Drucker hinzufügen/entfernen** — neuer Drucker rein, alter Drucker raus (verkauft/ersetzt). Druck-Historie optional behalten oder komplett löschen
 - Multi-Drucker Dashboard (alle Drucker side-by-side)
 - Live-Daten: Temperaturen, Status, Fortschritt, Layer, Speed
 - Webcam Live-Feed
