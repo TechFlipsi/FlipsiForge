@@ -264,25 +264,85 @@ FlipsiForge.Server (Optional)   — ASP.NET Core backend, any Linux server
 - Same Desktop App connects to `https://flipsiforge.my-tailnet.ts.net` or public domain
 - Print monitoring from work, on the road, etc.
 
-### FlipsiForge.Server (Headless Backend)
+### FlipsiForge.Server (Headless Backend) — zwei Modi
 
-- **ASP.NET Core** web server — runs on **any Linux server** (Raspberry Pi, NUC, VPS, old laptop, NAS with Docker). ARM64 + x64.
-- **No GUI** — pure backend, manages data and printer connections
-- **Two access methods:**
-  1. **Gateway API** (REST + WebSocket) — the Desktop App connects to this. The app talks to the server like a client: fetch filaments, send print jobs, get live printer data, sync settings. Real-time WebSocket for live temperature/progress updates.
-  2. **Web UI** — browser-based interface for devices without the desktop app (phone, tablet, guest PC). Same features, rendered in browser.
-- **Multi-User with Roles** — Admin (full access), User (print only), Viewer (read-only). For families, makerspaces, community spaces
-- **Push Notifications** — print finished/error notifications via **Telegram** (preferred), plus Web-Push, email, and desktop notifications
-- **Timelapse** — webcam snapshots at intervals → timelapse video of print. Stored in dedicated timelapse tab. Server-side feature (PC doesn't need to stay on). **Manual start** also possible (timelapse without active print). **Render abort** on print cancel
-- **Druck-Statistiken-Export** — server collects data across all prints → monthly report (success rate, costs, filament usage)
-- **REST API for third parties** — public API so other tools can query filament data, print status, costs. `GET /api/filaments`, `GET /api/printers/status`, etc.
-- **Home Assistant Integration** — HACS custom integration + HA Add-on to run FlipsiForge.Server directly inside Home Assistant. Sensors for filament stock, print status, costs. Full HA dashboard support
-- Same SQLite database (or PostgreSQL for multi-user setups)
-- Printer connections live on the server — server controls printers 24/7
-- STL thumbnails generated server-side (software rendering — no GPU required)
-- File scanning scans USB drives / network mounts on the server host
-- Docker image for easy deployment (ARM64 + x64)
-- .NET 10 runs natively on ARM64 (Raspberry Pi 4/5, 64-bit)
+Der Server kann in zwei Modi installiert werden:
+
+#### Server Full (mit KI + Web-UI)
+
+- **ASP.NET Core** web server — für NUC, VPS, Pi 5 (8GB), oder jeden Linux-Server mit ≥4GB RAM
+- **KI eingebettet** — Gemma 4 E2B (~2.6GB) oder E2B QAT (~1.3GB) via ONNX. Chat, Empfehlungen, KI-Suche verfügbar über Web-UI
+- **Web-UI** — browserbasiertes Interface für Handy/Tablet/PC ohne Desktop-App. Voller Funktionsumfang inkl. KI-Chat
+- **Zwei Zugangswege:**
+  1. **Gateway API** (REST + WebSocket) — Desktop-App verbindet sich hier
+  2. **Web-UI** — Browser-Zugriff für Geräte ohne Desktop-App
+- **Multi-User mit Rollen** — Admin (alles), User (drucken), Viewer (nur gucken)
+- **Push-Notifications** — Telegram (bevorzugt), Web-Push, Email
+- **Timelapse** — serverseitig, PC muss nicht an bleiben
+- **REST API** — für Dritt-Tools
+- **Home Assistant Integration** — HACS + HA Add-on
+- **Drucker-Verwaltung** — Server steuert Drucker 24/7
+- **Datei-Scan** — USB-Laufwerke / Network-Mounts auf dem Server
+- **Docker Image** — ARM64 + x64
+
+#### Server Lite (reine Überwachung, keine KI, keine Web-UI)
+
+- **ASP.NET Core** web server — minimal, für Raspberry Pi 4 (2GB RAM) oder jeden Linux-Server
+- **Keine KI** — kein ONNX-Modell, kein Chat, keine KI-Suche. KI läuft nur in der Desktop-App
+- **Keine Web-UI** — kein Browser-Interface. Nur Gateway API für Desktop-App
+- **Was der Lite-Server macht:**
+  - 📡 Drucker-Status abfragen (Moonraker/Marlin/Bambu/PrusaLink/OctoPrint)
+  - 📹 Webcam-Stream bereitstellen
+  - 🔔 Push-Notifications (Telegram) bei Druckende/Fehler
+  - 📋 Druck-Queue verwalten (mit Bestätigungspflicht)
+  - 🧶 Filament-Datenbank syncen (Multi-PC)
+  - 📊 Druck-Statistiken sammeln
+  - 🔄 Datei-Sync (Nextcloud/Drive) verwalten
+  - 📡 mDNS Auto-Discovery broadcasten
+- **Was der Lite-Server NICHT macht:**
+  - ❌ KI-Chat / KI-Empfehlungen / KI-Suche (nur Desktop-App)
+  - ❌ Web-UI (nur Gateway API)
+  - ❌ Timelapse-Rendering (kann nachträglich auf Desktop gemacht werden)
+- **Ressourcen-Bedarf:** ~200-500MB RAM, ~100MB Disk. Läuft auf Pi 4 (2GB) problemlos
+- **Upgrade-Pfad:** Lite → Full durch Installation des KI-Modells + Aktivierung der Web-UI in Einstellungen
+
+#### Server-Modus wählen bei Installation
+
+```bash
+# Full (mit KI + Web-UI)
+docker run -d --name flipsiforge -p 5000:5000 flipsiforge/server:full
+
+# Lite (reine Überwachung)
+docker run -d --name flipsiforge -p 5000:5000 flipsiforge/server:lite
+
+# Oder in config.yaml:
+server:
+  mode: full    # 'full' oder 'lite'
+  ai: true      # true (Full) oder false (Lite)
+  webui: true   # true (Full) oder false (Lite)
+```
+
+#### Vergleich
+
+| Feature | Server Full | Server Lite |
+|---------|-------------|-------------|
+| KI-Chat | ✅ Gemma 4 E2B/QAT | ❌ |
+| KI-Empfehlungen | ✅ | ❌ (nur Desktop-App) |
+| KI-Suche | ✅ | ❌ (nur Desktop-App) |
+| Web-UI (Browser) | ✅ | ❌ |
+| Gateway API (Desktop-App) | ✅ | ✅ |
+| Drucker-Überwachung 24/7 | ✅ | ✅ |
+| Push-Notifications | ✅ | ✅ |
+| Druck-Queue | ✅ | ✅ |
+| Filament-Sync (Multi-PC) | ✅ | ✅ |
+| Timelapse | ✅ | ❌ |
+| REST API | ✅ | ✅ |
+| Home Assistant | ✅ | ✅ (Sensoren nur) |
+| mDNS Auto-Discovery | ✅ | ✅ |
+| RAM Bedarf | ~4GB+ | ~200-500MB |
+| Disk Bedarf | ~3GB+ (mit KI) | ~100MB |
+| Docker Image | `server:full` | `server:lite` |
+| Ziel-Hardware | NUC, VPS, Pi 5 (8GB) | Pi 4 (2GB), Mini-PC |
 
 ## Tech Stack
 
@@ -382,21 +442,25 @@ GPL-3.0 — same as all TechFlipsi projects.
 - 2-4GB RAM → Gemma 4 E2B QAT (~1.3GB) — Chat (leicht verzögert)
 - KI ausschaltbar → 0MB extra RAM, nur Dateinamen-Suche + Filament-DB Auto-Fill
 
-### Server (Headless, Linux)
+### Server Full (mit KI + Web-UI)
 
 | Komponente | Minimum | Empfohlen |
 |------------|---------|-----------|
 | **OS** | Linux (ARM64 oder x64) | Ubuntu 22.04+ / Debian 12+ |
-| **RAM** | 2GB (Pi 4, KI aus) | 4GB+ (mit KI) |
-| **CPU** | ARM64 (Pi 4) oder x64 | Pi 5 / NUC / VPS |
-| **Disk** | 500MB (ohne KI) | 3GB+ (mit KI E2B QAT) |
-| **Docker** | Optional (Docker Image verfügbar) | Empfohlen für einfache Installation |
-| **Netzwerk** | LAN (mDNS Auto-Discovery) | — |
+| **RAM** | 4GB (mit E2B QAT) | 8GB+ (mit E2B) |
+| **CPU** | ARM64 (Pi 5) oder x64 | NUC / VPS |
+| **Disk** | 3GB+ (mit KI) | 3GB+ |
+| **Docker** | Empfohlen | Empfohlen |
 
-**Server KI-Modell je nach RAM:**
-- 4-8GB RAM → Gemma 4 E2B (~2.6GB)
-- 2-4GB RAM → Gemma 4 E2B QAT (~1.3GB)
-- KI ausschaltbar → 0MB extra RAM
+### Server Lite (reine Überwachung, keine KI, keine Web-UI)
+
+| Komponente | Minimum | Empfohlen |
+|------------|---------|-----------|
+| **OS** | Linux (ARM64 oder x64) | Ubuntu 22.04+ / Debian 12+ |
+| **RAM** | 2GB (Pi 4) | 2GB+ |
+| **CPU** | ARM64 (Pi 4) oder x64 | Pi 4 / Mini-PC |
+| **Disk** | 100MB | 200MB |
+| **Docker** | Empfohlen | Empfohlen |
 
 **Nicht unterstützt:** Raspberry Pi Zero, Pi 1/2/3 (zu wenig RAM/CPU)
 
