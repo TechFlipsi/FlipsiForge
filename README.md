@@ -26,10 +26,12 @@ FlipsiForge is a cross-platform 3D printing management tool that handles files, 
   - Live aktualisiert beim Scannen
 - **Suche** — immer Dateinamen-Suche + KI-Suche kombiniert (nicht entweder/oder):
   - **Dateinamen-Suche** (Fuzzy, offline, sofort) — durchsucht Dateinamen, Tags, Notizen nach dem Suchbegriff
-  - **KI-Suche** (lokal, automatisch mit am Start) — versteht Bedeutung, findet Synonyme, andere Sprachen. "Drache" findet auch `dragon_v2.stl`, `mythical_creature.3mf`, `wyvern_print.gcode`
+  - **KI-Suche** (lokal eingebettet, automatisch mit am Start) — versteht Bedeutung, findet Synonyme, andere Sprachen. "Drache" findet auch `dragon_v2.stl`, `mythical_creature.3mf`, `wyvern_print.gcode`
   - Beide laufen parallel, Ergebnisse werden zusammengeführt (Dateinamen-Treffer zuerst, dann KI-Treffer)
-  - KI läuft immer lokal (Ollama) — kein Cloud-Zwang, kein Internet nötig
-  - User tippt "Drache" → sieht sofort Dateinamen-Treffer + KI-Treffer in einer Liste
+  - **KI-Treffer sind gekennzeichnet** — jedes KI-Ergebnis hat ein Badge/Icon "🤖 KI" damit User sofort sieht: das ist ein KI-Treffer, kein Dateinamen-Treffer
+  - KI läuft **lokal eingebettet** (ONNX Runtime, kleines quantisiertes Modell — wie FlipsiSort/FlipsiColor). Kein Ollama, kein externer Service, kein Internet nötig
+  - **Optional:** User kann in Einstellungen externe KI-Anbieter konfigurieren (OpenAI, Anthropic, etc.) — wenn nichts konfiguriert wird, lokale KI verwendet
+  - User tippt "Drache" → sieht sofort Dateinamen-Treffer + KI-Treffer (gekennzeichnet) in einer Liste
 - **STL Repair Check** — scan files for defects (non-manifold edges, holes) before printing. Warning when model is broken
 - **G-code Visualizer** — load G-code file → 3D layer-by-layer visualization. See exactly what will be printed
 - **Datei-Versionierung** — edited STLs keep old versions (v1, v2, v3 with dates). No one loses the original by accident
