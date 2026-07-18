@@ -167,7 +167,7 @@ Drei KI-Funktionen in einer Integration:
   - Filament-Marken-Datenbank (Hersteller-Empfehlungen)
   - Slicer-Einstellungs-Datenbank (Optimierungs-Tipps)
   - Material-Standard-DB (Temperaturen, Eigenschaften)
-- **Lokal eingebettet** — Gemma 4 2B via ONNX Runtime, kein Ollama, kein Internet nötig
+- **Lokal eingebettet** — Gemma 4 E4B (Desktop, ~3.7GB) oder E2B (Server/Raspberry Pi, ~2.6GB) via ONNX Runtime. Kein Ollama, kein externer Service, kein Internet nötig. App wählt automatisch das passende Modell basierend auf verfügbarem RAM
 - **Optional:** Externe KI-Anbieter in Einstellungen konfigurierbar (OpenAI, Anthropic, etc.)
 - **Chat-Verlauf** — Gespräche werden gespeichert, User kann später weitermachen
 - **Schnell-Aktionen** — KI kann direkt Aktionen vorschlagen:
