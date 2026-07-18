@@ -33,8 +33,13 @@ FlipsiForge is a cross-platform 3D printing management tool that handles files, 
 
 ### 2. 🖨️ Printer Management — Direct Control
 
-- Connect to Klipper/Moonraker printers (HTTP REST API), Marlin printers (USB-serial), and Bambu Lab printers (Bambu API)
-- Multiple printer profiles (Snapmaker U1, Neptune 4 Pro, Bambu Lab, any Marlin printer)
+- Connect to **all major 3D printer brands** via 5 protocols:
+  - **Klipper/Moonraker** (Snapmaker, Elegoo Neptune, Voron, Qidi, Anycubic, custom) — HTTP REST API + WebSocket
+  - **Marlin** (Creality, Anycubic, Artillery, legacy printers) — USB-serial (System.IO.Ports)
+  - **Bambu Lab** (Bambu Lab X1/P1/A1 series) — MQTT + FTP API
+  - **PrusaLink** (Prusa MK3/MK4/MK3.5/SL1) — REST API (OpenAPI spec from Prusa)
+  - **OctoPrint** (any printer with OctoPrint host) — REST API + WebSocket
+- Multiple printer profiles — any brand, any model
 - Real-time data display:
   - Bed temperature / Hotend temperature (per extruder)
   - Print status (idle, printing, paused, error)
@@ -188,9 +193,11 @@ FlipsiForge.Server (Optional)   — ASP.NET Core backend, any Linux server
 | STL rendering | OpenTK / Silk.NET for 3D preview + G-code visualizer | Hardware-accelerated preview |
 | STL repair | Mesh analysis (non-manifold detection, hole finding) | Warn before printing broken models |
 | Slicer integration | OrcaSlicer / PrusaSlicer CLI orchestration | One-click STL → G-code → print |
-| Printer protocol (Klipper) | Moonraker REST API + WebSocket | Standard for Klipper-based printers |
-| Printer protocol (Marlin) | USB-serial (System.IO.Ports) | For Arduino-based non-Klipper printers |
-| Printer protocol (Bambu) | Bambu Lab API | For Bambu Lab printers (growing market) |
+| Printer protocol (Klipper) | Moonraker REST API + WebSocket | Snapmaker, Elegoo, Voron, Qidi, Anycubic |
+| Printer protocol (Marlin) | USB-serial (System.IO.Ports) | Creality, Anycubic, Artillery, legacy |
+| Printer protocol (Bambu) | Bambu Lab MQTT + FTP API | Bambu Lab X1/P1/A1 series |
+| Printer protocol (Prusa) | PrusaLink REST API (OpenAPI spec) | Prusa MK3/MK4/MK3.5/SL1 |
+| Printer protocol (OctoPrint) | OctoPrint REST API + WebSocket | Any printer with OctoPrint host |
 | Camera | USB webcam + RTSP IP camera support | Not everyone has USB — many use IP cameras |
 | NFC | OpenPrintTag standard + generic NFC read/write | Prusa's open NFC standard for filament ID |
 | Model repositories | Thingiverse / Printables / MakerWorld REST APIs | Unified search across all platforms |
