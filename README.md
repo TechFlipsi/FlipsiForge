@@ -54,9 +54,9 @@ A single, well-structured desktop application that handles three core pillars of
 - Usage history (which print used how much)
 - Integration with printer tab (auto-deduct filament on print completion)
 
-## Architecture — Shared Core
+## Architecture — Shared Core + Built-in Server
 
-FlipsiForge is designed with a **shared core architecture** from day one, enabling both a desktop app and a headless server variant:
+FlipsiForge is **one app** with an optional server backend. The desktop app always provides the full GUI experience — whether running standalone (local data) or connected to a FlipsiForge Server (centralized data).
 
 ```
 FlipsiForge.Core (shared business logic)
@@ -64,28 +64,47 @@ FlipsiForge.Core (shared business logic)
 ├── PrinterController  — Moonraker REST/WS + Marlin USB-serial
 ├── FilamentManager    — spool inventory, consumption, cost tracking
 ├── CostCalculator     — print cost calculator (filament + power + wear)
-└── CloudSync          — Nextcloud (P1) / Google Drive / OneDrive / Dropbox
+├── CloudSync          — Nextcloud (P1) / Google Drive / OneDrive / Dropbox
+└── ServerClient       — connects to FlipsiForge Server (optional)
 
-FlipsiForge (Desktop)       — Avalonia UI 12, uses Core
-FlipsiForge.Server (Headless) — ASP.NET Core web server + web UI, uses Core
+FlipsiForge (Desktop App)       — Avalonia UI 12, full GUI, always the client
+FlipsiForge.Server (Optional)   — ASP.NET Core backend, runs on Raspberry Pi / server
 ```
 
-### Desktop App
+### Mode 1: Standalone (Default)
 
-- Avalonia UI 12 (.NET 10) — Windows + Linux
-- Installer + Portable
-- Full GUI with STL rendering, multi-printer dashboard, webcam preview
+- App runs locally on the user's PC
+- All data stored in local SQLite database
+- No server needed — full functionality out of the box
+- Cloud-Sync (Nextcloud etc.) available as optional add-on
 
-### Server Variant (Headless)
+### Mode 2: Server-Connected
+
+- User sets up a FlipsiForge Server (e.g. on a Raspberry Pi in the home network)
+- In the Desktop App: Settings → Server → enter server URL
+- App switches to server mode — filaments, printer profiles, settings, and print history are fetched from the server
+- Multiple PCs can connect to the same server — all stay in sync automatically
+- UI is **identical** to standalone mode — the user doesn't notice the difference
+- Server can be disabled anytime → app falls back to local SQLite
+
+### Mode 3: Remote Access (Server from outside home)
+
+- Server supports Tailscale / WireGuard VPN for secure remote access
+- Reverse proxy support (nginx, Caddy) for domain-based access
+- Optional authentication (username/password or API token)
+- Same Desktop App connects to `https://flipsiforge.my-tailnet.ts.net` or public domain
+- Print monitoring from work, on the road, etc.
+
+### FlipsiForge.Server (Headless Backend)
 
 - **ASP.NET Core** web server — runs on Raspberry Pi (ARM64), mini PCs, or any Linux server
-- **Web UI** accessible via browser from any device on the network (phone, tablet, another PC)
-- Same SQLite database, same printer connections, same filament system
+- **No GUI** — pure backend, manages data and printer connections
+- **Web UI** accessible via browser from any device (phone, tablet, PC without desktop app)
+- Same SQLite database (or PostgreSQL for multi-user setups)
+- Printer connections live on the server — server controls printers 24/7
 - STL thumbnails generated server-side (software rendering — no GPU required)
-- Scans USB drives / network mounts instead of local filesystem
-- Printer can be controlled directly from the Pi it's connected to
-- Multi-user: multiple people in the same network share one filament database
-- 24/7 print monitoring without keeping a desktop PC running
+- File scanning scans USB drives / network mounts on the server host
+- Docker image for easy deployment (ARM64 + x64)
 - .NET 10 runs natively on ARM64 (Raspberry Pi 4/5, 64-bit)
 
 ## Tech Stack
@@ -122,9 +141,9 @@ FlipsiForge.Server (Headless) — ASP.NET Core web server + web UI, uses Core
 | v0.5.0 | Cloud-Sync (Nextcloud P1) + settings + multi-PC |
 | v0.6.0 | Multi-printer dashboard + webcam + notifications |
 | v0.7.0 | i18n (13 languages) |
-| v0.8.0 | FlipsiForge.Server — headless ASP.NET Core + web UI (Raspberry Pi) |
+| v0.8.0 | Built-in Server: FlipsiForge.Server backend + App server-connect mode + Web-UI + Docker (Raspberry Pi) |
 | v0.9.0 | Cloud-Sync extension (Google Drive, OneDrive, Dropbox) |
-| v1.0.0 | Installer (Windows .exe + Linux .deb) + Portable (.zip) + Server Docker image |
+| v1.0.0 | Installer (Windows .exe + Linux .deb) + Portable (.zip) + Server Docker image (ARM64 + x64) |
 
 ## License
 
