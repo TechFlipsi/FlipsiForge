@@ -2267,43 +2267,98 @@ public class AIPrintAdvisor
 public enum PrintGoal { MaximumStrength, FastPrint, VisualQuality, Prototype }
 ```
 
-### Lokale KI — kein Ollama, kein externer Service
+**Lokale KI — kein Ollama, kein externer Service**
+
+Zwei Gemma 4 Modelle werden mit der App gebündelt, je nach Plattform:
 
 ```csharp
 // IMMER lokal — ONNX Runtime, mit App gebündelt
-// Zwei Modelle eingebettet:
+// Drei Modelle eingebettet:
 // 1. Embedding-Modell für Suche: all-MiniLM-L6-v2 quantized (~23MB)
-// 2. LLM für KI-Assistent + Chat: Gemma 4 2B quantized INT4 (~2-4GB via ONNX)
-// Beide werden mit der App ausgeliefert, kein Download, kein Ollama, kein Internet
+// 2. LLM für Desktop (Windows/Linux PC): Gemma 4 E4B-it ONNX (~3.7GB)
+// 3. LLM für Server (Raspberry Pi / schwache Hardware): Gemma 4 E2B-it ONNX (~2.6GB)
 
-// === Such-KI (Embedding) ===
-var search = new FileSearchService(
-    embedder: new LocalEmbeddingModel("Assets/ai/all-MiniLM-L6-v2-q8.onnx")
+// === Desktop (Windows/Linux PC) — E4B (stärker) ===
+var advisor = new PrinterAssistant(
+    llm: new LocalLlmModel("Assets/ai/gemma-4-E4B-it-ONNX/model.onnx")
 );
 
-// === KI-Assistent + Chat (Gemma 4 2B LLM) ===
-var advisor = new PrinterAssistant(
-    llm: new LocalLlmModel("Assets/ai/gemma4-2b-int4.onnx")
+// === Server (Raspberry Pi / schwache Hardware) — E2B (leichter) ===
+var serverAdvisor = new PrinterAssistant(
+    llm: new LocalLlmModel("Assets/ai/gemma-4-E2B-it-ONNX/model.onnx")
 );
 ```
 
-**Warum Gemma 4 2B und nicht größer:**
-- 2B reicht für unsere Aufgaben — alle Daten werden im Prompt mitgeliefert
-- KI muss nur schlussfolgern ("PLA max 55°C + Auto = ungeeignet → nimm ABS")
-- Kein komplexes Reasoning nötig — wir liefern Filament-DB, Drucker-Info, etc.
-- INT4 quantisiert = ~2GB, lädt in ~3-5 Sekunden beim App-Start
-- Cross-platform via ONNX (Windows + Linux, ARM64 + x64)
+**Zwei Gemma 4 Modelle je nach Plattform:**
+
+| Modell | Größe | Effektive Parameter | Plattform | RAM Bedarf |
+|--------|-------|---------------------|-----------|------------|
+| **Gemma 4 E4B-it** (Desktop) | ~3.7GB | 4.5B | Windows/Linux PC | ~6-8GB RAM |
+| **Gemma 4 E2B-it** (Server) | ~2.6GB | 2.3B | Raspberry Pi 4/5, Mini-PC | ~4GB RAM |
+| all-MiniLM-L6-v2 (Suche) | ~23MB | — | Alle Plattformen | ~100MB |
+
+**Modell-Auswahl automatisch:**
+- Desktop-App erkennt verfügbaren RAM → wählt E4B (≥8GB RAM) oder E2B (<8GB RAM)
+- Server-Modus → immer E2B (Raspberry Pi hat typisch 4-8GB RAM)
+- User kann in Einstellungen manuell wählen: "Leicht (E2B)" oder "Voll (E4B)"
+
+**Download der Modelle:**
+- Beide als ONNX auf HuggingFace verfügbar:
+  - `onnx-community/gemma-4-E4B-it-ONNX` (~3.7GB)
+  - `onnx-community/gemma-4-E2B-it-ONNX` (~2.6GB)
+- Lizenz: Apache 2.0 (frei nutzbar, auch kommerziell)
+- Beide unterstützen: Text, Image, Audio (multimodal), 128K Context, 140+ Sprachen
+- QAT (Quantization-Aware Training) Versionen verfügbar für noch kleinere Größe:
+  - `onnx-community/gemma-4-E2B-it-qat-mobile-ONNX` (noch kleiner)
+  - `onnx-community/gemma-4-E4B-it-qat-mobile-ONNX`
+
+**Warum Gemma 4 E4B für Desktop und E2B für Server:**
+- E4B = 4.5B effektive Parameter → bessere Antworten, mehr Reasoning-Tiefe
+- E2B = 2.3B effektive Parameter → leichter, läuft auf Raspberry Pi
+- Beide verstehen Deutsch gut (140+ Sprachen unterstützt)
+- Beide haben 128K Context — genug für Filament-DB + Drucker-Info + Chat-Verlauf
+- Beide sind instruction-tuned ("it") — können direkt chaten ohne Fine-Tuning
+- Native System Prompt Support — ideal für unseren System-Prompt mit Filament-DB
+- Native Function Calling — KI kann direkt Aktionen in der Software auslösen
 
 **Warum ONNX und nicht Ollama:**
 - Kein extra Service der laufen muss (Ollama = separater Prozess)
 - Kein Port, keine Konfiguration, kein Installationsaufwand für User
 - Modell wird mit App gebündelt (.onnx Datei in Assets/)
 - FlipsiSort und FlipsiColor machen es ähnlich — KI ist eingebettet, nicht extern
-- ONNX Runtime ist cross-platform (Windows + Linux), NuGet verfügbar
-- Gesamtgröße: ~2-4GB (Gemma 2B INT4) + ~23MB (Embedding) = akzeptabel für Desktop-App
+- ONNX Runtime ist cross-platform (Windows + Linux, ARM64 + x64)
+- Gesamtgröße Desktop: ~3.7GB (E4B) + ~23MB (Embedding) = ~3.8GB
+- Gesamtgröße Server: ~2.6GB (E2B) + ~23MB (Embedding) = ~2.7GB
 
 **NuGet:** `Microsoft.ML.OnnxRuntime` (cross-platform, ARM64 + x64)
-**Modelle:** `Assets/ai/gemma4-2b-int4.onnx` (LLM) + `Assets/ai/all-MiniLM-L6-v2-q8.onnx` (Embedding)
+**Modelle:**
+- Desktop: `Assets/ai/gemma-4-E4B-it-ONNX/` (LLM, ~3.7GB)
+- Server: `Assets/ai/gemma-4-E2B-it-ONNX/` (LLM, ~2.6GB)
+- Beide: `Assets/ai/all-MiniLM-L6-v2-q8.onnx` (Embedding, ~23MB)
+
+**App-Größe mit eingebetteter KI:**
+- Desktop Installer/Portable: ~4GB (E4B + Embedding + App)
+- Server Docker Image: ~3GB (E2B + Embedding + App)
+- Akzeptabel für eine Desktop-App mit vollständiger Offline-KI
+
+**KI-Anbieter Schnittstelle (optional, in Einstellungen):**
+```csharp
+public interface IAiProvider
+{
+    Task<float[]> EmbedAsync(string text);      // für Embedding-Suche
+    Task<string> CompleteAsync(string prompt);  // für Chat + Empfehlungen
+}
+
+// Implementierungen:
+public class LocalOnnxProvider : IAiProvider { ... }     // Default — Gemma 4 E4B/E2B lokal
+public class OpenAiProvider : IAiProvider { ... }         // Optional — User konfiguriert
+public class AnthropicProvider : IAiProvider { ... }     // Optional
+public class OllamaProvider : IAiProvider { ... }         // Optional — falls User Ollama hat
+
+// In Einstellungen:
+// KI-Anbieter: ( ) Lokal-Gemma4-E4B (Desktop) ( ) Lokal-Gemma4-E2B (Server/Light)
+//              ( ) OpenAI  ( ) Anthropic  ( ) Ollama  ( ) Custom
+```
 
 ### Drucker-Assistent Chat (Gemma 4 2B lokal)
 
