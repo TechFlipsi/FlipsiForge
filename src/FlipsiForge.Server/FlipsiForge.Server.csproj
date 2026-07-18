@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Version>0.1.0-pre</Version>
+    <Company>TechFlipsi</Company>
+    <Authors>Fabian Kirchweger</Authors>
+    <Product>FlipsiForge Server</Product>
+    <Description>FlipsiForge 3D printer management server (Full or Lite mode)</Description>
+    <PackageLicenseExpression>GPL-3.0-only</PackageLicenseExpression>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\FlipsiForge.Core\FlipsiForge.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.0-preview.6.25358.103" />
+  </ItemGroup>
+
+</Project>

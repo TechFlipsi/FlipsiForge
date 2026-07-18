@@ -1,0 +1,7 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/FlipsiForge.Core/FlipsiForge.Core.csproj" />
+    <Project Path="src/FlipsiForge.Desktop/FlipsiForge.Desktop.csproj" />
+    <Project Path="src/FlipsiForge.Server/FlipsiForge.Server.csproj" />
+  </Folder>
+</Solution>

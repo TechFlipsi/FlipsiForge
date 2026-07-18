@@ -1,0 +1,38 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="FlipsiForge.Desktop.Views.AiAssistantView"
+             Background="#050507">
+
+    <Grid RowDefinitions="Auto,*,Auto" Margin="8">
+        <!-- Header mit Modell-Badge -->
+        <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="8" Margin="0,0,0,8">
+            <TextBlock Text="🤖 Drucker-Assistent" FontWeight="Bold" Foreground="#ff6600" />
+            <Border Background="#1a1a2e" CornerRadius="3" Padding="6,2">
+                <TextBlock Text="Gemma 4 (Modell nicht geladen)" FontSize="11" Foreground="#888" />
+            </Border>
+        </StackPanel>
+
+        <!-- Chat-Verlauf -->
+        <Border Grid.Row="1" Background="#0a0a0f" BorderBrush="#222" BorderThickness="1" CornerRadius="4">
+            <ScrollViewer>
+                <StackPanel Spacing="12" Margin="12">
+                    <TextBlock Text="KI-Assistent ist im Pre-Release noch nicht aktiv."
+                               Foreground="#666" FontSize="13" TextWrapping="Wrap" />
+                    <TextBlock Text="Im Pre-Release kannst du bereits Drucker und Filament verwalten."
+                               Foreground="#555" FontSize="12" TextWrapping="Wrap" />
+                    <TextBlock Text="Die Gemma 4 E4B/E2B Integration folgt in v0.2.0."
+                               Foreground="#555" FontSize="12" TextWrapping="Wrap" />
+                </StackPanel>
+            </ScrollViewer>
+        </Border>
+
+        <!-- Eingabe -->
+        <DockPanel Grid.Row="2" Margin="0,8,0,0">
+            <Button Content="➤" DockPanel.Dock="Right" Background="#ff6600" Foreground="#050507"
+                    Padding="16,8" IsEnabled="False" />
+            <TextBox Watermark="Frage an den Drucker-Assistenten..."
+                     Background="#1a1a2e" Foreground="#fff" BorderBrush="#333"
+                     IsEnabled="False" />
+        </DockPanel>
+    </Grid>
+</UserControl>

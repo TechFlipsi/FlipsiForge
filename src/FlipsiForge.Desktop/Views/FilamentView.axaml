@@ -1,0 +1,15 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="FlipsiForge.Desktop.Views.FilamentView"
+             Background="#050507">
+    <Grid Margin="8">
+        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="8">
+            <TextBlock Text="🧶" FontSize="48" HorizontalAlignment="Center" Opacity="0.3" />
+            <TextBlock Text="Kein Filament im Inventar" Foreground="#666" HorizontalAlignment="Center" />
+            <TextBlock Text="Füge deine erste Filament-Spule hinzu"
+                       Foreground="#444" FontSize="12" HorizontalAlignment="Center" />
+            <Button Content="+ Spule hinzufügen" Background="#ff6600" Foreground="#050507"
+                    Padding="16,6" Margin="0,8,0,0" />
+        </StackPanel>
+    </Grid>
+</UserControl>

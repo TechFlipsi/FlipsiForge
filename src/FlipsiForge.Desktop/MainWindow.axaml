@@ -1,0 +1,52 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:FlipsiForge.Desktop.ViewModels"
+        xmlns:views="using:FlipsiForge.Desktop.Views"
+        x:Class="FlipsiForge.Desktop.MainWindow"
+        Title="FlipsiForge v0.1.0-pre"
+        Width="1280" Height="800"
+        MinWidth="1024" MinHeight="600"
+        Background="#050507">
+
+    <Window.Resources>
+        <vm:ViewModelBase x:Key="ViewModel" />
+    </Window.Resources>
+
+    <Grid RowDefinitions="Auto,*">
+        <!-- Header -->
+        <Border Grid.Row="0" Background="#0a0a0f" Padding="16,10">
+            <StackPanel Orientation="Horizontal" Spacing="16">
+                <TextBlock Text="🔥" FontSize="24" VerticalAlignment="Center" />
+                <TextBlock Text="FlipsiForge" FontSize="20" FontWeight="Bold"
+                           Foreground="#ff6600" VerticalAlignment="Center" />
+                <TextBlock Text="v0.1.0-pre" FontSize="12" Foreground="#666"
+                           VerticalAlignment="Center" Margin="0,4,0,0" />
+            </StackPanel>
+        </Border>
+
+        <!-- TabControl mit 7 Tabs -->
+        <TabControl Grid.Row="1" Background="#050507" Padding="4">
+            <TabItem Header="📁 Datei-Manager">
+                <views:FileManagerView />
+            </TabItem>
+            <TabItem Header="🖨️ Drucker">
+                <views:PrinterView />
+            </TabItem>
+            <TabItem Header="🧶 Filament">
+                <views:FilamentView />
+            </TabItem>
+            <TabItem Header="🌐 Model-Repository">
+                <views:ModelRepoView />
+            </TabItem>
+            <TabItem Header="📊 Statistik">
+                <views:StatisticsView />
+            </TabItem>
+            <TabItem Header="🔥 Kosten-Rechner">
+                <views:CostCalculatorView />
+            </TabItem>
+            <TabItem Header="🤖 KI-Assistent">
+                <views:AiAssistantView />
+            </TabItem>
+        </TabControl>
+    </Grid>
+</Window>
