@@ -127,23 +127,36 @@ FlipsiForge is a cross-platform 3D printing management tool that handles files, 
 
 Eine kleine KI-Integration die dem User hilft die richtigen Einstellungen zu finden:
 
-- **Filament-Empfehlung** — analysiert die STL-Geometrie (Wandstärke, Overhangs, Größe, Detailgrad) und empfiehlt das passende Filament aus dem Inventar. "Dieses Modell hat dünne Wände und hohe Overhangs → PETG oder ABS empfohlen, nicht TPU"
-- **Druck-Einstellungs-Empfehlung** — basierend auf Datei + Filament + Drucker:
+- **Verwendungszweck (optional, Text-Eingabe)** — User beschreibt wofür das Modell gedacht ist:
+  - "Auto-Innenraum" → hitzebeständig, UV-stabil → ASA oder ABS
+  - "Außenbereich" → wetterfest, UV-resistent → ASA oder PETG
+  - "Dekoration im Haus" → optische Qualität, keine Belastung → PLA
+  - "Funktionsbauteil mit Gewinde" → fest, verschleißfest → PETG oder PA
+  - "Flexible Dichtung" → flexibel → TPU
+  - "Protoyp zum Testen" → schnell, billig → PLA
+  - Frei eingebbbar — KI interpretiert den Text
+- **Filament-Empfehlung mit Inventar-Check** — KI hat Zugriff auf das komplette Filament-Inventar:
+  - "Ideal wäre PETG, aber du hast keins → nimm ABS (hast du 2 Spulen) → PLA ist ungeeignet für Außenbereich"
+  - "Du hast 3 passende Spulen: Prusament PETG Orange, eSUN PETG Schwarz, Polymaker PETG Grau"
+  - "Kein passendes Filament im Inventar → PETG kaufen (empfohlen für dieses Modell)"
+- **Druck-Einstellungs-Empfehlung** — basierend auf Datei + Filament + Drucker + Verwendungszweck:
   - Hotend-Temperatur (z.B. PLA 200-220°C, PETG 230-245°C, TPU 220-240°C)
   - Bett-Temperatur (z.B. PLA 50-60°C, PETG 70-90°C)
   - Layer-Höhe (0.12mm Fine / 0.16mm Optimal / 0.24mm Draft)
   - Druckgeschwindigkeit (Fine Detail → langsam, Simple Geometrie → schnell)
   - Retraction-Distanz, Cooling-Fan %, Flow Rate
   - Infill-Dichte & Pattern (basierend auf Zweck: Prototyp vs. Funktionsbauteil)
-- **Slicer-Profil-Generierung** — KI generiert komplettes Slicer-Profil (OrcaSlicer/PrusaSlicer) basierend auf Datei + Filament + Drucker. User kann direkt starten
-- **Fehler-Prävention** — warnt vor Problemen: "Hotend-Temperatur zu hoch für dieses Filament", "Bett-Temperatur außerhalb des empfohlenen Bereichs", "Layer-Höhe zu groß für 0.2mm Düse"
+- **Slicer-Profil-Generierung** — KI generiert komplettes Slicer-Profil (OrcaSlicer/PrusaSlicer) basierend auf Datei + Filament + Drucker + Zweck. User kann direkt starten
+- **Fehler-Prävention** — warnt vor Problemen: "Hotend-Temperatur zu hoch für dieses Filament", "Bett-Temperatur außerhalb des empfohlenen Bereichs", "Layer-Höhe zu groß für 0.2mm Düse", "ABS braucht geschlossenen Drucker — deiner ist offen"
 - **Ziel-Modus** — User wählt Ziel: "Maximale Festigkeit", "Schneller Druck", "Optische Qualität", "Prototyp". KI passt Einstellungen entsprechend an
 - **Erklärung** — KI erklärt WARUM sie jede Einstellung empfiehlt. Nicht nur Werte, sondern Begründung
+- **Drucker-Datenbank (offline)** — mitgelieferte Datenbank mit Standard-Drucker-Profilen (Snapmaker U1, Neptune 4 Pro, Bambu Lab X1C, Prusa MK4, Creality Ender 3, Voron 2.4, etc.) — KI kann Tipps geben auch ohne Internet
+- **Vollständiger Daten-Zugriff** — KI hat Zugriff auf: Filament-Inventar, Drucker-Profile, Druck-Historie, Material-Datenbank, Drucker-Datenbank. Alles wird in den Prompt injiziert
 - **Lokales Modell** — läuft offline, kein Cloud-Zwang. Entweder kleines fein-getuntes Modell oder regelbasiertes System mit LLM als Fallback
 
 **Technischer Ansatz:**
 - Kein speziell trainiertes 3D-Druck-Modell existiert (Stand Juli 2026)
-- **Hybrid-System:** Regelbasierte Datenbank (Material-Typ → Standard-Temperaturen/Speed) + LLM für komplexe Empfehlungen (Geometrie-Analyse, Ziel-Modus)
+- **Hybrid-System:** Regelbasierte Datenbank (Material-Typ → Standard-Temperaturen/Speed) + LLM für komplexe Empfehlungen (Geometrie-Analyse, Ziel-Modus, Inventar-Check, Verwendungszweck)
 - **Referenz:** [Slicer Copilot](https://github.com/pfrankov/slicer-copilot) (11★, Apache-2.0) — nutzt LLM (GPT-4o) um .3mf-Projekte zu analysieren und Settings zu optimieren. Funktioniert mit lokalem LLM (OpenAI-compatible API)
 - **Wissenschaft:** [LLM-3D Print](https://arxiv.org/abs/2408.14307) — Forschung zeigt dass LLMs ohne Fine-Tuning 3D-Druck-Parameter optimieren können
 - **Datenquelle:** 3D-Druck-Settings-Datenbank (cnccode.com) mit Standardwerten für PLA/PETG/ABS/TPU für Temperatur/Speed/Retraction/Quality
