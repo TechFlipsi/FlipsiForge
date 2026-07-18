@@ -185,7 +185,9 @@ Ein PC-Programm passend zur TechFlipsi Homepage. Schwerpunkt: 3D-Drucker-Managem
 
 ## TechFlipsi Ecosystem Integration
 
-- **Design language**: Dark Void + Ember theme (matching techflipsi.kirchweger.de)
+- **Design**: Dark Void (`#050507`) + Ember (`#ff6600`) — identisch zur TechFlipsi Homepage
+- **Logo**: "TECH" weiß + "FLIPSI" orange — selbes Logo wie techflipsi.kirchweger.de
+- **Schriften**: Inter (Body) + Space Grotesk (Headings) — wie Homepage
 - **Branding**: TechFlipsi family product
 - **Software-Standard**: Avalonia UI + Installer/Portable + GPL-3.0 + 13 Sprachen i18n
 - **Website cross-link**: techflipsi.kirchweger.de/geraete.html
