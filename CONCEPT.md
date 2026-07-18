@@ -54,7 +54,7 @@ Ein PC-Programm passend zur TechFlipsi Homepage. Schwerpunkt: 3D-Drucker-Managem
 ## Übergreifend
 - **🔥 Druck-Kosten-Rechner** (Sir bestätigt: MUSS rein!) — Filament-Gewicht × Preis/gram + Stromkosten (Drucker-Watt × Dauer × Strompreis) + Verschleiß = Gesamtkosten
 - **Cloud-Sync** (optional): Nextcloud (Priorität 1), Google Drive, OneDrive, Dropbox. Sync von Einstellungen + Filament-Stand + Datei-Ablage. Default = lokal ohne Cloud.
-- **Server-Variante (Headless)**: ASP.NET Core Web Server für Raspberry Pi / Linux Server. Web-UI für Browser-Zugriff (Handy, Tablet, PC). Multi-User im selben Netzwerk. 24/7 Druck-Überwachung ohne PC. Docker Image (ARM64 + x64). Shared Core mit Desktop-App.
+- **Server-Variante (eingebaut, nicht separat)**: Die Desktop-App ist immer der Client. Server-Modus ist optional — in Settings → Server URL eingeben → App zieht Filamente/Drucker/Einstellungen vom Server. UI bleibt identisch ob lokal oder server-verbunden. Server = ASP.NET Core Backend (headless, Raspberry Pi, Docker ARM64+x64). Web-UI für Browser-Zugriff (Handy/Tablet ohne Desktop-App). Remote-Zugang via Tailscale/WireGuard/Reverse Proxy. Multi-PC Sync über denselben Server. Server abschaltbar → App fällt zurück auf lokales SQLite.
 - **Projekt-Gruppen**: Dateien + Filament + Drucker zu einem "Projekt" zusammenfassen
 - **Export/Backup**: Gesamte Datenbank exportieren (JSON/CSV)
 - **Dark/Light Theme**: Dark Void + Ember als Default (TechFlipsi-Style)
@@ -87,9 +87,9 @@ Ein PC-Programm passend zur TechFlipsi Homepage. Schwerpunkt: 3D-Drucker-Managem
 | v0.5.0 | Cloud-Sync (Nextcloud P1) + Settings + Multi-PC |
 | v0.6.0 | Multi-Drucker Dashboard + Webcam + Notifications |
 | v0.7.0 | i18n (13 languages) |
-| v0.8.0 | FlipsiForge.Server — Headless ASP.NET Core + Web-UI (Raspberry Pi) |
+| v0.8.0 | Built-in Server: FlipsiForge.Server Backend + App Server-Connect Mode + Web-UI + Docker (Raspberry Pi) |
 | v0.9.0 | Cloud-Sync Erweiterung (Google Drive, OneDrive, Dropbox) |
-| v1.0.0 | Installer (Windows .exe + Linux .deb) + Portable (.zip) + Server Docker image |
+| v1.0.0 | Installer (Windows .exe + Linux .deb) + Portable (.zip) + Server Docker image (ARM64 + x64) |
 
 ## TechFlipsi Ecosystem Integration
 
