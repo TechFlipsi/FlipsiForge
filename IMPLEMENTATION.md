@@ -902,6 +902,145 @@ public class DriveScanner
 
 ### 4.1 Material-Datenbank (Auto-Fill Densities)
 
+### Filament Spool Model (Full CRUD + Size + Weight)
+
+```csharp
+public class FilamentSpool
+{
+    public int Id { get; set; }
+    public string Brand { get; set; } = "";
+    public string MaterialName { get; set; } = "";
+    public string MaterialType { get; set; } = "PLA";   // PLA, PETG, ...
+    public decimal Density { get; set; }                 // g/cm³
+    public decimal DiameterMm { get; set; } = 1.75m;     // 1.75, 2.85, 3.00
+
+    // Weight tracking
+    public decimal NominalWeightG { get; set; } = 1000m;  // advertised (e.g. 1000g)
+    public decimal ActualWeightG { get; set; }            // measured (scale)
+    public decimal ConsumedWeightG { get; set; } = 0m;    // auto-deducted on print
+    public decimal EmptySpoolWeightG { get; set; } = 0m;  // for weigh-to-calculate
+    public decimal RemainingWeightG => (ActualWeightG > 0 ? ActualWeightG : NominalWeightG) - ConsumedWeightG;
+
+    // Spool dimensions (for AMS/box compatibility)
+    public decimal SpoolWidthMm { get; set; }              // e.g. 56mm
+    public decimal SpoolOuterDiameterMm { get; set; }      // e.g. 200mm
+    public decimal SpoolInnerDiameterMm { get; set; }      // e.g. 52mm
+    public decimal SpoolHubDiameterMm { get; set; }        // e.g. 80mm
+
+    // Cost
+    public decimal PurchasePrice { get; set; }             // total price paid
+    public decimal PricePerKg => NominalWeightG > 0 ? PurchasePrice / (NominalWeightG / 1000m) : 0m;
+    public decimal PricePerGram => NominalWeightG > 0 ? PurchasePrice / NominalWeightG : 0m;
+
+    // Visual
+    public string? ColorHex { get; set; }                  // e.g. "#1a1a1a"
+    public string? PhotoPath { get; set; }                // shop photo or own photo
+
+    // NFC / QR
+    public string? NfcTagUid { get; set; }                // OpenPrintTag UUID
+    public string? QrCode { get; set; }                   // generated QR identifier
+
+    // Status & lifecycle
+    public SpoolStatus Status { get; set; } = SpoolStatus.Active;
+    public DateTime PurchaseDate { get; set; }
+    public DateTime? ArchivedAt { get; set; }              // when removed/archived
+
+    // Relations
+    public List<DryingSession> DryingSessions { get; set; } = new();
+    public List<PrintJob> PrintJobs { get; set; } = new();
+}
+
+public enum SpoolStatus
+{
+    Active,     // in use, ready to print
+    InDryer,    // currently drying
+    InStorage,  // stored away
+    Empty,      // consumed, waiting to be archived
+    Archived    // removed/kept for history
+}
+```
+
+### Filament Manager (Add / Edit / Remove)
+
+```csharp
+public class FilamentManager
+{
+    private readonly FlipsiForgeDbContext _db;
+
+    public async Task<FilamentSpool> AddSpoolAsync(SpoolConfig config)
+    {
+        var spool = new FilamentSpool
+        {
+            Brand = config.Brand,
+            MaterialName = config.MaterialName,
+            MaterialType = config.MaterialType,
+            Density = MaterialDatabase.GetValueOrDefault(config.MaterialType, 1.24m),
+            DiameterMm = config.DiameterMm,
+            NominalWeightG = config.NominalWeightG,
+            ActualWeightG = config.ActualWeightG,
+            EmptySpoolWeightG = config.EmptySpoolWeightG,
+            SpoolWidthMm = config.SpoolWidthMm,
+            SpoolOuterDiameterMm = config.SpoolOuterDiameterMm,
+            SpoolInnerDiameterMm = config.SpoolInnerDiameterMm,
+            SpoolHubDiameterMm = config.SpoolHubDiameterMm,
+            PurchasePrice = config.PurchasePrice,
+            ColorHex = config.ColorHex,
+            PurchaseDate = DateTime.UtcNow,
+            Status = SpoolStatus.Active
+        };
+        _db.Spools.Add(spool);
+        await _db.SaveChangesAsync();
+        return spool;
+    }
+
+    // Multi-pack: add multiple identical spools at once
+    public async Task<List<FilamentSpool>> AddMultiPackAsync(SpoolConfig config, int count)
+    {
+        var spools = new List<FilamentSpool>();
+        for (int i = 0; i < count; i++)
+            spools.Add(await AddSpoolAsync(config));
+        return spools;
+    }
+
+    public async Task EditSpoolAsync(int spoolId, SpoolConfig updates)
+    {
+        var spool = await _db.Spools.FindAsync(spoolId);
+        if (spool == null) return;
+        spool.Brand = updates.Brand;
+        spool.MaterialName = updates.MaterialName;
+        spool.MaterialType = updates.MaterialType;
+        spool.Density = updates.Density;
+        spool.DiameterMm = updates.DiameterMm;
+        spool.NominalWeightG = updates.NominalWeightG;
+        spool.ActualWeightG = updates.ActualWeightG;
+        spool.ColorHex = updates.ColorHex;
+        spool.PurchasePrice = updates.PurchasePrice;
+        // ... alle Felder
+        await _db.SaveChangesAsync();
+    }
+
+    public async Task RemoveSpoolAsync(int spoolId, bool keepHistory = true)
+    {
+        var spool = await _db.Spools.FindAsync(spoolId);
+        if (spool == null) return;
+
+        if (keepHistory)
+        {
+            spool.Status = SpoolStatus.Archived;
+            spool.ArchivedAt = DateTime.UtcNow;
+        }
+        else
+        {
+            // Full purge — delete spool + all related data
+            var drying = _db.DryingSessions.Where(d => d.SpoolId == spoolId);
+            _db.DryingSessions.RemoveRange(drying);
+            _db.Spools.Remove(spool);
+        }
+        await _db.SaveChangesAsync();
+    }
+}
+```
+
 ```csharp
 public static readonly Dictionary<string, MaterialInfo> MaterialDatabase = new()
 {

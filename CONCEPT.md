@@ -91,12 +91,15 @@ Ein PC-Programm passend zur TechFlipsi Homepage. Schwerpunkt: 3D-Drucker-Managem
 - Benachrichtigungen (Desktop-Notification bei Druckende/Error)
 
 ### Tab 3: 🧶 Filament-Verwaltung (Eigenes System)
+- **Spulen hinzufügen/bearbeiten/löschen** — vollständiges CRUD. Neue Spule anlegen, Details bearbeiten, entfernen wenn leer/verkauft/weggeworfen. Historie optional behalten oder komplett löschen
+- **Filament-Größenangabe** — Durchmesser (1.75mm, 2.85mm, 3.00mm) + Spulen-Abmessungen (Breite, Außendurchmesser, Innendurchmesser, Nabendurchmesser) für AMS/Box-Kompatibilität
+- **Gewichts-Tracking** — Nenngewicht (laut Hersteller), Ist-Gewicht (gemessen), Verbrauch (auto-abgezogen beim Drucken), Restgewicht (berechnet). Leerspulengewicht für Wiege-Funktion
 - Spulen-Inventar (Marke, Typ, Farbe, Gewicht, Restbestand)
-- Spool Lifecycle: neu → in-use → leer
-- Kosten-Tracking (Preis/Spule, Preis/Gramm)
-- Low-Stock Warnungen
+- Spool Lifecycle: neu → in-use → leer → archiviert
+- Kosten-Tracking (Preis/Spule, Preis/Gramm, Preis/kg)
+- Low-Stock Warnungen (konfigurierbar)
 - Material-Typen: PLA, PETG, TPU, ABS, ASA, PC, Nylon, etc.
-- Farb-Tags mit visuellen Swatches
+- Farb-Tags mit visuellen Swatches + Farb-Filter
 - Verbrauchs-Historie (welcher Druck, wie viel)
 - Auto-Abzug bei Druck-Ende
 - QR-Code pro Spule (generieren + scannen)
@@ -106,6 +109,8 @@ Ein PC-Programm passend zur TechFlipsi Homepage. Schwerpunkt: 3D-Drucker-Managem
 - Trocknungs-Timer mit Countdown
 - Material-Empfehlung ("PLA/PETG, nicht TPU" basierend auf Geometrie)
 - Verbrauch pro Kategorie (Diagramm: "2,3kg PLA vs 800g PETG")
+- **Spool-Status** — aktiv, im Trockner, im Lager, leer, archiviert. Nach Status filtern
+- **Multi-Pack** — mehrere identische Spulen auf einmal anlegen ("5× Prusament PLA Galaxy Black, je 1000g")
 
 ### Tab 4: 🌐 Model-Repository
 - Unified Search über Thingiverse, Printables, MakerWorld (und mehr)
