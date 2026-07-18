@@ -237,7 +237,8 @@ FlipsiForge.Server (Optional)   — ASP.NET Core backend, any Linux server
 | Schrift Body | `Inter` |
 | Schrift Headings | `Space Grotesk` |
 | Karten/Surface | Dark surface mit Border + Hover-Glow |
-| Logo | "TECH" weiß + "FLIPSI" orange (`.flip` class) |
+| Logo | `logo-emblem.png` — 3D-Drucker-Extruder der einen Wireframe-Würfel druckt (Neon-Orange auf Schwarz, kreisförmig). Selbes Bild wie techflipsi.kirchweger.de |
+| App-Icon | `apple-touch-icon.png` / `favicon.ico` — abgeleitet vom Logo-Emblem |
 | Buttons | `.cta-button` mit Arrow SVG Icon |
 
 ## Roadmap (Planned)
