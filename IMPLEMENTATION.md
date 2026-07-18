@@ -1972,12 +1972,20 @@ flipsiforge-hacs/
 
 ### HA Add-on (Docker Container)
 
+**Wichtig:** Das HA Add-on mit FlipsiForge **Server Full** (KI + Web-UI) funktioniert **nur auf starken HA-Hosts** — nicht auf Raspberry Pi! HA selbst braucht schon RAM, plus Add-ons, plus FlipsiForge mit KI-Modell = zu viel für einen Pi.
+
+**Empfehlung:**
+- **HA auf Raspberry Pi:** Nur FlipsiForge **Server Lite** als Add-on (reine Überwachung, keine KI, ~200MB RAM). HACS Integration für Sensoren.
+- **HA auf NUC / Intel NUC / Proxmox VM / starkem Server:** FlipsiForge **Server Full** als Add-on (mit KI + Web-UI). Genug RAM für HA + Add-ons + KI-Modell.
+- **Alternative:** FlipsiForge Server separat (eigener Pi 4 / NUC), nur HACS Integration verbindet HA mit FlipsiForge. Kein Add-on nötig.
+
 ```yaml
-# config.yaml
-name: FlipsiForge
+# config.yaml — zwei Varianten
+# Variante 1: Full (nur auf starkem HA-Host!)
+name: FlipsiForge Full
 version: "1.0.0"
-slug: flipsiforge
-description: FlipsiForge 3D printer management server
+slug: flipsiforge-full
+description: FlipsiForge 3D printer management with AI + Web-UI (NUC/VM only!)
 arch:
   - aarch64
   - amd64
@@ -1991,12 +1999,34 @@ ingress_port: 8080
 options:
   api_key: ""
   sync_interval: 3600
+  ai_model: "auto"    # auto, e2b, e2b-qat, off
+schema:
+  api_key: str
+  sync_interval: int
+  ai_model: list(auto|e2b|e2b-qat|off)
+map:
+  - share:rw
+  - media:rw
+
+# Variante 2: Lite (für Raspberry Pi HA)
+name: FlipsiForge Lite
+version: "1.0.0"
+slug: flipsiforge-lite
+description: FlipsiForge 3D printer monitoring (no AI, no Web-UI — Pi compatible)
+arch:
+  - aarch64
+  - amd64
+startup: services
+boot: auto
+options:
+  api_key: ""
+  sync_interval: 3600
 schema:
   api_key: str
   sync_interval: int
 map:
   - share:rw
-  - media:rw
+```
 ```
 
 **.NET auf HA Alpine:** `dotnet publish -r linux-musl-arm64 --self-contained` (Alpine nutzt musl libc → `linux-musl-*` RIDs).
