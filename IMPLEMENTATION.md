@@ -2306,6 +2306,7 @@ var serverAdvisor = new PrinterAssistant(
 - 4-8GB RAM → Stufe 2 (E2B, Mini-PC)
 - 2-4GB RAM → Stufe 3 (E2B QAT, Raspberry Pi 4)
 - User kann in Einstellungen manuell wählen: "Voll (E4B)", "Leicht (E2B)", "Minimal (E2B QAT)"
+- **KI komplett ausschaltbar** — User kann KI in Einstellungen deaktivieren. Dateinamen-Suche (Fuzzy) funktioniert weiterhin, nur KI-Suche/Chat/Empfehlungen sind aus. Empfehlungen aus Filament-DB (Auto-Fill Temperaturen) funktionieren auch ohne KI.
 
 **Download der Modelle:**
 - Alle als ONNX auf HuggingFace verfügbar (Apache 2.0):
