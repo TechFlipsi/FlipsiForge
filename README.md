@@ -22,10 +22,11 @@ A single, well-structured desktop application that handles three core pillars of
 - Search & filter across all discovered files
 - Watch folders — automatically detect new files
 
-### 2. 🖨️ Printer Management — Direct Control
+### Printer Management — Direct Control
 
-- Connect to Klipper/Moonraker printers (HTTP REST API)
-- Multiple printer profiles (Snapmaker U1, Neptune 4 Pro, etc.)
+- Connect to Klipper/Moonraker printers (HTTP REST API) and Marlin printers (USB-serial)
+- Multiple printer profiles (Snapmaker U1, Neptune 4 Pro, any Marlin printer)
+- ** Druck-Kosten-Rechner** — Filament weight × price/g + electricity (printer wattage × duration × kWh price) + wear = total cost per print
 - Real-time data display:
   - Bed temperature / Hotend temperature (per extruder)
   - Print status (idle, printing, paused, error)
@@ -41,8 +42,9 @@ A single, well-structured desktop application that handles three core pillars of
   - Load/unload filament macros
 - G-code terminal (send raw commands)
 
-### 3. 🧶 Filament Management — Spool Tracking
+### 3. 🧶 Filament Management — Spool Tracking (Eigenes System)
 
+- Custom-built filament tracking (not Spoolman — adaptable to community needs)
 - Track filament inventory (brand, type, color, weight, remaining)
 - Spool lifecycle: new → in-use → empty
 - Cost tracking per spool (price paid, price per gram)
@@ -52,17 +54,21 @@ A single, well-structured desktop application that handles three core pillars of
 - Usage history (which print used how much)
 - Integration with printer tab (auto-deduct filament on print completion)
 
-## Tech Stack (Preliminary)
+## Tech Stack
 
 | Component | Choice | Reason |
 |-----------|--------|--------|
-| Framework | Avalonia UI 12 (.NET 10) | Cross-platform (Windows + Linux), proven with FlipsiColor.Avalonia |
-| Language | C# 13 | Familiar, performant |
+| Framework | Avalonia UI 12 (.NET 10) | TechFlipsi software standard, cross-platform (Windows + Linux) |
+| Language | C# 13 | Proven with FlipsiColor.Avalonia |
 | File scanning | .NET filesystem watchers + background indexing | Non-blocking, incremental |
 | STL rendering | OpenTK / Silk.NET for 3D preview thumbnails | Hardware-accelerated preview |
-| Printer protocol | Moonraker REST API + WebSocket for live data | Standard for Klipper-based printers |
-| Local storage | SQLite (LiteDB alternative for document-style) | Embedded, no server needed |
-| i18n | JSON-based localization (like FlipsiColor/FlipsiSort) | Consistent with existing TechFlipsi apps |
+| Printer protocol (Klipper) | Moonraker REST API + WebSocket | Standard for Klipper-based printers |
+| Printer protocol (Marlin) | USB-serial (System.IO.Ports) | For Arduino-based non-Klipper printers |
+| Cloud-Sync | Nextcloud WebDAV (P1) + Google Drive / OneDrive / Dropbox | Optional, default = local-only |
+| Local storage | SQLite | Embedded, no server needed |
+| i18n | JSON-based localization (13 languages) | Consistent with FlipsiColor/FlipsiSort |
+| Packaging | Installer (.exe + .deb) + Portable (.zip) | New TechFlipsi standard |
+| License | GPL-3.0 | Consistent with all TechFlipsi projects |
 
 ## TechFlipsi Ecosystem Integration
 
@@ -75,16 +81,18 @@ A single, well-structured desktop application that handles three core pillars of
 | Phase | Scope |
 |-------|-------|
 | v0.1.0 | File scanner + grid/list view + STL thumbnails |
-| v0.2.0 | Printer tab (Moonraker connection, live data, basic controls) |
-| v0.3.0 | Filament inventory tracking |
-| v0.4.0 | Cross-tab integration (start print from file → deduct from spool) |
-| v0.5.0 | Settings, multi-printer, profiles |
-| v0.6.0 | i18n (13 languages like FlipsiColor/FlipsiSort) |
-| v1.0.0 | Installer (Windows .exe + Linux .deb), portable version |
+| v0.2.0 | Printer tab (Moonraker + Marlin, live data, basic controls) |
+| v0.3.0 | Filament inventory tracking (custom system) |
+| v0.4.0 | Druck-Kosten-Rechner + cross-tab integration |
+| v0.5.0 | Cloud-Sync (Nextcloud P1) + settings + multi-PC |
+| v0.6.0 | Multi-printer dashboard + webcam + notifications |
+| v0.7.0 | i18n (13 languages) |
+| v0.8.0 | Cloud-Sync extension (Google Drive, OneDrive, Dropbox) |
+| v1.0.0 | Installer (Windows .exe + Linux .deb) + Portable (.zip) |
 
 ## License
 
-MIT — same as other TechFlipsi projects.
+GPL-3.0 — same as all TechFlipsi projects.
 
 ## Author
 
