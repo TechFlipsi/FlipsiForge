@@ -189,3 +189,103 @@ Ein PC-Programm passend zur TechFlipsi Homepage. Schwerpunkt: 3D-Drucker-Managem
 - **Software-Standard**: Avalonia UI + Installer/Portable + GPL-3.0 + 13 Sprachen i18n
 - **Website cross-link**: techflipsi.kirchweger.de/geraete.html
 - **Community**: Öffentlich, Issues/PRs willkommen (wie FlipsiColor)
+
+## Referenz-Projekte — Was es gibt und was wir besser machen
+
+### Drucker-Kontrolle (Klipper/Moonraker)
+
+| Projekt | Stars | Sprache | Lizenz | Was es kann | Was wir übernehmen |
+|---------|-------|---------|--------|-------------|---------------------|
+| **[Mainsail](https://github.com/mainsail-crew/mainsail)** | 2.180 | Vue | GPL-3.0 | Beliebtestes Klipper Web-UI. Dashboard, Macros, Temperature Curves, Webcam | UI/UX Patterns für Drucker-Dashboard, Macro-Verwaltung |
+| **[Fluidd](https://github.com/fluidd-core/fluidd)** | 1.782 | Vue | GPL-3.0 | Zweites großes Klipper UI. Lightweight, responsive | Alternative UI-Patterns, responsive Design-Ideen |
+| **[OctoPrint](https://github.com/OctoPrint/OctoPrint)** | 9.041 | Python | AGPL-3.0 | Das originale 3D-Drucker Web-Interface. Plugin-System, G-code viewer, Timelapse | Plugin-System Architektur, G-code Visualisierung, Timelapse-Pattern |
+| **[KlipperScreen](https://github.com/jordanruthe/KlipperScreen)** | 1.363 | Python | AGPL-3.0 | Touchscreen-Interface für Klipper | Touch-optimized UI Patterns (relevant für Web-UI auf Tablet) |
+| **[Moonraker](https://github.com/Arksine/moonraker)** | 1.427 | Python | GPL-3.0 | API Server für Klipper. REST + WebSocket | Unsere direkte API-Grundlage für Klipper-Drucker |
+
+**Unser Vorteil**: Mainsail/Fluidd/OctoPrint sind reine Web-Interfaces. FlipsiForge bietet eine **native Desktop-App** mit Datei-Manager, Filament-Tracking und Model-Repository — alles in einem. Plus Server-Modus mit Auto-Discovery.
+
+### Slicer
+
+| Projekt | Stars | Sprache | Lizenz | Relevanz |
+|---------|-------|---------|--------|----------|
+| **[OrcaSlicer](https://github.com/OrcaSlicer/OrcaSlicer)** | 15.138 | C++ | AGPL-3.0 | Meistgenutzter Open-Source Slicer. Wir rufen die CLI davon auf |
+| **[PrusaSlicer](https://github.com/prusa3d/PrusaSlicer)** | 9.179 | C++ | AGPL-3.0 | Zweite Slicer-Option für CLI-Integration |
+| **[Cura](https://github.com/Ultimaker/Cura)** | 6.996 | Python | LGPL-3.0 | Dritte Option. Python-basiert, auch CLI-callable |
+
+**Unser Ansatz**: Wir bauen keinen eigenen Slicer. Wir orchestrieren OrcaSlicer/PrusaSlicer/Cura via CLI — STL → Slice → G-code → Drucker, alles aus FlipsiForge.
+
+### Filament-Management
+
+| Projekt | Stars | Sprache | Lizenz | Was es kann | Was wir besser machen |
+|---------|-------|---------|--------|-------------|----------------------|
+| **[Spoolman](https://github.com/Donkie/Spoolman)** | 2.608 | Python | MIT | Beliebtestes Filament-Tracking. Web-Service, QR-Codes, Klipper/Moonraker-Integration, OctoPrint-Plugin | Wir bauen eigenes System: Desktop-App statt nur Web, Trocknungs-Log/Timer, Material-Empfehlung, Verbrauchs-Vorhersage, Kosten-Rechner integriert |
+| **[SpoolEase](https://github.com/yanshay/SpoolEase)** | 528 | Rust | — | NFC-basiertes Filament-Management. Gewicht/Location-Tracking, Slicer-Integration | NFC als zusätzliche Option neben QR-Codes interessant |
+
+**Unser Vorteil**: Spoolman ist nur Filament. Wir haben Filament + Drucker + Dateien + Kosten in einer App. Plus Trocknungs-Log und Material-Empfehlung die keines der beiden hat.
+
+### 3D-Modell-Verwaltung (Datei-Manager)
+
+| Projekt | Stars | Sprache | Lizenz | Was es kann | Was wir besser machen |
+|---------|-------|---------|--------|-------------|----------------------|
+| **[Manyfold](https://github.com/manyfold3d/manyfold)** | 2.083 | Ruby | AGPL-3.0 | Self-hosted 3D-Modell-Verwaltung. Docker, Tags, STL-Viewer im Browser, Metadata | Wir: Desktop-App statt nur Web, Auto-Scan aller Laufwerke (nicht nur ein Ordner), STL-Reparatur-Check, G-code Visualizer, Duplikat-Erkennung, Drucker-Eignung-Check |
+| **[StlVault](https://github.com/rubenwe/StlVault)** | 230 | C# | MIT | 3D-Modell-Viewer und Organizer. "Lightroom für 3D-Druck" | C# — gleiche Sprache wie wir! Architektur als Referenz. Wir erweitern um Drucker/Filament/Kosten |
+| **[STL Shelf](https://stl-shelf.com)** | — | — | — | Private STL-Bibliothek. Versioning, Katalogisierung | Datei-Versionierung als Inspiration |
+
+**Unser Vorteil**: Manyfold und StlVault sind nur Datei-Manager. FlipsiForge verbindet Dateien mit Druckern (start print from file manager) und Filament (auto-deduct on print). Niemand hat das bisher in einer App.
+
+### Model-Repository (Online-Suche)
+
+| Projekt | Stars | Was es kann |
+|---------|-------|-------------|
+| **[3DScanner](https://github.com/MoeinAlz/3DScanner)** | 0 | Scrapt MakerWorld, Printables, Thingiverse gleichzeitig. "No more jumping between websites" |
+
+**Das bestätigt unsere Idee**: Jemand hatte exakt denselben Gedanken — unified search über alle Plattformen. Aber 0 Stars, winzig. Wir bauen das richtig: in eine Desktop-App integriert, mit Download direkt in den Datei-Manager, Filter, "Makes" Gallery.
+
+### STL-Reparatur
+
+| Projekt | Stars | Sprache | Was es kann |
+|---------|-------|---------|-------------|
+| **[stlrepair](https://github.com/shanekirk/stlrepair)** | 6 | C++ | CLI-Tool: repariert broken STL headers, truncated data, non-triangle data |
+
+**Insight**: STL-Reparatur ist ein Nischen-Feature. Wir bauen es direkt in die App ein als Pre-Print-Check — warnt before man druckt, nicht nur nachher.
+
+### Kosten-Rechner
+
+| Projekt | Stars | Was es kann |
+|---------|-------|-------------|
+| **[3D_Printer_Cost_Calculator](https://github.com/BahadrPoroy/3D_Printer_Cost_Calculator)** | 0 | Desktop, C++, Filament + Strom |
+| **[FilamentCalculator](https://github.com/MKinG4ever/FilamentCalculator)** | 0 | Python, Filament + Strom + Verschleiß + Profit |
+
+**Insight**: Kosten-Rechner gibt es als Standalone-Tools, aber niemand hat es in ein 3D-Druck-Management-Tool integriert. Bei uns ist es Teil des Workflows: Datei auswählen → Filament wählen → Kosten automatisch berechnet → Drucken.
+
+### Timelapse
+
+| Projekt | Stars | Was es kann |
+|---------|-------|-------------|
+| **[easy-timelapse](https://github.com/Mercuso/easy-timelapse)** | 9 | Webcam/Phone → Timelapse bei Layer-Change |
+| **OctoPrint** (Plugin) | — | Built-in Timelapse via G-code hooks |
+
+**Unser Ansatz**: Server-side Timelapse (PC muss nicht an bleiben). Moonraker hat camera endpoint + layer-change hooks. Snapshots → ffmpeg → MP4.
+
+## Was FlipsiForge einzigartig macht
+
+Kein existierendes Projekt kombiniert alle diese Bereiche:
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                    FlipsiForge                          │
+│                                                         │
+│  Datei-Manager  +  Drucker-Kontrolle  +  Filament-DB    │
+│  (Manyfold)        (Mainsail/Fluidd)     (Spoolman)      │
+│       +                +                      +          │
+│  Model-Search    Slicer-Integration    Kosten-Rechner    │
+│  (3DScanner)      (OrcaSlicer CLI)      (niemand hat)    │
+│       +                +                      +          │
+│  STL-Repair      Druck-Queue             Trocknungs-Log  │
+│  (stlrepair)      (OctoPrint)             (niemand hat)  │
+│                                                         │
+│  = Alles in EINER App. Desktop + Server.                │
+└─────────────────────────────────────────────────────────┘
+```
+
+**Bisher muss man 4-5 Tools kombinieren:** Mainsail (Drucker) + Spoolman (Filament) + Manyfold (Dateien) + OrcaSlicer (Slicing) + Web-Browser (Modelle suchen). FlipsiForge macht das alles.
