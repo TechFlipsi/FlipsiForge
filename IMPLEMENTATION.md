@@ -2360,14 +2360,14 @@ public class OllamaProvider : IAiProvider { ... }         // Optional — falls 
 //              ( ) OpenAI  ( ) Anthropic  ( ) Ollama  ( ) Custom
 ```
 
-### Drucker-Assistent Chat (Gemma 4 2B lokal)
+### Drucker-Assistent Chat (Gemma 4 E4B/E2B lokal)
 
 Ein Chat-Interface direkt in der Software. User stellt Fragen, KI antwortet — kontext-bewusst mit allen Software-Daten.
 
 ```csharp
 public class PrinterAssistant
 {
-    private readonly LocalLlmModel _llm;  // Gemma 4 2B via ONNX, lokal
+    private readonly LocalLlmModel _llm;  // Gemma 4 E4B (Desktop) oder E2B (Server) via ONNX, lokal
     private readonly FlipsiForgeDbContext _db;
     private readonly List<ChatMessage> _history = new();  // Chat-Verlauf
 
@@ -2385,7 +2385,7 @@ public class PrinterAssistant
             string.Join("\n", _history.Select(m => $"{m.Role}: {m.Content}")) +
             "\nassistant: ";
 
-        // Gemma 4 2B generiert Antwort lokal
+        // Gemma 4 E4B/E2B generiert Antwort lokal
         var response = await _llm.GenerateAsync(fullPrompt, maxTokens: 500);
 
         _history.Add(new ChatMessage("assistant", response));
