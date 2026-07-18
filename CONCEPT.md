@@ -15,7 +15,7 @@ Ein PC-Programm passend zur TechFlipsi Homepage. Schwerpunkt: 3D-Drucker-Managem
 | # | Frage | Antwort |
 |---|-------|---------|
 | 1 | Framework | **Avalonia UI (.NET 10)** — neuer TechFlipsi Software-Standard. Windows + Linux. **Portable Version** = neuer Standard für alle TechFlipsi Apps! |
-| 2 | Drucker-Protokoll | **Klipper/Moonraker + Marlin** (USB-serial). Klipper ist Standard, aber Marlin für breite Community. |
+| 2 | Drucker-Protokoll | **5 Protokolle für alle Hersteller**: (1) Klipper/Moonraker — Snapmaker, Elegoo, Voron, Qidi, Anycubic. (2) Marlin USB-serial — Creality, Anycubic, Artillery, legacy. (3) Bambu Lab MQTT+FTP — Bambu X1/P1/A1. (4) PrusaLink REST — Prusa MK3/MK4/MK3.5/SL1. (5) OctoPrint REST — jeder Drucker mit OctoPrint host. Ziel: JEEDER 3D-Drucker auf dem Markt einbindbar. |
 | 3 | Plattform | **Windows + Linux** |
 | 4 | Packaging | **Installer + Portable** — neuer Standard! |
 | 5 | Cloud-Sync | **Optional, Default = Lokal.** Nextcloud = Priorität 1. Auch Google Drive, OneDrive, Dropbox. Use-Cases: Einstellungen sync, Filament-Stand auf allen PCs, 3D-Druck-Dateien zentral. |
