@@ -1448,21 +1448,41 @@ var plugin = (IFlipsiPlugin)Activator.CreateInstance(pluginType);
 
 **NuGet:** `Lang.Avalonia` + `Lang.Avalonia.Json` (v12.1.0.1, Avalonia 12 kompatibel)
 
+**13 Sprachen** — gleicher Standard wie FlipsiColor und FlipsiSort:
+
+| # | Sprache | Kulturcode | JSON Datei |
+|---|---------|------------|-----------|
+| 1 | English (Fallback) | `en-US` | `en-US.json` |
+| 2 | Deutsch | `de-DE` | `de-DE.json` |
+| 3 | Français | `fr-FR` | `fr-FR.json` |
+| 4 | Español | `es-ES` | `es-ES.json` |
+| 5 | Italiano | `it-IT` | `it-IT.json` |
+| 6 | Português | `pt-PT` | `pt-PT.json` |
+| 7 | Nederlands | `nl-NL` | `nl-NL.json` |
+| 8 | Polski | `pl-PL` | `pl-PL.json` |
+| 9 | Русский | `ru-RU` | `ru-RU.json` |
+| 10 | 中文 (简体) | `zh-CN` | `zh-CN.json` |
+| 11 | 日本語 | `ja-JP` | `ja-JP.json` |
+| 12 | 한국어 | `ko-KR` | `ko-KR.json` |
+| 13 | Türkçe | `tr-TR` | `tr-TR.json` |
+
+**Regel (wie FlipsiColor/FlipsiSort):** Eingestellte Sprache = NUR Wörter in dieser Sprache. Deutsch → keine englischen Wörter sichtbar. Alle 13 Sprachen müssen ECHTE Übersetzungen sein — keine English-Kopien als Platzhalter.
+
 ```
 I18n/
 ├── en-US.json    # English (Fallback)
 ├── de-DE.json    # Deutsch
-├── fr-FR.json    # Französisch
-├── es-ES.json    # Spanisch
-├── it-IT.json    # Italienisch
-├── pt-PT.json    # Portugiesisch
-├── nl-NL.json    # Niederländisch
-├── pl-PL.json    # Polnisch
-├── ru-RU.json    # Russisch
-├── zh-CN.json    # Chinesisch (vereinfacht)
-├── ja-JP.json    # Japanisch
-├── ko-KR.json    # Koreanisch
-└── tr-TR.json    # Türkisch
+├── fr-FR.json    # Français
+├── es-ES.json    # Español
+├── it-IT.json    # Italiano
+├── pt-PT.json    # Português
+├── nl-NL.json    # Nederlands
+├── pl-PL.json    # Polski
+├── ru-RU.json    # Русский
+├── zh-CN.json    # 中文 (vereinfacht)
+├── ja-JP.json    # 日本語
+├── ko-KR.json    # 한국어
+└── tr-TR.json    # Türkçe
 ```
 
 ```json
