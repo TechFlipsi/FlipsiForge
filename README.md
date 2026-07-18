@@ -342,7 +342,7 @@ server:
 | Filament-Sync (Multi-PC) | ✅ | ✅ |
 | Timelapse | ✅ | ❌ |
 | REST API | ✅ | ✅ |
-| Home Assistant | ✅ (nur auf starkem HA-Host) | ✅ (Sensoren nur) |
+| Home Assistant | ✅ HACS + Add-on | ✅ HACS (Sensoren nur) |
 | mDNS Auto-Discovery | ✅ | ✅ |
 | RAM Bedarf | 2GB+ (Pi 4 mit QAT) | 200-500MB |
 | Disk Bedarf | 1.5GB+ (mit QAT) | ~100MB |

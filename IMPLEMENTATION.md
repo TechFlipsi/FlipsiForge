@@ -1972,12 +1972,32 @@ flipsiforge-hacs/
 
 ### HA Add-on (Docker Container)
 
-**Wichtig:** Das HA Add-on mit FlipsiForge **Server Full** (KI + Web-UI) funktioniert **nur auf starken HA-Hosts** — nicht auf Raspberry Pi! HA selbst braucht schon RAM, plus Add-ons, plus FlipsiForge mit KI-Modell = zu viel für einen Pi.
+**Wichtig:** HACS Integration und HA Add-on sind **zwei verschiedene Dinge**:
 
-**Empfehlung:**
-- **HA auf Raspberry Pi:** Nur FlipsiForge **Server Lite** als Add-on (reine Überwachung, keine KI, ~200MB RAM). HACS Integration für Sensoren.
-- **HA auf NUC / Intel NUC / Proxmox VM / starkem Server:** FlipsiForge **Server Full** als Add-on (mit KI + Web-UI). Genug RAM für HA + Add-ons + KI-Modell.
-- **Alternative:** FlipsiForge Server separat (eigener Pi 4 / NUC), nur HACS Integration verbindet HA mit FlipsiForge. Kein Add-on nötig.
+1. **HACS Integration** (Python, läuft in HA Core) — Liefert Sensoren/Daten in HA:
+   - Filament-Bestand, Drucker-Status, Druck-Fortschritt, Kosten, etc.
+   - Funktioniert mit **beiden** Server-Modi (Full und Lite)
+   - Funktioniert auch wenn FlipsiForge **separat** läuft (nicht als Add-on)
+   - Verbindet sich via REST API mit FlipsiForge Server (egal wo er läuft)
+
+2. **HA Add-on** (Docker Container unter HA Supervisor) — Installiert FlipsiForge Server direkt in HA:
+   - Nur wenn man FlipsiForge **in** HA betreiben will (nicht separat)
+   - **Server Full** als Add-on: Nur auf starken HA-Hosts (NUC, Proxmox VM) — nicht auf Pi!
+   - **Server Lite** als Add-on: OK auf Raspberry Pi HA (~200MB RAM)
+   - Braucht HACS Integration **zusätzlich** für Sensoren in HA
+
+**Zusammenfassung:**
+
+| Setup | HACS Integration | HA Add-on | FlipsiForge separat |
+|-------|-----------------|----------|---------------------|
+| FlipsiForge auf eigenem Pi 4/NUC | ✅ (verbindet zu Server) | ❌ | ✅ |
+| FlipsiForge Full in HA (NUC/VM) | ✅ (Sensoren) | ✅ Full | ❌ |
+| FlipsiForge Lite in HA (Pi) | ✅ (Sensoren) | ✅ Lite | ❌ |
+
+**HACS Integration ist immer nötig** — sie liefert die Sensoren/Daten in HA.
+**HA Add-on ist optional** — nur wenn man FlipsiForge direkt in HA installieren will.
+
+#### HA Add-on config.yaml — zwei Varianten
 
 ```yaml
 # config.yaml — zwei Varianten
