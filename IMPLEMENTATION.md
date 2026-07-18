@@ -948,15 +948,51 @@ public class FormatFilterBar
 </StackPanel>
 ```
 
-### 3.10 KI-Suche (immer Dateinamen + KI kombiniert)
+### 3.10 KI-Suche (immer Dateinamen + KI kombiniert, lokal eingebettet)
 
-Suche läuft **immer beides gleichzeitig** — Dateinamen-Suche (sofort, offline) + KI-Suche (lokal, versteht Bedeutung). Kein entweder/oder, kein Umschalten. User tippt "Drache" → sieht sofort alle Treffer in einer Liste.
+Suche läuft **immer beides gleichzeitig** — Dateinamen-Suche (sofort, offline) + KI-Suche (lokal eingebettet, versteht Bedeutung). Kein Ollama, kein externer Service. KI ist direkt in die App eingebettet (ONNX Runtime), wie FlipsiSort/FlipsiColor ihre KI eingebettet haben.
+
+**KI-Treffer sind gekennzeichnet** — jedes KI-Ergebnis hat ein "🤖 KI" Badge damit User sofort sieht woher der Treffer kommt.
 
 ```csharp
+// Lokale KI — ONNX Runtime, kein Ollama, kein externer Service
+// Kleines quantisiertes Modell (z.B. all-MiniLM-L6-v2 quantized, ~23MB)
+// Wird mit der App ausgeliefert, kein Download nötig
+using Microsoft.ML.OnnxRuntime;
+
+public class LocalEmbeddingModel
+{
+    private readonly InferenceSession _session;
+
+    public LocalEmbeddingModel(string modelPath = "Assets/ai/all-MiniLM-L6-v2-q8.onnx")
+    {
+        // ONNX Modell wird mit der App gebündelt
+        _session = new InferenceSession(modelPath);
+    }
+
+    // Text → Vektor (Embedding) für Ähnlichkeitssuche
+    public float[] Embed(string text)
+    {
+        var tokens = Tokenize(text);
+        var input = new DenseTensor<long>(tokens, new[] { 1, tokens.Length });
+        var inputs = new List<NamedOnnxValue>
+        {
+            NamedOnnxValue.CreateFromTensor("input_ids", input),
+            NamedOnnxValue.CreateFromTensor("attention_mask", CreateAttentionMask(tokens))
+        };
+        using var results = _session.Run(inputs);
+        return results.First().AsTensor<float>().ToArray();
+    }
+}
+
 public class FileSearchService
 {
-    private readonly HttpClient _llm;  // Ollama lokal — IMMER lokal, kein Cloud-Zwang
-    private readonly string _model;
+    private readonly LocalEmbeddingModel _embedder;  // immer lokal
+    private readonly HttpClient? _externalAi;        // optional, nur wenn User konfiguriert
+    private readonly string? _externalModel;
+
+    // Datei-Embeddings werden beim Scannen generiert und gespeichert
+    private readonly Dictionary<string, float[]> _fileEmbeddings = new();
 
     // === Einzige Such-Methode: immer Dateinamen + KI kombiniert ===
     public async Task<SearchResults> SearchAsync(
@@ -974,16 +1010,13 @@ public class FileSearchService
             .Select(r => (r.Value, r.Score, Source: "filename"))
             .ToList();
 
-        // 2. KI-Suche (lokal, versteht Bedeutung) — läuft parallel im Hintergrund
-        var aiTask = Task.Run(() => AiSearchAsync(query, fileList));
+        // 2. KI-Suche (lokal eingebettet) — läuft parallel
+        var aiTask = Task.Run(() => AiSearchLocalAsync(query, fileList));
 
-        // Dateinamen-Treffer sofort anzeigen (UI kann schon rendern)
-        // KI-Treffer kommen nach sobald Ollama antwortet (1-3 Sekunden)
-
+        // Dateinamen-Treffer sofort anzeigen
         var aiHits = await aiTask;
 
         // 3. Ergebnisse zusammenführen — Dateinamen-Treffer zuerst, dann KI-Treffer
-        // Dateien die in BEIDEN Listen sind → nur einmal anzeigen (höchste Relevanz)
         var seen = new HashSet<string>();
         var combined = new List<SearchResult>();
 
@@ -1002,97 +1035,157 @@ public class FileSearchService
         return new SearchResults { Files = combined };
     }
 
-    // KI-Suche — versteht Bedeutung, Synonyme, Sprachen
-    private async Task<List<(ScannedFile Value, int Score, string Source)>> AiSearchAsync(
+    // KI-Suche — lokal via Embedding-Ähnlichkeit (kein Ollama!)
+    private async Task<List<(ScannedFile Value, float Score, string Source)>> AiSearchLocalAsync(
         string query, List<ScannedFile> files)
     {
-        var fileDescriptions = files.Select((f, i) =>
-            $"{i}: {f.FileName} | Tags: {f.Tags} | Notizen: {f.Notes}").ToList();
-
-        var prompt = $"""
-        Ein User sucht nach: "{query}"
-
-        Hier sind alle 3D-Druck-Dateien in seiner Sammlung:
-        {string.Join("\n", fileDescriptions)}
-
-        Welche Dateien passen zur Suche? Berücksichtige:
-        - Dateinamen (auch wenn sie anders heißen — "dragon" = "Drache")
-        - Tags und Notizen
-        - Bedeutung/Synonyme (z.B. "Drache" → dragon, wyvern, mythical, lizard, creature)
-        - Sprache (deutsch/englisch/chinesisch — "Drache" = "dragon" = "龙")
-        - Modell-Typ (z.B. "Auto" → car, vehicle, truck, bmw, etc.)
-
-        Gib die Indizes der passenden Dateien zurück als JSON-Array.
-        Sortiere nach Relevanz (beste Treffer zuerst).
-        """;
-
         try
         {
-            var response = await _llm.PostAsJsonAsync("/api/chat", new
+            // Query → Embedding (lokal, ONNX)
+            var queryEmbedding = _embedder.Embed(query);
+
+            var results = new List<(ScannedFile, float, string)>();
+
+            foreach (var file in files)
             {
-                model = _model,
-                messages = new[] { new { role = "user", content = prompt } },
-                format = "json", stream = false
-            });
+                // Datei-Embedding aus Cache (beim Scannen generiert)
+                if (!_fileEmbeddings.TryGetValue(file.Path, out var fileEmbedding))
+                {
+                    // Falls noch nicht indexiert → on-the-fly embedden
+                    fileEmbedding = _embedder.Embed($"{file.FileName} {file.Tags} {file.Notes}");
+                    _fileEmbeddings[file.Path] = fileEmbedding;
+                }
 
-            var result = await response.Content.ReadFromJsonAsync<OllamaResponse>();
-            var indices = ParseIndices(result.Message.Content);
+                // Cosine Similarity zwischen Query und Datei
+                var similarity = CosineSimilarity(queryEmbedding, fileEmbedding);
 
-            return indices.Select(i => (files[i], 100 - i * 5, "ai")).ToList();
+                if (similarity > 0.3f)  // Threshold für "passend"
+                {
+                    results.Add((file, similarity, "ai"));
+                }
+            }
+
+            return results;
         }
         catch
         {
-            // Wenn Ollama nicht läuft → nur Dateinamen-Suche (graceful degradation)
-            return new List<(ScannedFile, int, string)>();
+            // Falls lokales Modell nicht verfügbar → nur Dateinamen-Suche
+            return new List<(ScannedFile, float, string)>();
         }
+    }
+
+    // Optional: externe KI-Anbieter (nur wenn User in Einstellungen konfiguriert)
+    private async Task<List<(ScannedFile, float, string)>> AiSearchExternalAsync(
+        string query, List<ScannedFile> files)
+    {
+        if (_externalAi == null)
+            return new List<(ScannedFile, float, string)>();  // nicht konfiguriert
+
+        // LLM-basierte Suche (z.B. OpenAI, Anthropic)
+        // Nur wenn User explizit einen Anbieter in Einstellungen eingetragen hat
+        // ... (wie vorheriges Prompt-basiertes Pattern)
+    }
+
+    private static float CosineSimilarity(float[] a, float[] b)
+    {
+        float dot = 0, magA = 0, magB = 0;
+        for (int i = 0; i < a.Length; i++)
+        {
+            dot += a[i] * b[i];
+            magA += a[i] * a[i];
+            magB += b[i] * b[i];
+        }
+        return dot / (MathF.Sqrt(magA) * MathF.Sqrt(magB));
     }
 }
 
 public record SearchResults
 {
-    public List<ScannedFile>? AllFiles { get; init; }  // wenn keine Suche aktiv
-    public List<SearchResult>? Files { get; init; }     // Suchergebnisse
+    public List<ScannedFile>? AllFiles { get; init; }
+    public List<SearchResult>? Files { get; init; }
 }
 
-public record SearchResult(ScannedFile File, int Score, string Source)
+public record SearchResult(ScannedFile File, float Score, string Source)
 {
     public bool IsFilenameMatch => Source == "filename";
     public bool IsAiMatch => Source == "ai";
+    public string BadgeText => Source switch
+    {
+        "filename" => "",           // kein Badge für Dateinamen-Treffer
+        "ai" => "🤖 KI",           // KI-Treffer Badge
+        _ => ""
+    };
 }
 ```
 
 **UI Verhalten:**
 1. User tippt "Drache" in Suchfeld
-2. **Sofort** (0ms): Dateinamen-Treffer erscheinen — `drache.stl`, `drachen_burg.stl`
-3. **Nach 1-3 Sekunden**: KI-Treffer werden ergänzt — `dragon_v2.stl`, `mythical_creature.3mf`, `wyvern_print.gcode`
-4. Treffer aus Dateinamen-Suche werden oben angezeigt (höhere Konfidenz), KI-Treffer darunter
-5. Badge pro Treffer: "Dateiname" oder "KI-Empfehlung" damit User weiß woher der Treffer kommt
+2. **Sofort** (0ms): Dateinamen-Treffer erscheinen — `drache.stel`, `drachen_burg.stl` (kein Badge)
+3. **Nach ~100ms**: KI-Treffer werden ergänzt — `dragon_v2.stl` 🤖 KI, `mythical_creature.3mf` 🤖 KI
+4. KI-Treffer haben ein "🤖 KI" Badge rechts neben dem Dateinamen
+5. User sieht sofort: "ah, dragon_v2.stl ist ein KI-Treffer — heißt nicht Drache aber die KI sagt es passt"
 
-**Graceful Degradation:** Wenn Ollama nicht installiert/nicht läuft → nur Dateinamen-Suche. KI-Suche schlägt leise fehl, User merkt nichts — sieht trotzdem die Dateinamen-Treffer.
-
-**Beispiel KI-Suche:**
-
-| Eingabe | Dateinamen-Suche findet (sofort) | KI-Suche findet zusätzlich (1-3s) |
-|---------|----------------------------------|-------------------------------------|
-| "Drache" | `drache.stl`, `drachen_burg.stl` | `dragon_v2.stl`, `mythical_creature.3mf`, `chinese_dragon.stl`, `wyvern_print.gcode` |
-| "Auto" | `auto.stl` | `car_body.stl`, `bmw_m3.3mf`, `vehicle_chassis.stl`, `truck_wheel.stl` |
-| "Düse" | `düse.stl` | `nozzle_v6.stl`, `hotend_block.stl`, `extruder_tip.stl` |
-| "Handy" | `handy.stl` | `phone_stand.stl`, `smartphone_holder.3mf`, `iphone_case.stl` |
-| "klein" | — (kein Match) | Alle Modelle mit kleiner Bounding-Box (KI analysiert Geometrie) |
-
-**Lokal (immer):**
+**Lokale KI — kein Ollama, kein externer Service:**
 ```csharp
-// IMMER lokal — Ollama, kein Cloud, kein Internet nötig
+// IMMER lokal — ONNX Runtime, mit App gebündelt
+// Modell: all-MiniLM-L6-v2 quantized (~23MB) oder ähnlich
+// Kein Ollama, kein Python, kein extra Prozess, kein Internet
 var search = new FileSearchService(
-    new HttpClient { BaseAddress = new("http://localhost:11434") },
-    model: "gemma4:12b"  // oder was lokal läuft
+    embedder: new LocalEmbeddingModel()  // ONNX, eingebettet
+);
+
+// Optional: User kann in Einstellungen externen Anbieter konfigurieren
+// Wenn nicht konfiguriert → lokale KI wird verwendet
+var searchWithExternal = new FileSearchService(
+    embedder: new LocalEmbeddingModel(),
+    externalAi: new HttpClient { BaseAddress = new("https://api.openai.com/v1") },
+    externalModel: "gpt-4o-mini"  // nur wenn User es will
 );
 ```
 
-**Performance bei großen Sammlungen:**
-- < 500 Dateien: KI durchsucht alle in einem Prompt (1-3s)
-- 500-2000 Dateien: Batch-Verarbeitung (500 pro Prompt, Ergebnisse zusammenführen)
-- > 2000 Dateien: Embedding-basierte Vektorsuche (nomic-embed-text lokal) — Dateien werden als Vektoren indexiert, KI-Suche wird zur Ähnlichkeitssuche (sofort nach Indexierung)
+**Warum ONNX und nicht Ollama:**
+- Kein extra Service der laufen muss (Ollama = separater Prozess)
+- Kein Port, keine Konfiguration, kein Installationsaufwand für User
+- Modell wird mit App gebündelt (.onnx Datei in Assets/)
+- FlipsiSort und FlipsiColor machen es ähnlich — KI ist eingebettet, nicht extern
+- ONNX Runtime ist cross-platform (Windows + Linux), NuGet verfügbar
+- ~23MB Modellgröße (quantized) — kein Problem für Installer/Portable
+
+**NuGet:** `Microsoft.ML.OnnxRuntime` (cross-platform, ARM64 + x64)
+
+**KI-Anbieter Schnittstelle (optional, in Einstellungen):**
+```csharp
+public interface IAiProvider
+{
+    Task<float[]> EmbedAsync(string text);      // für Embedding-Suche
+    Task<string> CompleteAsync(string prompt);  // für komplexe Empfehlungen
+}
+
+// Implementierungen:
+public class LocalOnnxProvider : IAiProvider { ... }     // Default — immer verfügbar
+public class OpenAiProvider : IAiProvider { ... }         // Optional — User konfiguriert
+public class AnthropicProvider : IAiProvider { ... }     // Optional
+public class OllamaProvider : IAiProvider { ... }         // Optional — falls User Ollama hat
+
+// In Einstellungen:
+// [ ] KI-Anbieter: ( ) Lokal (Standard)  ( ) OpenAI  ( ) Anthropic  ( ) Ollama  ( ) Custom
+```
+
+**Beispiel KI-Suche mit Badge:**
+
+| Eingabe | Dateinamen-Treffer (sofort, kein Badge) | KI-Treffer (mit 🤖 KI Badge) |
+|---------|---------------------------------------|------------------------------|
+| "Drache" | `drache.stl`, `drachen_burg.stl` | `dragon_v2.stl` 🤖 KI, `mythical_creature.3mf` 🤖 KI, `wyvern_print.gcode` 🤖 KI |
+| "Auto" | `auto.stl` | `car_body.stl` 🤖 KI, `bmw_m3.3mf` 🤖 KI, `truck_wheel.stl` 🤖 KI |
+| "Düse" | `düse.stl` | `nozzle_v6.stl` 🤖 KI, `hotend_block.stl` 🤖 KI |
+| "klein" | — (nichts) | Alle kleinen Modelle 🤖 KI (Embedding erkennt Geometrie-Kontext) |
+
+**Performance:**
+- Embedding-Suche ist **schneller** als LLM-Prompt — nur Vektor-Multiplikation
+- Datei-Embeddings werden beim Scannen generiert und gecacht (SQLite)
+- Suche dauert ~50-100ms (ONNX Inference für Query, dann Cosine Similarity)
+- Kein Warten auf LLM-Antwort — Embeddings sind bereits berechnet
+- Bei > 2000 Dateien: Vektor-Index (FAISS oder simple SQLite Vektor-Suche)
 
 ---
 
