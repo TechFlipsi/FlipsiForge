@@ -270,8 +270,12 @@ Der Server kann in zwei Modi installiert werden:
 
 #### Server Full (mit KI + Web-UI)
 
-- **ASP.NET Core** web server — für NUC, VPS, Pi 5 (8GB), oder jeden Linux-Server mit ≥4GB RAM
-- **KI eingebettet** — Gemma 4 E2B (~2.6GB) oder E2B QAT (~1.3GB) via ONNX. Chat, Empfehlungen, KI-Suche verfügbar über Web-UI
+- **ASP.NET Core** web server — für Raspberry Pi 4 (2GB), NUC, VPS, Pi 5, oder jeden Linux-Server
+- **KI eingebettet** — automatisch passendes Modell je nach RAM, aber **manuell umstellbar**:
+  - ≥8GB RAM → Gemma 4 E2B (~2.6GB) — Standard
+  - 2-4GB RAM → Gemma 4 E2B QAT (~1.3GB) — automatisch gewählt auf Pi 4
+  - User kann manuell umstellen: "Standard (E2B)", "Minimal (E2B QAT)", "KI aus"
+  - Grund für manuelle Umstellung: Falsch-Erkennung, System kann mehr, oder System braucht weniger
 - **Web-UI** — browserbasiertes Interface für Handy/Tablet/PC ohne Desktop-App. Voller Funktionsumfang inkl. KI-Chat
 - **Zwei Zugangswege:**
   1. **Gateway API** (REST + WebSocket) — Desktop-App verbindet sich hier
@@ -284,6 +288,7 @@ Der Server kann in zwei Modi installiert werden:
 - **Drucker-Verwaltung** — Server steuert Drucker 24/7
 - **Datei-Scan** — USB-Laufwerke / Network-Mounts auf dem Server
 - **Docker Image** — ARM64 + x64
+- **Auf Pi 4 (2GB):** Läuft mit E2B QAT (~1.3GB) + Web-UI. KI-Antworten leicht verzögert aber voll funktionsfähig
 
 #### Server Lite (reine Überwachung, keine KI, keine Web-UI)
 
@@ -339,10 +344,10 @@ server:
 | REST API | ✅ | ✅ |
 | Home Assistant | ✅ | ✅ (Sensoren nur) |
 | mDNS Auto-Discovery | ✅ | ✅ |
-| RAM Bedarf | ~4GB+ | ~200-500MB |
-| Disk Bedarf | ~3GB+ (mit KI) | ~100MB |
+| RAM Bedarf | 2GB+ (Pi 4 mit QAT) | 200-500MB |
+| Disk Bedarf | 1.5GB+ (mit QAT) | ~100MB |
 | Docker Image | `server:full` | `server:lite` |
-| Ziel-Hardware | NUC, VPS, Pi 5 (8GB) | Pi 4 (2GB), Mini-PC |
+| Ziel-Hardware | Pi 4 (2GB), NUC, VPS, Pi 5 | Pi 4 (2GB), Mini-PC |
 
 ## Tech Stack
 
@@ -447,10 +452,16 @@ GPL-3.0 — same as all TechFlipsi projects.
 | Komponente | Minimum | Empfohlen |
 |------------|---------|-----------|
 | **OS** | Linux (ARM64 oder x64) | Ubuntu 22.04+ / Debian 12+ |
-| **RAM** | 4GB (mit E2B QAT) | 8GB+ (mit E2B) |
-| **CPU** | ARM64 (Pi 5) oder x64 | NUC / VPS |
-| **Disk** | 3GB+ (mit KI) | 3GB+ |
+| **RAM** | 2GB (Pi 4, mit E2B QAT) | 4GB+ (mit E2B) |
+| **CPU** | ARM64 (Pi 4) oder x64 | Pi 5 / NUC / VPS |
+| **Disk** | 1.5GB+ (mit E2B QAT) | 3GB+ (mit E2B) |
 | **Docker** | Empfohlen | Empfohlen |
+
+**KI-Modell auf Server Full automatisch je nach RAM:**
+- ≥4GB RAM → Gemma 4 E2B (~2.6GB) — Standard
+- 2-4GB RAM → Gemma 4 E2B QAT (~1.3GB) — Pi 4
+- Manuell umstellbar: "Standard (E2B)", "Minimal (E2B QAT)", "KI aus"
+- Auf Pi 4 (2GB): E2B QAT + Web-UI läuft problemlos, KI-Antworten leicht verzögert
 
 ### Server Lite (reine Überwachung, keine KI, keine Web-UI)
 
