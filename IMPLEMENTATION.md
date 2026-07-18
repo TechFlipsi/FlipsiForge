@@ -896,6 +896,193 @@ public class DriveScanner
 }
 ```
 
+### 3.9 Format-Filter Badges
+
+Zeigt oben in der Leiste die Anzahl pro Dateiformat als klickbare Badges:
+
+```csharp
+public class FormatFilterBar
+{
+    // Live-Zähler pro Format
+    public Dictionary<string, int> FormatCounts { get; } = new()
+    {
+        ["STL"] = 0, ["3MF"] = 0, ["G-code"] = 0, ["OBJ"] = 0,
+        ["STEP"] = 0, ["PLY"] = 0, ["AMF"] = 0, ["X3D"] = 0
+    };
+
+    public string? ActiveFilter { get; set; }  // null = alle, "STL" = nur STL
+
+    // Wird beim Scannen live aktualisiert
+    public void OnFileFound(ScannedFile file)
+    {
+        var format = GetFormatName(file.Extension);
+        if (FormatCounts.ContainsKey(format))
+            FormatCounts[format]++;
+    }
+
+    // Filter anwenden
+    public IEnumerable<ScannedFile> ApplyFilter(IEnumerable<ScannedFile> files)
+    {
+        if (string.IsNullOrEmpty(ActiveFilter))
+            return files;  // "Alle" — kein Filter
+        return files.Where(f => GetFormatName(f.Extension) == ActiveFilter);
+    }
+}
+```
+
+**UI (Avalonia AXAML):**
+```xml
+<!-- Format-Filter Leiste oben -->
+<StackPanel Orientation="Horizontal" Classes="format-filter-bar">
+    <Button Content="Alle" Command="{Binding SetFormatFilterCommand}" CommandParameter="{x:Null}"
+            Classes.active="{Binding IsAllActive}" />
+    <Button Content="STL: 200" Command="{Binding SetFormatFilterCommand}" CommandParameter="STL"
+            Classes.active="{Binding IsStlActive}" IsVisible="{Binding HasStl}" />
+    <Button Content="3MF: 50" Command="{Binding SetFormatFilterCommand}" CommandParameter="3MF"
+            Classes.active="{Binding Is3mfActive}" IsVisible="{Binding Has3mf}" />
+    <Button Content="G-code: 120" Command="{Binding SetFormatFilterCommand}" CommandParameter="G-code"
+            Classes.active="{Binding IsGcodeActive}" IsVisible="{Binding HasGcode}" />
+    <Button Content="OBJ: 30" Command="{Binding SetFormatFilterCommand}" CommandParameter="OBJ"
+            Classes.active="{Binding IsObjActive}" IsVisible="{Binding HasObj}" />
+    <!-- ... weitere Formate -->
+</StackPanel>
+```
+
+### 3.10 KI-Suche (Semantic Search)
+
+Normale Suche durchsucht Dateinamen. KI-Suche versteht Bedeutung — "Drache" findet alle Drachen-Modelle egal wie sie heißen.
+
+```csharp
+public class FileSearchService
+{
+    private readonly HttpClient _llm;  // Ollama oder Cloud
+    private readonly string _model;
+
+    // === Modus 1: Normale Suche (Fuzzy, offline) ===
+    public IEnumerable<ScannedFile> NormalSearch(string query, IEnumerable<ScannedFile> files)
+    {
+        if (string.IsNullOrWhiteSpace(query))
+            return files;
+
+        // FuzzySharp durchsucht Dateinamen, Tags, Notizen
+        return Process.ExtractAllBy(query, files.ToList(),
+            f => $"{f.FileName} {f.Tags} {f.Notes}", cutoff: 60)
+            .Select(r => r.Value);
+    }
+
+    // === Modus 2: KI-Suche (Semantic, versteht Bedeutung) ===
+    public async Task<IEnumerable<ScannedFile>> AiSearchAsync(
+        string query,
+        IEnumerable<ScannedFile> files)
+    {
+        if (string.IsNullOrWhiteSpace(query))
+            return files;
+
+        // Dateinamen + Tags + Notizen als Liste vorbereiten
+        var fileList = files.ToList();
+        var fileDescriptions = fileList.Select(f =>
+            $"{f.FileName} | Tags: {f.Tags} | Notizen: {f.Notes}").ToList();
+
+        // KI fragen: welche Dateien passen zum Suchbegriff?
+        var prompt = $"""
+        Ein User sucht nach: "{query}"
+
+        Hier sind alle 3D-Druck-Dateien in seiner Sammlung:
+        {string.Join("\n", fileDescriptions.Select((d, i) => $"{i}: {d}"))}
+
+        Welche Dateien passen zur Suche? Berücksichtige:
+        - Dateinamen (auch wenn sie anders heißen — "dragon" = "Drache")
+        - Tags und Notizen
+        - Bedeutung/Synonyme (z.B. "Drache" → dragon, wyvern, mythical, lizard, creature)
+        - Sprache (deutsch/englisch/chinesisch — "Drache" = "dragon" = "龙")
+        - Modell-Typ (z.B. "Auto" → car, vehicle, truck, bmw, etc.)
+
+        Gib die Indizes der passenden Dateien zurück als JSON-Array.
+        Sortiere nach Relevanz (beste Treffer zuerst).
+        """;
+
+        var response = await _llm.PostAsJsonAsync("/api/chat", new
+        {
+            model = _model,
+            messages = new[] { new { role = "user", content = prompt } },
+            format = "json", stream = false
+        });
+
+        var result = await response.Content.ReadFromJsonAsync<OllamaResponse>();
+        var indices = ParseIndices(result.Message.Content);
+
+        return indices.Select(i => fileList[i]);
+    }
+
+    // === KI-Suche mit Geometrie (optional, fortgeschritten) ===
+    // Wenn Thumbnails generiert wurden, kann KI auch Geometrie analysieren
+    // z.B. "rundes Modell" → findet alle runden/kreisförmigen Objekte
+    public async Task<IEnumerable<ScannedFile>> AiSearchWithGeometryAsync(
+        string query,
+        IEnumerable<ScannedFile> files,
+        Dictionary<int, MeshAnalysis> meshData)  // optional: Geometrie-Daten
+    {
+        var fileList = files.ToList();
+        var descriptions = fileList.Select((f, i) =>
+        {
+            var mesh = meshData.GetValueOrDefault(i);
+            var geomInfo = mesh != null
+                ? $" | Geometrie: {mesh.BoundingBox}, {mesh.TriangleCount} triangles, " +
+                  $"Wandstärke min {mesh.MinWallThickness}mm"
+                : "";
+            return $"{i}: {f.FileName} | Tags: {f.Tags}{geomInfo}";
+        }).ToList();
+
+        var prompt = $"""
+        User sucht: "{query}"
+
+        Dateien mit Geometrie-Daten:
+        {string.Join("\n", descriptions)}
+
+        Berücksichtige neben Namen/Tags auch die Geometrie:
+        - "kleines Modell" → kleine Bounding-Box
+        - "detailreich" → viele Triangles
+        - "dünn" → geringe Wandstärke
+        - "rund" → viele Kurven (hohe Triangle-Dichte bei kleiner Box)
+
+        Gib passende Indizes als JSON-Array zurück, sortiert nach Relevanz.
+        """;
+
+        // ... LLM call same as above
+    }
+}
+```
+
+**Beispiel KI-Suche:**
+
+| Eingabe | Normale Suche findet | KI-Suche findet zusätzlich |
+|---------|---------------------|---------------------------|
+| "Drache" | `drache.stl` (exakt) | `dragon_v2.stl`, `mythical_creature.3mf`, `chinese_dragon.stl`, `wyvern_print.gcode` |
+| "Auto" | `auto.stl` | `car_body.stl`, `bmw_m3.3mf`, `vehicle_chassis.stl`, `truck_wheel.stl` |
+| "Düse" | `düse.stl` | `nozzle_v6.stl`, `hotend_block.stl`, `extruder_tip.stl` |
+| "Handy" | `handy.stl` | `phone_stand.stl`, `smartphone_holder.3mf`, `iphone_case.stl` |
+| "klein" | — (kein Match) | Alle Modelle mit kleiner Bounding-Box (KI analysiert Geometrie) |
+
+**Lokal oder Cloud:**
+```csharp
+// Lokal (Ollama) — offline, kostenlos
+var search = new FileSearchService(
+    new HttpClient { BaseAddress = new("http://localhost:11434") },
+    model: "gemma4:12b"
+);
+
+// Cloud (optional, schneller bei großen Sammlungen)
+var cloudSearch = new FileSearchService(
+    new HttpClient { BaseAddress = new("https://api.openai.com/v1") },
+    model: "gpt-4o-mini"
+);
+```
+
+**Performance bei großen Sammlungen:**
+- < 500 Dateien: KI durchsucht alle in einem Prompt (schnell)
+- 500-2000 Dateien: Batch-Verarbeitung (500 pro Prompt, Ergebnisse zusammenführen)
+- > 2000 Dateien: Embedding-basierte Vektorsuche (nomic-embed-text lokal, ähnlich Honcho) — Dateien werden als Vektoren indexiert, KI-Suche wird zur Ähnlichkeitssuche
+
 ---
 
 ## 4. Filament-Management & Kosten-Rechner

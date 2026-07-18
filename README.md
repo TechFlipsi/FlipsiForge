@@ -19,6 +19,16 @@ FlipsiForge is a cross-platform 3D printing management tool that handles files, 
 - Categorization by type, date, size, material tags
 - Search & filter across all discovered files
 - Watch folders — automatically detect new files
+- **Format-Filter oben** — zeigt Anzahl pro Dateiformat als klickbare Badges oben in der Leiste:
+  - `STL: 200` `3MF: 50` `G-code: 120` `OBJ: 30` `STEP: 15` `PLY: 8` `AMF: 3`
+  - Klick auf ein Format → zeigt nur Dateien dieses Typs
+  - Klick auf "Alle" → zeigt wieder alles
+  - Live aktualisiert beim Scannen
+- **Suche** — zwei Modi:
+  - **Normale Suche** — durchsucht Dateinamen, Tags, Notizen (Fuzzy-tolerant)
+  - **KI-Suche (optional)** — versteht Bedeutung, nicht nur Text. "Drache" eingeben → findet alle Drachen-Modelle, egal ob sie "dragon_v2.stl", "mythical_creature.3mf" oder "chinese_dragon_print.stl" heißen. KI analysiert Dateinamen + Tags + (optional) Thumbnail/Geometrie
+  - Umschaltbar zwischen normaler und KI-Suche (Toggle oder separate Eingabe)
+  - KI-Suche läuft lokal (Ollama) oder Cloud — gleiche Architektur wie KI-Assistent
 - **STL Repair Check** — scan files for defects (non-manifold edges, holes) before printing. Warning when model is broken
 - **G-code Visualizer** — load G-code file → 3D layer-by-layer visualization. See exactly what will be printed
 - **Datei-Versionierung** — edited STLs keep old versions (v1, v2, v3 with dates). No one loses the original by accident
