@@ -94,54 +94,131 @@ FlipsiForge/
 <PackageReference Include="PCSC" Version="7.0.*" />
 <PackageReference Include="PCSC.Iso7816" Version="7.0.*" />
 <PackageReference Include="System.Composition" Version="10.0.*" />
+<PackageReference Include="Serilog" Version="4.*" />
+<PackageReference Include="Serilog.Sinks.File" Version="6.*" />
+<PackageReference Include="Serilog.Sinks.Console" Version="6.*" />
 ```
 
 ### NuGet Packages — Desktop
 
 ```xml
 <!-- FlipsiForge.csproj (Desktop) -->
-<PackageReference Include="Avalonia.UI" Version="12.0.5" />
-<PackageReference Include="Avalonia.ReactiveUI" Version="12.0.5" />
+<!-- Avalonia 12.0.5 (stable, battle-tested in FlipsiColor v0.4.0+) -->
+<PackageReference Include="Avalonia" Version="12.0.5" />
+<PackageReference Include="Avalonia.Desktop" Version="12.0.5" />
+<PackageReference Include="Avalonia.Themes.Fluent" Version="12.0.5" />
+<PackageReference Include="Avalonia.Fonts.Inter" Version="12.0.5" />
+<PackageReference Include="Avalonia.Controls.DataGrid" Version="12.0.1" />
+
+<!-- MVVM: CommunityToolkit.Mvvm (source generators, FlipsiColor pattern) -->
+<PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
+
+<!-- i18n -->
 <PackageReference Include="Lang.Avalonia" Version="12.1.0.1" />
 <PackageReference Include="Lang.Avalonia.Json" Version="12.1.0.1" />
-<PackageReference Include="OpenTK" Version="4.9.*" />
-<!-- oder: Silk.NET -->
+
+<!-- 3D Rendering: Silk.NET + Avalonia NativeControlHost (cross-platform) -->
+<PackageReference Include="Silk.NET" Version="2.*" />
+<PackageReference Include="Silk.NET.OpenGL" Version="2.*" />
+
+<!-- G-code Visualization: SkiaSharp (simpler than GPU for 2D layer rendering) -->
+<PackageReference Include="SkiaSharp" Version="2.88.*" />
+
+<!-- Images -->
+<PackageReference Include="SixLabors.ImageSharp" Version="3.*" />
+
+<!-- USB-Serial (Marlin) -->
 <PackageReference Include="System.IO.Ports" Version="9.0.*" />
-<!-- .NET 10 hat System.IO.Ports eingebaut, aber falls nachinstalliert -->
 ```
 
 ### NuGet Packages — Server
 
 ```xml
 <!-- FlipsiForge.Server.csproj -->
-<PackageReference Include="Microsoft.AspNetCore.App" Version="10.0.*" />
-<PackageReference Include="Makaretu.Dns.Multicast" Version="1.6.*" />
-<PackageReference Include="Telegram.Bot" Version="22.*" />
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <TargetFramework>net10.0</TargetFramework>
+  <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.0" />
+  <PackageReference Include="Makaretu.Dns.Multicast" Version="1.6.*" />
+  <PackageReference Include="Telegram.Bot" Version="22.*" />
+  <PackageReference Include="MQTTnet" Version="4.*" />
+</Project>
 ```
 
-### MVVM Pattern (ReactiveUI)
+### MVVM Pattern (CommunityToolkit.Mvvm — FlipsiColor Pattern)
 
 ```csharp
-// Example: PrinterTabViewModel
-public class PrinterTabViewModel : ReactiveObject
+// CommunityToolkit.Mvvm 8.4.2 — source generators, FlipsiColor uses this
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
+
+public partial class PrinterTabViewModel : ObservableObject, IDisposable
 {
-    private PrinterStatus _status;
-    public PrinterStatus Status
+    [ObservableProperty] private PrinterStatus _status;
+    [ObservableProperty] private bool _isBusy;
+    [ObservableProperty] private string _statusText = "";
+
+    // Computed property — re-notifies when dependencies change
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(FullStatus))]
+    private int _printerCount;
+
+    public string FullStatus => $"Printers: {PrinterCount} — {StatusText}";
+
+    // Change callback (partial method, auto-generated)
+    partial void OnStatusTextChanged(string value)
     {
-        get => _status;
-        set => this.RaiseAndSetIfChanged(ref _status, value);
+        // side-effect on change
     }
 
-    public ReactiveCommand<Unit, Unit> PauseCommand { get; }
-    public ReactiveCommand<Unit, Unit> CancelCommand { get; }
-
-    public PrinterTabViewModel(IPrinterController printer)
+    [RelayCommand(CanExecute = nameof(CanConnect))]
+    private async Task ConnectAsync(CancellationToken token)
     {
-        PauseCommand = ReactiveCommand.CreateFromTask(() => printer.PauseAsync());
-        CancelCommand = ReactiveCommand.CreateFromTask(() => printer.CancelAsync());
+        IsBusy = true;
+        try { /* ... */ }
+        finally { IsBusy = false; }
     }
+    private bool CanConnect() => !IsBusy;
+
+    [RelayCommand]
+    private void SelectPrinter(Printer p) { /* parameter command */ }
 }
 ```
+
+### Multi-Tab App Structure (FlipsiColor Pattern)
+
+FlipsiColor nutzt eine Sidebar + TabControl Architektur. FlipsiForge sollte dasselbe Pattern mit 5 Tabs verwenden:
+
+```xml
+<!-- MainWindow.axaml -->
+<Grid>
+  <Grid.ColumnDefinitions>
+    <ColumnDefinition Width="220"/>   <!-- Sidebar Navigation -->
+    <ColumnDefinition Width="*"/>      <!-- Main Content -->
+  </Grid.ColumnDefinitions>
+
+  <!-- Sidebar with 5 Tab buttons -->
+  <StackPanel Grid.Column="0" Classes="sidebar">
+    <Button Content="📁 Dateien"  Command="{Binding NavigateCommand}" CommandParameter="Files"/>
+    <Button Content="🖨️ Drucker"  Command="{Binding NavigateCommand}" CommandParameter="Printers"/>
+    <Button Content="🧶 Filament" Command="{Binding NavigateCommand}" CommandParameter="Filament"/>
+    <Button Content="🌐 Modelle"  Command="{Binding NavigateCommand}" CommandParameter="Models"/>
+    <Button Content="📊 Statistik" Command="{Binding NavigateCommand}" CommandParameter="Stats"/>
+  </StackPanel>
+
+  <!-- Content area: ViewSwitcher -->
+  <ContentControl Grid.Column="1" Content="{Binding CurrentView}"/>
+</Grid>
+```
+
+### Key Avalonia 12 Pitfalls (from FlipsiColor/FlipsiSort experience)
+
+- **`[ObservableProperty]` requires `partial` class** — source generator needs it
+- **Use `{DynamicResource}` for theme brushes**, NOT `{ThemeResource}` (WPF-only)
+- **`Dispatcher.UIThread.Post()`** not `Dispatcher.Invoke()` for UI thread
+- **`StorageProvider.OpenFilePickerAsync()`** not `OpenFileDialog` (Avalonia 12 API)
+- **Compiled bindings enabled by default** in v12
+- **Version from assembly**: `Assembly.GetExecutingAssembly().GetName().Version?.ToString(3)` — never hardcode
+- **`ScrollBarViewer Padding="L,T,R,48"`** — bottom 48px so last section isn't clipped
 
 ---
 
@@ -554,52 +631,49 @@ public record Mesh(List<Vector3> Vertices, List<int> Indices)
 
 **Keine NuGet nötig** — STL ist simpel genug zum selbst parsen. Alternativ: `netgen-mesh` oder `TriangleNet` für komplexere Operationen.
 
-### 3.2 3D Rendering (OpenTK in Avalonia)
+### 3.2 3D Rendering (Silk.NET + Avalonia NativeControlHost)
+
+**Silk.NET** ist der cross-platform Pfad für 3D-Rendering in Avalonia (Windows + Linux).
+**HelixToolkit.Avalonia.SharpDX** ist Windows-only (DirectX) — nicht nutzbar.
 
 ```csharp
-// NuGet: OpenTK + OpenTK.GLWpfControl (oder Avalonia-integrated)
-using OpenTK.Mathematics;
-using OpenTK.Graphics.OpenGL;
+// Silk.NET OpenGL via Avalonia NativeControlHost
+using Silk.NET.OpenGL;
+using Silk.NET.Windowing;
 
-public class StlRenderer : IDisposable
+public class StlRenderControl : NativeControlHost
 {
+    private GL _gl;
     private int _vao, _vbo, _ebo;
-    private int _shaderProgram;
+    private uint _shaderProgram;
+
+    protected override IPlatformHandle CreatePlatformControlHandle(IPlatformHandle parent)
+    {
+        // Create native OpenGL context via Silk.NET
+        var handle = base.CreatePlatformControlHandle(parent);
+        _gl = GL.GetApi(CreateDefaultContext());
+        SetupShaders();
+        return handle;
+    }
 
     public void LoadMesh(Mesh mesh)
     {
-        GL.GenVertexArrays(1, out _vao);
-        GL.BindVertexArray(_vao);
-
-        // Vertices
-        GL.GenBuffers(1, out _vbo);
-        GL.BindBuffer(BufferTarget.ArrayBuffer, _vbo);
-        var verts = mesh.Vertices.SelectMany(v => new[] { v.X, v.Y, v.Z }).ToArray();
-        GL.BufferData(BufferTarget.ArrayBuffer, verts.Length * sizeof(float), verts, BufferUsageHint.StaticDraw);
-
-        // Indices
-        GL.GenBuffers(1, out _ebo);
-        GL.BindBuffer(BufferTarget.ElementArrayBuffer, _ebo);
-        GL.BufferData(BufferTarget.ElementArrayBuffer, mesh.Indices.Count * sizeof(int), mesh.Indices.ToArray(), BufferUsageHint.StaticDraw);
-
-        GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 3 * sizeof(float), 0);
-        GL.EnableVertexAttribArray(0);
+        // Upload vertices and indices to GPU
+        _gl.GenVertexArrays(1, out _vao);
+        _gl.BindVertexArray(_vao);
+        // ... (same as OpenTK pattern but with Silk.NET API)
     }
 
     public void Render(Camera camera)
     {
-        GL.UseProgram(_shaderProgram);
-        GL.UniformMatrix4(GL.GetUniformLocation(_shaderProgram, "view"), false, ref camera.ViewMatrix);
-        GL.UniformMatrix4(GL.GetUniformLocation(_shaderProgram, "projection"), false, ref camera.ProjectionMatrix);
-        GL.BindVertexArray(_vao);
-        GL.DrawElements(PrimitiveType.Triangles, _indexCount, DrawElementsType.UnsignedInt, 0);
+        _gl.UseProgram(_shaderProgram);
+        _gl.BindVertexArray(_vao);
+        _gl.DrawElements(PrimitiveType.Triangles, (uint)_indexCount, DrawElementsType.UnsignedInt, 0);
     }
 }
 ```
 
-**Avalonia Integration:** `OpenTK.GLWpfControl` in Avalonia 12 via `Avalonia.OpenGL` Native Control.
-
-**Alternative:** `Silk.NET` — modernere API, unterstützt auch windowless rendering (wichtig für Server-side Thumbnails!).
+**NativeControlHost Airspace-Limitation:** Das OpenGL-Control überlagert andere Avalonia-Controls nicht (kein Transparency). STL-Viewer in separatem Panel, nicht über anderen UI-Elementen.
 
 ### 3.3 Thumbnail Generation (Server-side, ohne GPU)
 
@@ -1455,14 +1529,16 @@ public class TelegramNotifier
 
 | Need | Package | Version |
 |------|---------|---------|
-| UI Framework | `Avalonia.UI` | 12.0.5 |
-| MVVM | `Avalonia.ReactiveUI` | 12.0.5 |
+| UI Framework | `Avalonia` + `Avalonia.Desktop` + `Avalonia.Themes.Fluent` | 12.0.5 |
+| MVVM | `CommunityToolkit.Mvvm` | 8.4.2 |
+| DataGrid | `Avalonia.Controls.DataGrid` | 12.0.1 |
 | i18n | `Lang.Avalonia` + `Lang.Avalonia.Json` | 12.1.0.1 |
 | SQLite | `Microsoft.Data.Sqlite` + `SQLitePCLRaw.bundle_e_sqlite3` | 10.0.x |
 | SQLite EF Core | `Microsoft.EntityFrameworkCore.Sqlite` | 10.0.9 |
 | PostgreSQL EF Core | `Npgsql.EntityFrameworkCore.PostgreSQL` | 10.0.x |
 | EF Core Tooling | `Microsoft.EntityFrameworkCore.Design` | 10.0.x |
-| 3D Rendering | `OpenTK` | 4.9.x |
+| 3D Rendering | `Silk.NET` + `Silk.NET.OpenGL` | 2.x |
+| G-code Visualization | `SkiaSharp` | 2.88.x |
 | Image Processing | `SixLabors.ImageSharp` | 3.x |
 | QR Codes | `QRCoder` | 1.8.0 |
 | QR Scanning | `ZXing.Net` | 0.16.x |
@@ -1472,6 +1548,7 @@ public class TelegramNotifier
 | USB-Serial (Marlin) | `System.IO.Ports` | 9.0.x |
 | MQTT (Bambu) | `MQTTnet` | 4.x |
 | Video/RTSP | `LibVLCSharp.Avalonia` | 3.x |
+| Logging | `Serilog` + `Serilog.Sinks.File` + `Serilog.Sinks.Console` | 4.x / 6.x |
 | mDNS Discovery | `Makaretu.Dns.Multicast` | 1.6.x |
 | Plugin System | `System.Composition` (MEF2) | 10.0.x |
 | Telegram Bot | `Telegram.Bot` | 22.x |
