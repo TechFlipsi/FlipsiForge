@@ -503,6 +503,29 @@ server:
 - ⬜ Plugin System
 - ⬜ i18n (13 Sprachen)
 
+### Phase 4: Druckerfarm-Support (v0.4.0+)
+
+Für kommerzielle Nutzer mit 10–50+ Druckern. Skaliert vom Heimwerker bis zur Farm.
+
+- ✅ **Core Models** — PrinterCluster, PrintBatch, BatchItem, FarmSchedule, FarmSettings
+- ✅ **AutoSchedulerService** — automatische Verteilung von Batch-Aufträgen auf freie Drucker
+  - Prioritäts-Sortierung (Low/Normal/High/Urgent)
+  - Deadline-Bewusst: dringende Aufträge zuerst
+  - Bauvolumen-Check: Teil passt auf den Drucker?
+  - MaxConcurrentPrints Limit pro Farm
+  - Failover: fehlerhafte Drucker überspringen, Items neu verteilen
+  - Auto-Reschedule bei Druckfehler (einstellbar)
+- ⬜ **Batch-Slicing** — 50 Teile automatisch slicen und auf 10 Drucker verteilen
+- ⬜ **Drucker-Cluster/Gruppen** — Farm A (Produktion) vs Farm B (Prototyp)
+  - Min/Max Active Printers pro Cluster
+  - Auto-Schedule innerhalb des Clusters
+- ⬜ **Multi-User mit Rollen** — Admin (alles), Operator (drucken), Viewer (nur gucken)
+- ⬜ **Spaghetti-Detection** — Kamera-KI erkennt fehlgeschlagene Drucke (Stub vorhanden, KI-Integration folgt)
+- ⬜ **Farm-Overview Dashboard** — alle Drucker gleichzeitig, Live-Status, geschätzte Fertigstellung
+- ⬜ **ERP/Shop-API** — Aufträge einlesen (CSV/JSON/Webhook), Kosten exportieren
+- ⬜ **Automatische Filament-Nachbestellung** — bei niedrigem Bestand
+- ⬜ **Batch-Export** —fertige Teile als Auftrags-Package mit Kostenreport
+
 ## License
 
 GPL-3.0 — same as all TechFlipsi projects.

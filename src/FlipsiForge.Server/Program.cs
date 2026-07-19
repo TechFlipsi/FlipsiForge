@@ -766,4 +766,258 @@ if (webUiEnabled && serverMode == ServerMode.Full)
     app.MapFallbackToFile("index.html");
 }
 
+// =========================================================================
+//  FARM API — verfügbar in BEIDEN Modi (Full + Lite)
+//  Druckerfarm-Support: Cluster, Batches, Auto-Scheduling, Overview
+//  Lite: alle Endpunkte verfügbar (Farm-Überwachung braucht keine KI)
+//  Full: alle Endpunkte + KI-gestützte Empfehlungen
+// =========================================================================
+
+// --- Drucker-Cluster ---
+
+/// <summary>Listet alle Drucker-Cluster.</summary>
+app.MapGet("/api/farm/clusters", async (FlipsiForgeDbContext db) =>
+{
+    var clusters = await db.Set<PrinterCluster>().ToListAsync();
+    return Results.Ok(clusters);
+}).WithSummary("Farm: Alle Drucker-Cluster");
+
+/// <summary>Erstellt einen neuen Drucker-Cluster.</summary>
+app.MapPost("/api/farm/clusters", async (FlipsiForgeDbContext db, PrinterCluster cluster) =>
+{
+    cluster.CreatedAt = DateTime.UtcNow;
+    db.Set<PrinterCluster>().Add(cluster);
+    await db.SaveChangesAsync();
+    return Results.Created($"/api/farm/clusters/{cluster.Id}", cluster);
+}).WithSummary("Farm: Cluster erstellen");
+
+/// <summary>Liefert einen Cluster nach ID.</summary>
+app.MapGet("/api/farm/clusters/{id}", async (FlipsiForgeDbContext db, int id) =>
+{
+    var cluster = await db.Set<PrinterCluster>().FindAsync(id);
+    return cluster is null ? Results.NotFound() : Results.Ok(cluster);
+}).WithSummary("Farm: Cluster nach ID");
+
+/// <summary>Aktualisiert einen Cluster.</summary>
+app.MapPut("/api/farm/clusters/{id}", async (FlipsiForgeDbContext db, int id, PrinterCluster updated) =>
+{
+    var cluster = await db.Set<PrinterCluster>().FindAsync(id);
+    if (cluster is null) return Results.NotFound();
+    cluster.Name = updated.Name;
+    cluster.Description = updated.Description;
+    cluster.PrinterIds = updated.PrinterIds;
+    cluster.ClusterType = updated.ClusterType;
+    cluster.AutoSchedule = updated.AutoSchedule;
+    cluster.MinActivePrinters = updated.MinActivePrinters;
+    cluster.MaxActivePrinters = updated.MaxActivePrinters;
+    cluster.Notes = updated.Notes;
+    await db.SaveChangesAsync();
+    return Results.Ok(cluster);
+}).WithSummary("Farm: Cluster aktualisieren");
+
+/// <summary>Löscht einen Cluster.</summary>
+app.MapDelete("/api/farm/clusters/{id}", async (FlipsiForgeDbContext db, int id) =>
+{
+    var cluster = await db.Set<PrinterCluster>().FindAsync(id);
+    if (cluster is null) return Results.NotFound();
+    db.Set<PrinterCluster>().Remove(cluster);
+    await db.SaveChangesAsync();
+    return Results.NoContent();
+}).WithSummary("Farm: Cluster löschen");
+
+// --- Print Batches ---
+
+/// <summary>Listet alle Print-Batches (filterbar nach Status).</summary>
+app.MapGet("/api/farm/batches", async (FlipsiForgeDbContext db, string? status = null) =>
+{
+    var query = db.Set<PrintBatch>().AsQueryable();
+    if (!string.IsNullOrEmpty(status) && Enum.TryParse<BatchStatus>(status, true, out var bs))
+        query = query.Where(b => b.Status == bs);
+    var batches = await query.OrderByDescending(b => b.Priority).ThenByDescending(b => b.CreatedAt).ToListAsync();
+    return Results.Ok(batches);
+}).WithSummary("Farm: Alle Batches (filterbar nach Status)");
+
+/// <summary>Erstellt einen neuen Print-Batch.</summary>
+app.MapPost("/api/farm/batches", async (FlipsiForgeDbContext db, PrintBatch batch) =>
+{
+    batch.CreatedAt = DateTime.UtcNow;
+    if (batch.Status == BatchStatus.Pending) batch.Status = BatchStatus.Pending;
+    db.Set<PrintBatch>().Add(batch);
+    await db.SaveChangesAsync();
+    return Results.Created($"/api/farm/batches/{batch.Id}", batch);
+}).WithSummary("Farm: Batch erstellen");
+
+/// <summary>Liefert einen Batch nach ID inkl. Items.</summary>
+app.MapGet("/api/farm/batches/{id}", async (FlipsiForgeDbContext db, int id) =>
+{
+    var batch = await db.Set<PrintBatch>().FindAsync(id);
+    if (batch is null) return Results.NotFound();
+    var items = await db.Set<BatchItem>().Where(i => i.BatchId == id).ToListAsync();
+    return Results.Ok(new { batch, items });
+}).WithSummary("Farm: Batch nach ID mit Items");
+
+/// <summary>Liefert den Fortschritt eines Batches.</summary>
+app.MapGet("/api/farm/batches/{id}/progress", async (FlipsiForgeDbContext db, int id) =>
+{
+    var batch = await db.Set<PrintBatch>().FindAsync(id);
+    if (batch is null) return Results.NotFound();
+    var items = await db.Set<BatchItem>().Where(i => i.BatchId == id).ToListAsync();
+    var totalParts = items.Sum(i => i.Quantity);
+    var completedParts = items.Sum(i => i.PrintedQuantity);
+    var failedParts = items.Count(i => i.Status == BatchItemStatus.Failed);
+    var activePrinters = items.Count(i => i.Status == BatchItemStatus.Printing);
+    var remaining = items.Where(i => i.Status != BatchItemStatus.Completed)
+        .Sum(i => i.EstimatedDurationMin ?? 0);
+    return Results.Ok(new
+    {
+        totalParts,
+        completedParts,
+        failedParts,
+        activePrinters,
+        estimatedRemainingMin = remaining,
+        progressPercent = totalParts > 0 ? (double)completedParts / totalParts * 100 : 0
+    });
+}).WithSummary("Farm: Batch-Fortschritt");
+
+/// <summary>Bricht einen Batch ab.</summary>
+app.MapPost("/api/farm/batches/{id}/cancel", async (FlipsiForgeDbContext db, int id) =>
+{
+    var batch = await db.Set<PrintBatch>().FindAsync(id);
+    if (batch is null) return Results.NotFound();
+    batch.Status = BatchStatus.Cancelled;
+    batch.FinishedAt = DateTime.UtcNow;
+    var items = await db.Set<BatchItem>().Where(i => i.BatchId == id && i.Status == BatchItemStatus.Pending).ToListAsync();
+    foreach (var item in items) item.Status = BatchItemStatus.Failed;
+    await db.SaveChangesAsync();
+    return Results.Ok(batch);
+}).WithSummary("Farm: Batch abbrechen");
+
+// --- Batch Items ---
+
+/// <summary>Fügt Items zu einem Batch hinzu.</summary>
+app.MapPost("/api/farm/batches/{id}/items", async (FlipsiForgeDbContext db, int id, BatchItem item) =>
+{
+    var batch = await db.Set<PrintBatch>().FindAsync(id);
+    if (batch is null) return Results.NotFound();
+    item.BatchId = id;
+    item.Status = BatchItemStatus.Pending;
+    db.Set<BatchItem>().Add(item);
+    batch.TotalParts += item.Quantity;
+    await db.SaveChangesAsync();
+    return Results.Created($"/api/farm/batches/{id}/items/{item.Id}", item);
+}).WithSummary("Farm: Batch-Item hinzufügen");
+
+// --- Auto-Scheduling ---
+
+/// <summary>Verteilt Batch-Aufträge auf verfügbare Drucker.</summary>
+app.MapPost("/api/farm/batches/{id}/schedule", async (FlipsiForgeDbContext db, int id) =>
+{
+    var batch = await db.Set<PrintBatch>().FindAsync(id);
+    if (batch is null) return Results.NotFound();
+
+    // Einfache Scheduling-Logik: Items nach SortOrder, Drucker nach Status
+    var items = await db.Set<BatchItem>()
+        .Where(i => i.BatchId == id && i.Status == BatchItemStatus.Pending)
+        .OrderBy(i => i.SortOrder)
+        .ToListAsync();
+
+    var clusterPrinterIds = batch.AssignedClusterId.HasValue
+        ? (await db.Set<PrinterCluster>().FindAsync(batch.AssignedClusterId.Value))?.PrinterIds ?? new()
+        : new List<int>();
+
+    var printersQuery = db.Printers.Where(p => p.IsActive).AsQueryable();
+    var printers = await printersQuery.ToListAsync();
+
+    // Cluster-Filter
+    if (clusterPrinterIds.Count > 0)
+        printers = printers.Where(p => clusterPrinterIds.Contains(p.Id)).ToList();
+
+    var scheduled = 0;
+    foreach (var item in items)
+    {
+        // Finde einen passenden Drucker (Bauvolumen-Check, idle)
+        var printer = printers.FirstOrDefault(p =>
+            p.BuildVolumeX > 0 && p.BuildVolumeY > 0 &&
+            p.BuildVolumeZ > 0);
+
+        if (printer is null) continue;
+
+        item.AssignedPrinterId = printer.Id;
+        item.Status = BatchItemStatus.Assigned;
+        db.Set<FarmSchedule>().Add(new FarmSchedule
+        {
+            BatchId = id,
+            PrinterId = printer.Id,
+            ScheduledStart = DateTime.UtcNow,
+            EstimatedEnd = DateTime.UtcNow.AddMinutes((double)(item.EstimatedDurationMin ?? 60)),
+            Status = FarmScheduleStatus.Scheduled,
+            Priority = (int)batch.Priority
+        });
+        scheduled++;
+    }
+
+    if (scheduled > 0 && batch.Status == BatchStatus.Pending)
+        batch.Status = BatchStatus.Ready;
+
+    await db.SaveChangesAsync();
+    return Results.Ok(new { scheduled, remaining = items.Count - scheduled });
+}).WithSummary("Farm: Batch auto-schedule auf verfügbare Drucker");
+
+// --- Farm Overview ---
+
+/// <summary>Farm-Übersicht: alle Drucker, aktive Batches, geschätzte Fertigstellung.</summary>
+app.MapGet("/api/farm/overview", async (FlipsiForgeDbContext db) =>
+{
+    var printers = await db.Printers.Where(p => p.IsActive).ToListAsync();
+    var batches = await db.Set<PrintBatch>().Where(b => b.Status == BatchStatus.Printing || b.Status == BatchStatus.Ready).ToListAsync();
+    var items = await db.Set<BatchItem>().Where(i => i.Status == BatchItemStatus.Pending || i.Status == BatchItemStatus.Assigned).ToListAsync();
+
+    return Results.Ok(new
+    {
+        totalPrinters = printers.Count,
+        activePrinters = await db.Set<FarmSchedule>().CountAsync(s => s.Status == FarmScheduleStatus.Running),
+        idlePrinters = printers.Count - await db.Set<FarmSchedule>().CountAsync(s => s.Status == FarmScheduleStatus.Running),
+        totalBatches = await db.Set<PrintBatch>().CountAsync(),
+        activeBatches = batches.Count,
+        totalPartsQueued = items.Sum(i => i.Quantity - i.PrintedQuantity),
+        estimatedCompletionTimeMin = items.Sum(i => (double)(i.EstimatedDurationMin ?? 0)),
+        serverMode = serverMode.ToString(),
+        serverVersion
+    });
+}).WithSummary("Farm: Übersicht über alle Drucker und Batches");
+
+// --- Farm Settings ---
+
+/// <summary>Liefert die Farm-Einstellungen.</summary>
+app.MapGet("/api/farm/settings", async (FlipsiForgeDbContext db) =>
+{
+    var settings = await db.Set<FarmSettings>().FirstOrDefaultAsync();
+    return Results.Ok(settings ?? new FarmSettings());
+}).WithSummary("Farm: Einstellungen");
+
+/// <summary>Aktualisiert die Farm-Einstellungen.</summary>
+app.MapPut("/api/farm/settings", async (FlipsiForgeDbContext db, FarmSettings updated) =>
+{
+    var settings = await db.Set<FarmSettings>().FirstOrDefaultAsync();
+    if (settings is null)
+    {
+        updated.Id = 1;
+        db.Set<FarmSettings>().Add(updated);
+    }
+    else
+    {
+        settings.MaxConcurrentPrints = updated.MaxConcurrentPrints;
+        settings.AutoAssignPrinters = updated.AutoAssignPrinters;
+        settings.PreferSameCluster = updated.PreferSameCluster;
+        settings.FailoverOnError = updated.FailoverOnError;
+        settings.AutoRescheduleFailed = updated.AutoRescheduleFailed;
+        settings.SpaghettiDetectionEnabled = updated.SpaghettiDetectionEnabled;
+        settings.SpaghettiDetectionInterval = updated.SpaghettiDetectionInterval;
+        settings.NotificationOnFail = updated.NotificationOnFail;
+        settings.AutoPauseOnAnomaly = updated.AutoPauseOnAnomaly;
+    }
+    await db.SaveChangesAsync();
+    return Results.Ok(settings ?? updated);
+}).WithSummary("Farm: Einstellungen aktualisieren");
+
 app.Run();

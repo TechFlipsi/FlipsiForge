@@ -28,6 +28,18 @@ public class FlipsiForgeDbContext : DbContext
     /// <summary>Forge-Bot Historie.</summary>
     public DbSet<BotMessage> BotMessages => Set<BotMessage>();
 
+    // === v0.3.0 Farm DbSets ===
+    /// <summary>Drucker-Cluster (Gruppen für Produktion/Tests/etc.).</summary>
+    public DbSet<PrinterCluster> PrinterClusters => Set<PrinterCluster>();
+    /// <summary>Print-Batches (Auftragsgruppen mit mehreren Teilen).</summary>
+    public DbSet<PrintBatch> PrintBatches => Set<PrintBatch>();
+    /// <summary>Einzelne Teile in einem Batch.</summary>
+    public DbSet<BatchItem> BatchItems => Set<BatchItem>();
+    /// <summary>Zeitplan-Einträge (welcher Drucker druckt was wann).</summary>
+    public DbSet<FarmSchedule> FarmSchedules => Set<FarmSchedule>();
+    /// <summary>Globale Farm-Einstellungen (Singleton).</summary>
+    public DbSet<FarmSettings> FarmSettings => Set<FarmSettings>();
+
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
         if (!optionsBuilder.IsConfigured)
@@ -62,6 +74,16 @@ public class FlipsiForgeDbContext : DbContext
 
         modelBuilder.Entity<ScannedFile>()
             .HasIndex(f => f.ContentHash);
+
+        // v0.3.0: Farm - PrinterCluster.PrinterIds als JSON speichern
+        modelBuilder.Entity<PrinterCluster>()
+            .Property(c => c.PrinterIds)
+            .HasConversion(
+                v => System.Text.Json.JsonSerializer.Serialize(v, (System.Type)null!),
+                v => System.Text.Json.JsonSerializer.Deserialize<List<int>>(v ?? "[]", (System.Text.Json.JsonSerializerOptions?)null) ?? new());
+
+        // FarmSettings als Singleton (nur eine Zeile)
+        modelBuilder.Entity<FarmSettings>().HasData(new FarmSettings { Id = 1 });
 
         base.OnModelCreating(modelBuilder);
     }
