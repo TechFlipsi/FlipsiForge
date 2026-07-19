@@ -60,7 +60,47 @@ dotnet run --project src/FlipsiForge.MockMoonraker -- --scenario printing
 
 Siehe [TESTING.md](TESTING.md) für alle Szenarien und Details.
 
-## Wo kannst du mitmachen?
+## Du kannst NICHT programmieren? Kein Problem!
+
+**Du brauchst keine Programmierkenntnisse um zu helfen!** FlipsiForge lebt von Feedback aus der Community — jeder Beitrag zählt, egal ob Code oder nicht.
+
+### Was du ohne Programmierkenntnisse beitragen kannst
+
+| Beitrag | Wie | Aufwand |
+|---------|-----|---------|
+| 💡 **Feature-Wünsche** | Issue eröffnen: "Ich wünsche mir..." — beschreibe was dir im 3D-Druck-Alltag fehlt | 5 Min |
+| 🐛 **Bug-Reports** | Issue eröffnen: "Bei X passiert Y" — Screenshot + Beschreibung reicht | 5 Min |
+| 📝 **Feedback zur UI** | Issue: "Das ist unübersichtlich" oder "Das sollte größer sein" | 5 Min |
+| 🌐 **Übersetzungen** | Muttersprache übersetzen — nur JSON-Dateien, keine Code-Erfahrung nötig | 30 Min |
+| 📖 **Doku verbessern** | Rechtschreibung, Formulierungen, fehlende Erklärungen | 10 Min |
+| 🧪 **Testen** | Mock-Server ausprobieren, Szenarien durchklicken, Bugs melden | 20 Min |
+| 🤔 **Ideen & Konzepte** | "Was wäre wenn FlipsiForge auch X könnte?" — Issue eröffnen | 10 Min |
+| 🎨 **Design-Vorschläge** | Mockup zeichnen/skizzieren, als Issue hochladen | 15 Min |
+
+> **Jeder Feature-Wunsch ist willkommen.** Egal wie klein oder "unrealistisch" — schreib es auf. Wir entscheiden dann gemeinsam was machbar ist. Manchmal ist eine scheinbar unmögliche Idee der beste Anstoß.
+
+### Wie erstellst du ein Feature-Wunsch?
+
+Gehe zu [Issues](https://github.com/TechFlipsi/FlipsiForge/issues/new) und schreibe:
+
+```markdown
+## 💡 Feature-Wunsch: [Kurzer Titel]
+
+### Was ich mir wünsche
+[Beschreibe in eigenen Worten was dir fehlt — keine Technik-Sprache nötig]
+
+### Warum das helfen würde
+[Wie würde es deinen 3D-Druck-Alltag verbessern?]
+
+### Wie es aussehen könnte
+[Optional: Skizze, Screenshot von anderer Software, oder einfach beschreiben]
+```
+
+Fertig. Kein Code, kein PR, kein Fork nötig. Wir kümmern uns um den Rest.
+
+---
+
+## Wo kannst du mitmachen (mit Code)?
 
 ### 🎨 UI/UX (Avalonia / AXAML)
 
