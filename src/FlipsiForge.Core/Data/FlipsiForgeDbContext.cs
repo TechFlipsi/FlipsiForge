@@ -9,6 +9,7 @@ public class FlipsiForgeDbContext : DbContext
     public FlipsiForgeDbContext() { }
     public FlipsiForgeDbContext(DbContextOptions<FlipsiForgeDbContext> options) : base(options) { }
 
+    // === v0.1.0 DbSets ===
     public DbSet<Printer> Printers => Set<Printer>();
     public DbSet<Spool> Spools => Set<Spool>();
     public DbSet<ScannedFile> ScannedFiles => Set<ScannedFile>();
@@ -18,6 +19,14 @@ public class FlipsiForgeDbContext : DbContext
     public DbSet<ChatMessage> ChatMessages => Set<ChatMessage>();
     public DbSet<FilamentBrandSpec> FilamentBrandSpecs => Set<FilamentBrandSpec>();
     public DbSet<AppSettings> Settings => Set<AppSettings>();
+
+    // === v0.2.0 DbSets ===
+    /// <summary>Favoriten-Markierungen für gescannte Dateien.</summary>
+    public DbSet<FavoriteFile> FavoriteFiles => Set<FavoriteFile>();
+    /// <summary>Zugriffs-Logs für gescannte Dateien (Häufigkeit-Sortierung).</summary>
+    public DbSet<FileUsageLog> FileUsageLogs => Set<FileUsageLog>();
+    /// <summary>Forge-Bot Historie.</summary>
+    public DbSet<BotMessage> BotMessages => Set<BotMessage>();
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
@@ -33,7 +42,7 @@ public class FlipsiForgeDbContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        // ScannedFile.Embedding als JSON speichern
+        // ScannedFile.Embedding als JSON-kompatiblen String speichern
         modelBuilder.Entity<ScannedFile>()
             .Property(f => f.Embedding)
             .HasConversion(
@@ -43,6 +52,16 @@ public class FlipsiForgeDbContext : DbContext
 
         // AppSettings als Singleton (nur eine Zeile)
         modelBuilder.Entity<AppSettings>().HasData(new AppSettings { Id = 1 });
+
+        // v0.2.0: Indizes
+        modelBuilder.Entity<FavoriteFile>()
+            .HasIndex(f => f.ScannedFileId);
+
+        modelBuilder.Entity<FileUsageLog>()
+            .HasIndex(f => f.ScannedFileId);
+
+        modelBuilder.Entity<ScannedFile>()
+            .HasIndex(f => f.ContentHash);
 
         base.OnModelCreating(modelBuilder);
     }

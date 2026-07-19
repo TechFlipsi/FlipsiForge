@@ -1,0 +1,54 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="FlipsiForge.Desktop.Views.ForgeBotView"
+             x:CompileBindings="False"
+             Background="Transparent"
+             IsHitTestVisible="True">
+
+    <UserControl.Styles>
+        <Style Selector="Button">
+            <Setter Property="Background" Value="#1a1a2e" />
+            <Setter Property="Foreground" Value="#fff" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="CornerRadius" Value="4" />
+            <Setter Property="Padding" Value="10,5" />
+            <Setter Property="FontSize" Value="12" />
+        </Style>
+    </UserControl.Styles>
+
+    <Panel>
+        <!-- Sprechblase (klein, oben) -->
+        <Border IsVisible="{Binding IsMessageVisible}"
+                Background="#0a0a0f" BorderBrush="#ff6600" BorderThickness="1"
+                CornerRadius="6" Padding="10,6" MaxWidth="220"
+                HorizontalAlignment="Center" VerticalAlignment="Top"
+                Margin="0,0,0,80" ZIndex="20">
+            <TextBlock Text="{Binding CurrentMessage}" Foreground="#fff"
+                       FontSize="11" TextWrapping="Wrap" />
+        </Border>
+
+        <!-- Mascot: SVG-Image -->
+        <Image Source="avares://FlipsiForge.Desktop/Assets/forgebot.svg"
+               Width="120" Height="160"
+               HorizontalAlignment="Center" VerticalAlignment="Bottom"
+               PointerPressed="Mascot_PointerPressed"
+               IsHitTestVisible="True" />
+
+        <!-- Kleines Menü (bei Klick) -->
+        <Border IsVisible="{Binding IsMenuOpen}"
+                Background="#0a0a0f" BorderBrush="#ff6600" BorderThickness="1"
+                CornerRadius="6" Padding="6"
+                HorizontalAlignment="Center" VerticalAlignment="Top"
+                Margin="0,0,0,170" ZIndex="30">
+            <StackPanel Spacing="4">
+                <Button Content="🔕 1h stumm" Command="{Binding MuteOneHourCommand}"
+                        HorizontalContentAlignment="Left" HorizontalAlignment="Stretch" />
+                <Button Content="💬 Nachricht testen" Command="{Binding TriggerMessageCommand}"
+                        HorizontalContentAlignment="Left" HorizontalAlignment="Stretch" />
+                <Button Content="✕ Schließen" Command="{Binding CloseMenuCommand}"
+                        HorizontalContentAlignment="Left" HorizontalAlignment="Stretch"
+                        Foreground="#888" />
+            </StackPanel>
+        </Border>
+    </Panel>
+</UserControl>

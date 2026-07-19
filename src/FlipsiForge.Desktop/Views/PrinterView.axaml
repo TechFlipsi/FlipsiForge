@@ -1,15 +1,97 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:FlipsiForge.Desktop.ViewModels"
              x:Class="FlipsiForge.Desktop.Views.PrinterView"
-             Background="#050507">
-    <Grid Margin="8">
-        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="8">
-            <TextBlock Text="🖨️" FontSize="48" HorizontalAlignment="Center" Opacity="0.3" />
-            <TextBlock Text="Keine Drucker hinzugefügt" Foreground="#666" HorizontalAlignment="Center" />
-            <TextBlock Text="Füge deinen ersten 3D-Drucker hinzu (Klipper, Marlin, Bambu, Prusa, OctoPrint)"
-                       Foreground="#444" FontSize="12" HorizontalAlignment="Center" />
-            <Button Content="+ Drucker hinzufügen" Background="#ff6600" Foreground="#050507"
-                    Padding="16,6" Margin="0,8,0,0" />
-        </StackPanel>
+             x:CompileBindings="False"
+             Background="Transparent">
+
+    <UserControl.DataContext>
+        <vm:PrinterViewModel />
+    </UserControl.DataContext>
+
+    <UserControl.Styles>
+        <Style Selector="Button">
+            <Setter Property="Background" Value="#1a1a2e" />
+            <Setter Property="Foreground" Value="#fff" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="CornerRadius" Value="4" />
+            <Setter Property="Padding" Value="12,6" />
+        </Style>
+        <Style Selector="Button.primary">
+            <Setter Property="Background" Value="#ff6600" />
+            <Setter Property="Foreground" Value="#050507" />
+            <Setter Property="FontWeight" Value="Bold" />
+        </Style>
+        <Style Selector="DataGrid">
+            <Setter Property="Background" Value="#050507" />
+            <Setter Property="BorderBrush" Value="#1a1a2e" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="RowBackground" Value="#0a0a0f" />
+            <Setter Property="Foreground" Value="#fff" />
+            <Setter Property="FontFamily" Value="Inter, sans-serif" />
+            <Setter Property="FontSize" Value="13" />
+        </Style>
+        <Style Selector="DataGridColumnHeader">
+            <Setter Property="Background" Value="#0a0a0f" />
+            <Setter Property="Foreground" Value="#ff6600" />
+            <Setter Property="FontWeight" Value="Bold" />
+        </Style>
+        <Style Selector="DataGridRow">
+            <Setter Property="Background" Value="#0a0a0f" />
+        </Style>
+        <Style Selector="DataGridRow:selected">
+            <Setter Property="Background" Value="#1a1a2e" />
+        </Style>
+    </UserControl.Styles>
+
+    <Grid RowDefinitions="Auto,*" Margin="16">
+        <!-- Toolbar -->
+        <Border Grid.Row="0" Background="#0a0a0f" CornerRadius="6" Padding="12,8" Margin="0,0,0,10">
+            <Grid ColumnDefinitions="Auto,*,Auto">
+                <TextBlock Grid.Column="0" Text="🖨️ Drucker" Foreground="#ff6600" FontWeight="Bold"
+                           FontSize="18" VerticalAlignment="Center" />
+                <TextBlock Grid.Column="1" Text="{Binding Printers.Count, StringFormat='{}{0} Drucker'}"
+                           Foreground="#666" FontSize="12" VerticalAlignment="Center" Margin="16,0,0,0" />
+                <Button Grid.Column="2" Classes="primary" Content="+ Drucker hinzufügen"
+                        Command="{Binding AddCommand}" />
+            </Grid>
+        </Border>
+
+        <!-- Drucker-Liste -->
+        <DataGrid Grid.Row="1"
+                  ItemsSource="{Binding Printers}"
+                  AutoGenerateColumns="False"
+                  IsReadOnly="True"
+                  CanUserSortColumns="True"
+                  GridLinesVisibility="Horizontal"
+                  BorderThickness="1"
+                  BorderBrush="#1a1a2e">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Drucker" Binding="{Binding Display}" Width="2*" />
+                <DataGridTextColumn Header="Protokoll" Binding="{Binding ProtocolDisplay}" Width="*" />
+                <DataGridTextColumn Header="IP / USB" Binding="{Binding IpUsb}" Width="*" />
+                <DataGridTextColumn Header="Status" Binding="{Binding StatusGlyph}" Width="*" />
+                <DataGridTextColumn Header="Düse" Binding="{Binding Nozzle}" Width="0.6*" />
+                <DataGridTextColumn Header="Bauvolumen" Binding="{Binding BuildVolume}" Width="1.2*" />
+                <DataGridTemplateColumn Header="Aktion" Width="2*">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate DataType="{x:Type vm:PrinterRowVm}">
+                            <StackPanel Orientation="Horizontal" Spacing="4">
+                                <Button Content="🔗 Test"
+                                        Command="{Binding $parent[UserControl].DataContext.TestConnectionCommand}"
+                                        CommandParameter="{Binding}" />
+                                <Button Content="✎ Bearbeiten"
+                                        Command="{Binding $parent[UserControl].DataContext.EditCommand}"
+                                        CommandParameter="{Binding}" />
+                                <Button Content="✕ Löschen"
+                                        Background="#3a1a1a" Foreground="#ff8888"
+                                        Command="{Binding $parent[UserControl].DataContext.DeleteCommand}"
+                                        CommandParameter="{Binding}" />
+                            </StackPanel>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+            </DataGrid.Columns>
+        </DataGrid>
     </Grid>
 </UserControl>

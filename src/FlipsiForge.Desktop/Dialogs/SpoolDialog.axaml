@@ -1,0 +1,153 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="FlipsiForge.Desktop.Dialogs.SpoolDialog"
+             x:CompileBindings="False"
+        Title="Spule bearbeiten"
+        Width="560" Height="720"
+        CanResize="False"
+        WindowStartupLocation="CenterOwner"
+        Background="#050507"
+        ShowInTaskbar="False">
+
+    <Window.Styles>
+        <Style Selector="TextBlock.label">
+            <Setter Property="Foreground" Value="#aaa" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+        <Style Selector="TextBox">
+            <Setter Property="Background" Value="#0a0a0f" />
+            <Setter Property="BorderBrush" Value="#1a1a2e" />
+            <Setter Property="Foreground" Value="#fff" />
+            <Setter Property="CornerRadius" Value="4" />
+            <Setter Property="Padding" Value="8,6" />
+        </Style>
+        <Style Selector="ComboBox">
+            <Setter Property="Background" Value="#0a0a0f" />
+            <Setter Property="BorderBrush" Value="#1a1a2e" />
+            <Setter Property="Foreground" Value="#fff" />
+            <Setter Property="CornerRadius" Value="4" />
+            <Setter Property="Padding" Value="8,6" />
+            <Setter Property="MinWidth" Value="180" />
+        </Style>
+        <Style Selector="CheckBox">
+            <Setter Property="Foreground" Value="#fff" />
+        </Style>
+        <Style Selector="Button">
+            <Setter Property="Background" Value="#1a1a2e" />
+            <Setter Property="Foreground" Value="#fff" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="CornerRadius" Value="4" />
+            <Setter Property="Padding" Value="16,8" />
+        </Style>
+        <Style Selector="Slider">
+            <Setter Property="Foreground" Value="#ff6600" />
+            <Setter Property="MinWidth" Value="80" />
+        </Style>
+    </Window.Styles>
+
+    <Grid RowDefinitions="*,Auto" Margin="20">
+        <ScrollViewer Grid.Row="0">
+            <StackPanel Spacing="8">
+                <TextBlock Text="Spule bearbeiten" Foreground="#ff6600" FontWeight="Bold" FontSize="16"
+                           Margin="0,0,0,8" />
+
+                <Grid ColumnDefinitions="180,*">
+                    <TextBlock Grid.Column="0" Classes="label" Text="Marke" />
+                    <TextBox Grid.Column="1" x:Name="BrandBox" />
+                </Grid>
+                <Grid ColumnDefinitions="180,*">
+                    <TextBlock Grid.Column="0" Classes="label" Text="Material-Name" />
+                    <TextBox Grid.Column="1" x:Name="MaterialBox" PlaceholderText="z.B. PLA Matte" />
+                </Grid>
+                <Grid ColumnDefinitions="180,*">
+                    <TextBlock Grid.Column="0" Classes="label" Text="Material-Typ" />
+                    <ComboBox Grid.Column="1" x:Name="MaterialTypeCombo" HorizontalAlignment="Stretch" />
+                </Grid>
+
+                <!-- Color-Picker (RGB-Slider) -->
+                <TextBlock Text="Farbe" Foreground="#ff6600" FontWeight="Bold" Margin="0,8,0,2" />
+                <Grid ColumnDefinitions="60,*,40" Margin="0,2">
+                    <TextBlock Grid.Column="0" Classes="label" Text="R" />
+                    <Slider Grid.Column="1" x:Name="RSlider" Minimum="0" Maximum="255" />
+                    <TextBlock Grid.Column="2" x:Name="RText" Foreground="#fff" VerticalAlignment="Center"
+                               HorizontalAlignment="Center" />
+                </Grid>
+                <Grid ColumnDefinitions="60,*,40" Margin="0,2">
+                    <TextBlock Grid.Column="0" Classes="label" Text="G" />
+                    <Slider Grid.Column="1" x:Name="GSlider" Minimum="0" Maximum="255" />
+                    <TextBlock Grid.Column="2" x:Name="GText" Foreground="#fff" VerticalAlignment="Center"
+                               HorizontalAlignment="Center" />
+                </Grid>
+                <Grid ColumnDefinitions="60,*,40" Margin="0,2">
+                    <TextBlock Grid.Column="0" Classes="label" Text="B" />
+                    <Slider Grid.Column="1" x:Name="BSlider" Minimum="0" Maximum="255" />
+                    <TextBlock Grid.Column="2" x:Name="BText" Foreground="#fff" VerticalAlignment="Center"
+                               HorizontalAlignment="Center" />
+                </Grid>
+                <Grid ColumnDefinitions="180,*,60" Margin="0,6">
+                    <TextBlock Grid.Column="0" Classes="label" Text="Vorschau" />
+                    <Border Grid.Column="1" x:Name="ColorPreview" Height="28" CornerRadius="4"
+                            Background="#000000" />
+                    <TextBlock Grid.Column="2" x:Name="HexText" Foreground="#fff"
+                               VerticalAlignment="Center" HorizontalAlignment="Center" FontFamily="monospace" />
+                </Grid>
+                <Grid ColumnDefinitions="180,*" Margin="0,4">
+                    <TextBlock Grid.Column="0" Classes="label" Text="Farbname" />
+                    <TextBox Grid.Column="1" x:Name="ColorNameBox" PlaceholderText="z.B. Ember Orange" />
+                </Grid>
+
+                <!-- Gewicht / Dichte / Kosten -->
+                <TextBlock Text="Physische Werte" Foreground="#ff6600" FontWeight="Bold" Margin="0,8,0,2" />
+                <Grid ColumnDefinitions="180,*" Margin="0,4">
+                    <TextBlock Grid.Column="0" Classes="label" Text="Durchmesser (mm)" />
+                    <NumericUpDown Grid.Column="1" x:Name="DiameterBox" Minimum="0.1" Maximum="5.0"
+                                   Increment="0.05" FormatString="0.##" />
+                </Grid>
+                <Grid ColumnDefinitions="180,*" Margin="0,4">
+                    <TextBlock Grid.Column="0" Classes="label" Text="Totalgewicht (g)" />
+                    <NumericUpDown Grid.Column="1" x:Name="TotalBox" Minimum="1" Maximum="100000" />
+                </Grid>
+                <Grid ColumnDefinitions="180,*" Margin="0,4">
+                    <TextBlock Grid.Column="0" Classes="label" Text="Restgewicht (g)" />
+                    <NumericUpDown Grid.Column="1" x:Name="RemainingBox" Minimum="0" Maximum="100000" />
+                </Grid>
+                <Grid ColumnDefinitions="180,*" Margin="0,4">
+                    <TextBlock Grid.Column="0" Classes="label" Text="Dichte (g/cm³)" />
+                    <NumericUpDown Grid.Column="1" x:Name="DensityBox" Minimum="0.1" Maximum="10"
+                                   Increment="0.01" FormatString="0.##" />
+                </Grid>
+                <Grid ColumnDefinitions="180,*" Margin="0,4">
+                    <TextBlock Grid.Column="0" Classes="label" Text="Kosten (€)" />
+                    <NumericUpDown Grid.Column="1" x:Name="CostBox" Minimum="0" Maximum="10000"
+                                   Increment="1" FormatString="F2" />
+                </Grid>
+                <Grid ColumnDefinitions="180,*" Margin="0,4">
+                    <TextBlock Grid.Column="0" Classes="label" Text="Kaufdatum" />
+                    <DatePicker Grid.Column="1" x:Name="PurchaseDatePicker" />
+                </Grid>
+
+                <!-- QR / NFC -->
+                <TextBlock Text="QR / NFC" Foreground="#ff6600" FontWeight="Bold" Margin="0,8,0,2" />
+                <Grid ColumnDefinitions="180,*" Margin="0,4">
+                    <TextBlock Grid.Column="0" Classes="label" Text="QR-Code" />
+                    <TextBox Grid.Column="1" x:Name="QrBox" PlaceholderText="optional" />
+                </Grid>
+                <Grid ColumnDefinitions="180,*" Margin="0,4">
+                    <TextBlock Grid.Column="0" Classes="label" Text="NFC-Tag" />
+                    <TextBox Grid.Column="1" x:Name="NfcBox" PlaceholderText="optional" />
+                </Grid>
+
+                <!-- Notizen -->
+                <TextBlock Text="Notizen" Foreground="#ff6600" FontWeight="Bold" Margin="0,8,0,2" />
+                <TextBox x:Name="NotesBox" AcceptsReturn="True" Height="60" TextWrapping="Wrap" />
+            </StackPanel>
+        </ScrollViewer>
+
+        <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="10" Margin="0,14,0,0">
+            <Button Content="Abbrechen" Click="Cancel_Click" Foreground="#aaa" />
+            <Button Content="Speichern" Background="#ff6600" Foreground="#050507" FontWeight="Bold"
+                    Click="Save_Click" />
+        </StackPanel>
+    </Grid>
+</Window>

@@ -1,0 +1,28 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="FlipsiForge.Desktop.Dialogs.ConfirmDialog"
+             x:CompileBindings="False"
+        Title="Bestätigung"
+        Width="420" Height="200"
+        CanResize="False"
+        WindowStartupLocation="CenterOwner"
+        Background="#050507"
+        ShowInTaskbar="False">
+
+    <Grid RowDefinitions="*,Auto" Margin="20">
+        <TextBlock Grid.Row="0" x:Name="MessageText"
+                   Text="Wirklich?"
+                   Foreground="#fff"
+                   FontSize="14"
+                   TextWrapping="Wrap"
+                   VerticalAlignment="Center" />
+        <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="10">
+            <Button Content="Abbrechen" Background="#1a1a2e" Foreground="#aaa"
+                    BorderThickness="0" CornerRadius="4" Padding="16,8"
+                    Click="Cancel_Click" />
+            <Button Content="OK" Background="#ff6600" Foreground="#050507"
+                    FontWeight="Bold" BorderThickness="0" CornerRadius="4" Padding="16,8"
+                    Click="Ok_Click" />
+        </StackPanel>
+    </Grid>
+</Window>

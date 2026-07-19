@@ -72,3 +72,59 @@ public enum AiModelChoice
     E2BQat,
     Off
 }
+
+// === v0.2.0 Erweiterungen ===
+
+/// <summary>Häufigkeit der Forge-Bot-Nachrichten.</summary>
+public enum BotFrequency
+{
+    Rare,
+    Normal,
+    Often
+}
+
+/// <summary>Position des Forge-Bot auf dem Bildschirm.</summary>
+public enum BotPosition
+{
+    BottomRight,
+    BottomLeft,
+    TopRight,
+    TopLeft
+}
+
+/// <summary>Art der Push-Benachrichtigung.</summary>
+public enum NotificationKind
+{
+    InApp,
+    System,
+    Email,
+    Webhook
+}
+
+/// <summary>Sortier-Modi für die Datei-Liste.</summary>
+public enum FileSortMode
+{
+    NameAsc,
+    NameDesc,
+    DateAsc,
+    DateDesc,
+    SizeAsc,
+    SizeDesc,
+    Frequency,
+    FavoritesFirst
+}
+
+/// <summary>Anzeige-Modus der Datei-Liste (Raster oder Liste).</summary>
+public enum ViewMode
+{
+    Grid,
+    List
+}
+
+/// <summary>Datumsformat-Einstellung (regional).</summary>
+public enum DateFormat
+{
+    EU,
+    US,
+    Iso
+}
