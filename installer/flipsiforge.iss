@@ -1,6 +1,6 @@
 ; FlipsiForge Inno Setup Script v0.2.0
 ; TechFlipsi (Fabian Kirchweger) — GPL-3.0
-; Kompilieren mit: iscc flipsiforge.iss (Inno Setup 6+)
+; Kompilieren: iscc installer/flipsiforge.iss (vom Repo-Root)
 
 #define MyAppName "FlipsiForge"
 #define MyAppVersion "0.2.0"
@@ -19,7 +19,7 @@ AppUpdatesURL=https://github.com/TechFlipsi/FlipsiForge
 DefaultDirName={autopf}\FlipsiForge
 DefaultGroupName=FlipsiForge
 DisableProgramGroupPage=yes
-OutputDir=..\dist
+OutputDir=dist
 OutputBaseFilename=FlipsiForge-0.2.0-win-x64-setup
 Compression=lzma2
 SolidCompression=yes

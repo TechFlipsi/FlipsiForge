@@ -1,0 +1,43 @@
+name: Build Windows Installer
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+jobs:
+  build-windows-exe:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.300'
+
+      - name: Publish Desktop (win-x64, self-contained)
+        run: |
+          dotnet publish src/FlipsiForge.Desktop/FlipsiForge.Desktop.csproj `
+            -c Release -r win-x64 --self-contained true `
+            -p:PublishSingleFile=true -p:PublishTrimmed=false `
+            -o dist/win-desktop
+
+      - name: Install Inno Setup
+        run: choco install innosetup -y
+
+      - name: Compile .exe Installer
+        run: iscc installer/flipsiforge.iss
+
+      - name: Upload .exe to GitHub Release
+        if: github.event_name == 'release'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/FlipsiForge-0.2.0-win-x64-setup.exe
+
+      - name: Upload .exe as Artifact (manual trigger)
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/upload-artifact@v4
+        with:
+          name: FlipsiForge-0.2.0-win-x64-setup
+          path: dist/FlipsiForge-0.2.0-win-x64-setup.exe
