@@ -6,7 +6,22 @@ FlipsiForge is a cross-platform 3D printing management tool that handles files, 
 
 ## Status
 
-🚧 **Concept Phase** — Repository created, development not yet started.
+🚧 **v0.2.0 in Entwicklung** — Server erweitert (Settings, Files, Maintenance, KI, Bot, Backup), Desktop-App + Core.Services parallel in Arbeit.
+
+## v0.2.0 Highlights (Server)
+
+- **Web-UI (Full-Modus):** Browser-Dashboard unter `/` mit 6 Tabs (Drucker, Spulen, Filament-DB, Statistik, Files, System). Dark Void + Ember Theme. Vanilla JS, kein Build-Step, keine Node-Abhängigkeit.
+  - ![Web-UI Screenshot — Platzhalter](docs/screenshot-web-ui-v0.2.0.png) _(Screenshot folgt)_
+- **Settings-CRUD:** `GET /api/settings`, `PUT /api/settings`, `PATCH /api/settings/{field}` — partielle Updates via Feldname.
+- **Printer-CRUD komplett:** `PUT` (full update), `PATCH /activate` (reaktivieren), `DELETE?keepHistory=true|false` (archivieren vs. hart löschen).
+- **Live-Drucker-Anbindung:** `/connect`, `/status`, `/temps`, `/job` via `IPrinterConnectionManager` (Stub für Offline, Core.Services für Moonraker/Marlin/Bambu/PrusaLink/OctoPrint).
+- **Maintenance:** Wartungs-Einträge anlegen, Empfehlungen dual-mode (`?onlineMode=true|false`) — modellspezifisch oder allgemeine Tipps, niemals "Internet erforderlich".
+- **Files:** Scan-Trigger (`POST /api/files/scan` mit folders+extensions), Favoriten-Toggle, Usage-Log (viewed/printed), kombinierte Suche (Dateiname + KI falls verfügbar, 🤖 KI Badge für KI-Treffer).
+- **KI-Endpoints:** `/ai/chat` (Streaming via SSE wenn `AI:Streaming=true`), `/ai/embed`, `/ai/status`, `/ai/slicer-profile` (regelbasiert via Filament-DB + optional KI).
+- **Forge-Bot:** In-App Companion (Eilik-Stil, Dark Void + Ember), `/api/bot/messages`, `/api/bot/dismiss`, `/api/bot/settings`.
+- **Backup/Restore/Export/Cache:** SQLite-VACUUM-INTO-Backup, Restore mit Pre-Restore-Sicherung, JSON-Export aller Daten, Cache-Leeren (thumbnails/embeddings/temp).
+- **Erweiterte Statistiken:** `/statistics/files` (pro Format, pro Ordner, Favoriten-Count), `/statistics/filament` (Total Gewicht, nach Material, nach Marke).
+- **Core.Services-Kompatibel:** Server kompiliert und läuft eigenständig dank `Services/Stub*.cs` Fallbacks. Echte Core-Implementierungen schwenken via `TryAddSingleton` automatisch ein.
 
 ## Features
 
@@ -412,19 +427,25 @@ server:
 
 ## Roadmap
 
-### Phase 1: Grundgerüst + KI (aktuell — v0.1.0-pre)
+### Phase 1: Grundgerüst + KI (v0.1.0-pre → v0.2.0 — aktuell)
 - ✅ Projekt-Struktur (Core, Desktop, Server)
 - ✅ FlipsiForge.Core — Models, DbContext, Filament-Marken-Datenbank (41 Einträge)
 - ✅ FlipsiForge.Desktop — Avalonia UI 12, 7 Tabs scaffolded
-- ✅ FlipsiForge.Server — ASP.NET Core Minimal API (Full/Lite)
-- ✅ Docker (Full + Lite)
+- ✅ FlipsiForge.Server — ASP.NET Core Minimal API (Full/Lite) v0.1.0-pre
+- ✅ Docker (Full + Lite) auf .NET 10.0.300 SDK
 - ✅ Linux Build getestet
-- ⬜ Gemma 4 E4B/E2B via ONNX Runtime GenAI (Chat + Empfehlungen)
-- ⬜ KI-Suche (Embeddings + Dateinamen kombiniert)
-- ⬜ Drucker-Assistent Chat (Streaming)
-- ⬜ Wartungs-Empfehlungen (online + offline)
-- ⬜ Drucker-Protokolle (Moonraker, Marlin, Bambu, PrusaLink, OctoPrint)
-- ⬜ Datei-Scanner (Auto-Scan Laufwerke)
+- ✅ **v0.2.0 Server:** Settings-CRUD, Printer-CRUD komplett (PUT/PATCH/DELETE?keepHistory),
+  Spool-CRUD + Status, Files-Endpoints (Scan/Favorite/Usage/Search), Maintenance + Live-Status,
+  KI-Endpoints (Chat mit SSE-Streaming, Embed, Status, Slicer-Profil), Bot-Endpoints,
+  Backup/Restore/Export/Cache, erweiterte Statistiken (Files, Filament)
+- ✅ **v0.2.0 Web-UI (Full-Modus):** Dashboard mit 6 Tabs (Drucker, Spulen, Filament-DB,
+  Statistik, Files, System) — Dark Void + Ember Theme, Vanilla JS ohne Build-Step
+- ✅ Server-Stubs für Core.Services (`IPrinterConnectionManager`, `IAIChatEngine`,
+  `IEmbeddingProvider`) — Server läuft eigenständig, echte Core-Implementierungen via
+  `TryAdd`-Lifecycle einschwenkbar
+- ⬜ Gemma 4 E4B/E2B via ONNX Runtime GenAI (Chat + Empfehlungen) — Core.Services parallel
+- ⬜ KI-Suche (Embeddings + Dateinamen kombiniert) — Core.Services parallel
+- ⬜ Drucker-Protokolle (Moonraker, Marlin, Bambu, PrusaLink, OctoPrint) — Core.Services parallel
 - ⬜ Drucker/Filament CRUD in Desktop UI
 
 ### Phase 2: Home Assistant
@@ -434,8 +455,6 @@ server:
 - HACS und HA Add-on werden erst nach Phase 1 (Grundgerüst + KI) umgesetzt
 
 ### Phase 3: Erweiterte Features
-- ⬜ Web-UI für Server Full
-- ⬜ Slicer-Profil-Generierung
 - ⬜ Push-Notifications (Telegram)
 - ⬜ Cloud-Sync (Nextcloud)
 - ⬜ NFC/QR Code Support

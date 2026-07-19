@@ -1,0 +1,367 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:FlipsiForge.Desktop.ViewModels"
+             x:Class="FlipsiForge.Desktop.Views.SettingsView"
+             x:CompileBindings="False"
+             Background="Transparent">
+
+    <UserControl.Styles>
+        <!-- Section-Expander -->
+        <Style Selector="Expander">
+            <Setter Property="Background" Value="#0a0a0f" />
+            <Setter Property="BorderBrush" Value="#1a1a2e" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Margin" Value="0,0,0,10" />
+            <Setter Property="Foreground" Value="#fff" />
+            <Setter Property="FontSize" Value="14" />
+        </Style>
+        <Style Selector="Expander /template/ ToggleButton#PART.toggleExpander">
+            <Setter Property="Background" Value="#050507" />
+            <Setter Property="Foreground" Value="#ff6600" />
+            <Setter Property="FontWeight" Value="Bold" />
+        </Style>
+        <Style Selector="Expander /template/ ToggleButton#PART.toggleExpander:checked">
+            <Setter Property="Background" Value="#1a1a2e" />
+        </Style>
+        <!-- Section-Inhalt -->
+        <Style Selector="Expander > StackPanel">
+            <Setter Property="Spacing" Value="8" />
+            <Setter Property="Margin" Value="0,10,0,0" />
+        </Style>
+        <Style Selector="TextBlock.kicker">
+            <Setter Property="Foreground" Value="#aaa" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="Margin" Value="0,2,0,0" />
+        </Style>
+        <Style Selector="TextBox">
+            <Setter Property="Background" Value="#050507" />
+            <Setter Property="BorderBrush" Value="#1a1a2e" />
+            <Setter Property="Foreground" Value="#fff" />
+            <Setter Property="CornerRadius" Value="4" />
+            <Setter Property="Padding" Value="8,6" />
+        </Style>
+        <Style Selector="ComboBox">
+            <Setter Property="Background" Value="#050507" />
+            <Setter Property="BorderBrush" Value="#1a1a2e" />
+            <Setter Property="Foreground" Value="#fff" />
+            <Setter Property="CornerRadius" Value="4" />
+            <Setter Property="Padding" Value="8,6" />
+            <Setter Property="MinWidth" Value="180" />
+        </Style>
+        <Style Selector="Button">
+            <Setter Property="Background" Value="#1a1a2e" />
+            <Setter Property="Foreground" Value="#fff" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="CornerRadius" Value="4" />
+            <Setter Property="Padding" Value="12,6" />
+        </Style>
+        <Style Selector="Button.primary">
+            <Setter Property="Background" Value="#ff6600" />
+            <Setter Property="Foreground" Value="#050507" />
+            <Setter Property="FontWeight" Value="Bold" />
+        </Style>
+        <Style Selector="CheckBox">
+            <Setter Property="Foreground" Value="#fff" />
+        </Style>
+        <Style Selector="Border.row">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Padding" Value="0,4" />
+        </Style>
+        <Style Selector="Border.section">
+            <Setter Property="Background" Value="#0a0a0f" />
+            <Setter Property="BorderBrush" Value="#1a1a2e" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Margin" Value="0,0,0,10" />
+        </Style>
+    </UserControl.Styles>
+
+    <Grid RowDefinitions="*,Auto">
+        <!-- Settings-Sektionen (scrollbar) -->
+        <ScrollViewer Grid.Row="0">
+            <StackPanel Orientation="Vertical" Spacing="0" Margin="0,0,16,0">
+
+                <!-- === Save / Status-Leiste oben === -->
+                <Border Background="#1a1a2e" Padding="12,8" CornerRadius="6" Margin="0,0,0,14">
+                    <Grid ColumnDefinitions="*,Auto,Auto">
+                        <TextBlock Grid.Column="0" Text="{Binding SaveStatus}" Foreground="#aaa"
+                                   VerticalAlignment="Center" />
+                        <Button Grid.Column="1" Classes="primary" Content="💾 Speichern"
+                                Command="{Binding SaveCommand}" Margin="0,0,8,0" />
+                        <Button Grid.Column="2" Content="↺ Werkseinstellungen"
+                                Command="{Binding ResetToDefaultsCommand}" />
+                    </Grid>
+                </Border>
+
+                <!-- 1. Allgemein -->
+                <Expander Header="📋 Allgemein" IsExpanded="True">
+                    <StackPanel>
+                        <Grid ColumnDefinitions="220,*" Margin="0,4">
+                            <TextBlock Text="Sprache" VerticalAlignment="Center" Foreground="#aaa" />
+                            <ComboBox Grid.Column="1" ItemsSource="{Binding LanguageOptions}"
+                                      SelectedItem="{Binding Language}" />
+                        </Grid>
+                        <Grid ColumnDefinitions="220,*" Margin="0,4">
+                            <TextBlock Text="Theme" VerticalAlignment="Center" Foreground="#aaa" />
+                            <TextBlock Grid.Column="1" Text="Dark Void + Ember (fix)"
+                                       Foreground="#fff" VerticalAlignment="Center" Classes="kicker" />
+                        </Grid>
+                        <Grid ColumnDefinitions="220,*" Margin="0,4">
+                            <TextBlock Text="Start-Tab" VerticalAlignment="Center" Foreground="#aaa" />
+                            <ComboBox Grid.Column="1" ItemsSource="{Binding StartTabOptions}"
+                                      SelectedItem="{Binding StartTab}" />
+                        </Grid>
+                        <Grid ColumnDefinitions="220,*" Margin="0,4">
+                            <TextBlock Text="Währung" VerticalAlignment="Center" Foreground="#aaa" />
+                            <ComboBox Grid.Column="1" ItemsSource="{Binding CurrencyOptions}"
+                                      SelectedItem="{Binding Currency}" />
+                        </Grid>
+                        <Grid ColumnDefinitions="220,*" Margin="0,4">
+                            <TextBlock Text="Datumsformat" VerticalAlignment="Center" Foreground="#aaa" />
+                            <ComboBox Grid.Column="1" ItemsSource="{Binding DateFormatOptions}"
+                                      SelectedItem="{Binding DateFormat}" />
+                        </Grid>
+                        <CheckBox Content="Im Tray minimieren" IsChecked="{Binding MinimizeToTray}" Margin="0,8,0,0" />
+                    </StackPanel>
+                </Expander>
+
+                <!-- 2. Datei-Manager -->
+                <Expander Header="📁 Datei-Manager">
+                    <StackPanel>
+                        <TextBlock Text="Scan-Ordner" Foreground="#ff6600" FontWeight="Bold" />
+                        <Grid ColumnDefinitions="*,Auto,Auto" Margin="0,4">
+                            <TextBox Text="{Binding NewScanFolder}" PlaceholderText="Pfad eingeben..." />
+                            <Button Grid.Column="1" Content="+" Command="{Binding AddScanFolderCommand}" Margin="6,0,0,0" />
+                        </Grid>
+                        <ItemsControl ItemsSource="{Binding ScanFolders}" Margin="0,6,0,8">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid ColumnDefinitions="*,Auto" Margin="0,2">
+                                        <TextBlock Text="{Binding}" Foreground="#fff" VerticalAlignment="Center" />
+                                        <Button Grid.Column="1" Content="✕" Padding="6,2" FontSize="11"
+                                                Command="{Binding $parent[UserControl].DataContext.RemoveScanFolderCommand}"
+                                                CommandParameter="{Binding}" />
+                                    </Grid>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                        <WrapPanel>
+                            <CheckBox Content="STL" IsChecked="{Binding ScanStl}" Margin="0,0,16,0" />
+                            <CheckBox Content="3MF" IsChecked="{Binding Scan3mf}" Margin="0,0,16,0" />
+                            <CheckBox Content="GCODE" IsChecked="{Binding ScanGcode}" Margin="0,0,16,0" />
+                            <CheckBox Content="OBJ" IsChecked="{Binding ScanObj}" />
+                        </WrapPanel>
+                        <CheckBox Content="Auto-Scan aktiv" IsChecked="{Binding AutoScan}" Margin="0,8,0,4" />
+                        <Grid ColumnDefinitions="220,*" Margin="0,4">
+                            <TextBlock Text="Scan-Intervall (Min.)" VerticalAlignment="Center" Foreground="#aaa" />
+                            <NumericUpDown Grid.Column="1" Value="{Binding ScanIntervalMinutes}"
+                                           Minimum="1" Maximum="1440" />
+                        </Grid>
+                        <Grid ColumnDefinitions="220,*" Margin="0,4">
+                            <TextBlock Text="Standard-Ansicht" VerticalAlignment="Center" Foreground="#aaa" />
+                            <ComboBox Grid.Column="1">
+                                <ComboBoxItem Content="List" />
+                                <ComboBoxItem Content="Grid" />
+                            </ComboBox>
+                        </Grid>
+                        <Grid ColumnDefinitions="220,*" Margin="0,4">
+                            <TextBlock Text="Standard-Sortierung" VerticalAlignment="Center" Foreground="#aaa" />
+                            <ComboBox Grid.Column="1">
+                                <ComboBoxItem Content="Name ↑" />
+                                <ComboBoxItem Content="Name ↓" />
+                                <ComboBoxItem Content="Datum ↓" />
+                                <ComboBoxItem Content="Größe ↓" />
+                            </ComboBox>
+                        </Grid>
+                        <CheckBox Content="Thumbnails anzeigen" IsChecked="{Binding ShowThumbnails}" Margin="0,8,0,4" />
+                        <CheckBox Content="Duplikate erkennen" IsChecked="{Binding DetectDuplicates}" />
+                    </StackPanel>
+                </Expander>
+
+                <!-- 3. Drucker -->
+                <Expander Header="🖨️ Drucker">
+                    <StackPanel>
+                        <CheckBox Content="Beim Start automatisch verbinden" IsChecked="{Binding PrinterAutoConnect}" Margin="0,0,0,8" />
+                        <CheckBox Content="Bestätigungspflicht für Druck-Jobs" IsChecked="{Binding RequirePrintConfirmation}" Margin="0,0,0,8" />
+                        <Grid ColumnDefinitions="220,*" Margin="0,4">
+                            <TextBlock Text="Temperatur-Einheit" VerticalAlignment="Center" Foreground="#aaa" />
+                            <ComboBox Grid.Column="1">
+                                <ComboBoxItem Content="Celsius" />
+                                <ComboBoxItem Content="Fahrenheit" />
+                            </ComboBox>
+                        </Grid>
+                        <Grid ColumnDefinitions="220,*" Margin="0,4">
+                            <TextBlock Text="Webcam-Refresh (Sek.)" VerticalAlignment="Center" Foreground="#aaa" />
+                            <NumericUpDown Grid.Column="1" Value="{Binding WebcamRefreshSeconds}" Minimum="1" Maximum="60" />
+                        </Grid>
+                    </StackPanel>
+                </Expander>
+
+                <!-- 4. Filament -->
+                <Expander Header="🧶 Filament">
+                    <StackPanel>
+                        <CheckBox Content="Kosten-Tracking aktiv" IsChecked="{Binding FilamentCostTracking}" Margin="0,0,0,8" />
+                        <Grid ColumnDefinitions="220,*" Margin="0,4">
+                            <TextBlock Text="Trocknungs-Log Aufbewahrung (Tage)" VerticalAlignment="Center" Foreground="#aaa" />
+                            <NumericUpDown Grid.Column="1" Value="{Binding DryingLogRetentionDays}" Minimum="1" Maximum="365" />
+                        </Grid>
+                        <CheckBox Content="QR/NFC Tags verwalten" IsChecked="{Binding EnableQrNfc}" Margin="0,8,0,0" />
+                    </StackPanel>
+                </Expander>
+
+                <!-- 5. KI-Assistent -->
+                <Expander Header="🤖 KI-Assistent">
+                    <StackPanel>
+                        <CheckBox Content="KI Hauptschalter AN" IsChecked="{Binding AiEnabled}" Margin="0,0,0,8" />
+                        <Grid ColumnDefinitions="220,*" Margin="0,4">
+                            <TextBlock Text="Modell" VerticalAlignment="Center" Foreground="#aaa" />
+                            <ComboBox Grid.Column="1" ItemsSource="{Binding AiModelOptions}"
+                                      SelectedItem="{Binding AiModel}" />
+                        </Grid>
+                        <CheckBox Content="KI-Suche" IsChecked="{Binding AiSearchEnabled}" Margin="0,8,0,4" />
+                        <CheckBox Content="Wartungs-Empfehlungen" IsChecked="{Binding AiMaintenanceSuggestions}" Margin="0,0,0,4" />
+                        <CheckBox Content="Streaming-Antworten" IsChecked="{Binding AiStreaming}" Margin="0,0,0,8" />
+                        <TextBlock Text="Externe Anbieter (optional)" Foreground="#ff6600" FontWeight="Bold" Margin="0,4,0,2" />
+                        <Grid ColumnDefinitions="160,*" Margin="0,4">
+                            <TextBlock Text="OpenAI API-Key" VerticalAlignment="Center" Foreground="#aaa" />
+                            <TextBox Grid.Column="1" Text="{Binding OpenAiApiKey}" PlaceholderText="sk-..." />
+                        </Grid>
+                        <Grid ColumnDefinitions="160,*" Margin="0,4">
+                            <TextBlock Text="Anthropic API-Key" VerticalAlignment="Center" Foreground="#aaa" />
+                            <TextBox Grid.Column="1" Text="{Binding AnthropicApiKey}" PlaceholderText="sk-ant-..." />
+                        </Grid>
+                        <Grid ColumnDefinitions="160,*" Margin="0,4">
+                            <TextBlock Text="Ollama URL" VerticalAlignment="Center" Foreground="#aaa" />
+                            <TextBox Grid.Column="1" Text="{Binding OllamaUrl}" PlaceholderText="http://localhost:11434" />
+                        </Grid>
+                        <Grid ColumnDefinitions="160,*" Margin="0,4">
+                            <TextBlock Text="Modell-Download-Pfad" VerticalAlignment="Center" Foreground="#aaa" />
+                            <TextBox Grid.Column="1" Text="{Binding ModelDownloadPath}"
+                                     PlaceholderText="~/.flipsiforge/models" />
+                        </Grid>
+                    </StackPanel>
+                </Expander>
+
+                <!-- 6. Forge-Bot -->
+                <Expander Header="🤖 Forge-Bot">
+                    <StackPanel>
+                        <CheckBox Content="Bot AN" IsChecked="{Binding BotEnabled}" Margin="0,0,0,8" />
+                        <Grid ColumnDefinitions="220,*" Margin="0,4">
+                            <TextBlock Text="Frequenz" VerticalAlignment="Center" Foreground="#aaa" />
+                            <ComboBox Grid.Column="1" ItemsSource="{Binding BotFrequencyOptions}"
+                                      SelectedItem="{Binding BotFrequency}" />
+                        </Grid>
+                        <Grid ColumnDefinitions="220,120,120" Margin="0,4">
+                            <TextBlock Text="Nicht stören" VerticalAlignment="Center" Foreground="#aaa" />
+                            <TextBox Grid.Column="1" Text="{Binding BotDndStart}" PlaceholderText="22:00" />
+                            <TextBox Grid.Column="2" Text="{Binding BotDndEnd}" PlaceholderText="07:00" Margin="6,0,0,0" />
+                        </Grid>
+                        <Grid ColumnDefinitions="220,*" Margin="0,4">
+                            <TextBlock Text="Position" VerticalAlignment="Center" Foreground="#aaa" />
+                            <ComboBox Grid.Column="1" ItemsSource="{Binding BotPositionOptions}"
+                                      SelectedItem="{Binding BotPosition}" />
+                        </Grid>
+                        <Grid ColumnDefinitions="220,*" Margin="0,4">
+                            <TextBlock Text="Sprache" VerticalAlignment="Center" Foreground="#aaa" />
+                            <ComboBox Grid.Column="1" ItemsSource="{Binding BotLanguageOptions}"
+                                      SelectedItem="{Binding BotLanguage}" />
+                        </Grid>
+                    </StackPanel>
+                </Expander>
+
+                <!-- 7. Server & Netzwerk -->
+                <Expander Header="🌐 Server &amp; Netzwerk">
+                    <StackPanel>
+                        <Grid ColumnDefinitions="220,*" Margin="0,4">
+                            <TextBlock Text="Modus" VerticalAlignment="Center" Foreground="#aaa" />
+                            <ComboBox Grid.Column="1" ItemsSource="{Binding ServerModeOptions}"
+                                      SelectedItem="{Binding ServerMode}" />
+                        </Grid>
+                        <Grid ColumnDefinitions="220,*" Margin="0,4">
+                            <TextBlock Text="Port" VerticalAlignment="Center" Foreground="#aaa" />
+                            <NumericUpDown Grid.Column="1" Value="{Binding ServerPort}" Minimum="1" Maximum="65535" />
+                        </Grid>
+                        <CheckBox Content="Web-UI aktiv" IsChecked="{Binding WebUiEnabled}" Margin="0,8,0,8" />
+                        <Grid ColumnDefinitions="220,*,Auto" Margin="0,4">
+                            <TextBlock Text="API-Key" VerticalAlignment="Center" Foreground="#aaa" />
+                            <TextBox Grid.Column="1" Text="{Binding ApiKey}" IsReadOnly="True" />
+                            <Button Grid.Column="2" Content="🔄 Neu generieren" Margin="6,0,0,0"
+                                    Command="{Binding RegenerateApiKeyCommand}" />
+                        </Grid>
+                        <CheckBox Content="HTTPS verwenden" IsChecked="{Binding UseHttps}" Margin="0,8,0,0" />
+                    </StackPanel>
+                </Expander>
+
+                <!-- 8. Benachrichtigungen -->
+                <Expander Header="🔔 Benachrichtigungen">
+                    <StackPanel>
+                        <CheckBox Content="Push-Benachrichtigungen" IsChecked="{Binding NotifyPushEnabled}" Margin="0,0,0,8" />
+                        <CheckBox Content="Druck fertig" IsChecked="{Binding NotifyPrintFinished}" Margin="0,0,0,4" />
+                        <CheckBox Content="Druck fehlgeschlagen" IsChecked="{Binding NotifyPrintFailed}" Margin="0,0,0,8" />
+                        <Grid ColumnDefinitions="220,*" Margin="0,4">
+                            <TextBlock Text="Filament-Warngrenze (%)" VerticalAlignment="Center" Foreground="#aaa" />
+                            <NumericUpDown Grid.Column="1" Value="{Binding FilamentWarningPercent}" Minimum="1" Maximum="100" />
+                        </Grid>
+                        <CheckBox Content="Wartungs-Erinnerung" IsChecked="{Binding NotifyMaintenanceReminder}" Margin="0,8,0,8" />
+                        <Grid ColumnDefinitions="220,*" Margin="0,4">
+                            <TextBlock Text="Art" VerticalAlignment="Center" Foreground="#aaa" />
+                            <ComboBox Grid.Column="1" ItemsSource="{Binding NotificationKindOptions}"
+                                      SelectedItem="{Binding NotificationKind}" />
+                        </Grid>
+                    </StackPanel>
+                </Expander>
+
+                <!-- 9. Erweitert -->
+                <Expander Header="🔧 Erweitert">
+                    <StackPanel>
+                        <Grid ColumnDefinitions="220,*" Margin="0,4">
+                            <TextBlock Text="Backup-Intervall (Tage)" VerticalAlignment="Center" Foreground="#aaa" />
+                            <NumericUpDown Grid.Column="1" Value="{Binding BackupIntervalDays}" Minimum="1" Maximum="365" />
+                        </Grid>
+                        <Grid ColumnDefinitions="220,*" Margin="0,4">
+                            <TextBlock Text="Backup-Pfad" VerticalAlignment="Center" Foreground="#aaa" />
+                            <TextBox Grid.Column="1" Text="{Binding BackupPath}" />
+                        </Grid>
+                        <Grid ColumnDefinitions="220,*" Margin="0,4">
+                            <TextBlock Text="Log-Level" VerticalAlignment="Center" Foreground="#aaa" />
+                            <ComboBox Grid.Column="1" ItemsSource="{Binding LogLevelOptions}"
+                                      SelectedItem="{Binding LogLevel}" />
+                        </Grid>
+                        <CheckBox Content="Debug-Modus" IsChecked="{Binding DebugMode}" Margin="0,8,0,8" />
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <Button Content="🗑️ Cache leeren" Command="{Binding ClearCacheCommand}" />
+                            <Button Content="📤 Export" Command="{Binding ExportSettingsCommand}" />
+                        </StackPanel>
+                    </StackPanel>
+                </Expander>
+
+                <!-- 10. Über -->
+                <Expander Header="ℹ️ Über FlipsiForge">
+                    <StackPanel>
+                        <Grid ColumnDefinitions="220,*" Margin="0,4">
+                            <TextBlock Text="App-Version" Foreground="#aaa" />
+                            <TextBlock Grid.Column="1" Text="{Binding AppVersion}" Foreground="#fff" />
+                        </Grid>
+                        <Grid ColumnDefinitions="220,*" Margin="0,4">
+                            <TextBlock Text="Lizenz" Foreground="#aaa" />
+                            <TextBlock Grid.Column="1" Text="{Binding License}" Foreground="#fff" />
+                        </Grid>
+                        <Grid ColumnDefinitions="220,*" Margin="0,4">
+                            <TextBlock Text="Entwickler" Foreground="#aaa" />
+                            <TextBlock Grid.Column="1" Text="{Binding Developer}" Foreground="#fff" />
+                        </Grid>
+                        <Grid ColumnDefinitions="220,*" Margin="0,4">
+                            <TextBlock Text="Website" Foreground="#aaa" />
+                            <TextBlock Grid.Column="1" Text="{Binding Website}" Foreground="#ff6600" />
+                        </Grid>
+                        <Grid ColumnDefinitions="220,*" Margin="0,4">
+                            <TextBlock Text="GitHub" Foreground="#aaa" />
+                            <TextBlock Grid.Column="1" Text="{Binding GitHub}" Foreground="#ff6600" />
+                        </Grid>
+                    </StackPanel>
+                </Expander>
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
+</UserControl>

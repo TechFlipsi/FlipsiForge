@@ -3,50 +3,134 @@
         xmlns:vm="using:FlipsiForge.Desktop.ViewModels"
         xmlns:views="using:FlipsiForge.Desktop.Views"
         x:Class="FlipsiForge.Desktop.MainWindow"
-        Title="FlipsiForge v0.1.0-pre"
+        x:CompileBindings="False"
+        Title="FlipsiForge v0.2.0"
         Width="1280" Height="800"
         MinWidth="1024" MinHeight="600"
-        Background="#050507">
+        Background="#050507"
+        WindowStartupLocation="CenterScreen">
 
-    <Window.Resources>
-        <vm:ViewModelBase x:Key="ViewModel" />
-    </Window.Resources>
+    <Window.DataContext>
+        <vm:MainViewModel />
+    </Window.DataContext>
 
-    <Grid RowDefinitions="Auto,*">
-        <!-- Header -->
-        <Border Grid.Row="0" Background="#0a0a0f" Padding="16,10">
-            <StackPanel Orientation="Horizontal" Spacing="16">
-                <TextBlock Text="🔥" FontSize="24" VerticalAlignment="Center" />
-                <TextBlock Text="FlipsiForge" FontSize="20" FontWeight="Bold"
-                           Foreground="#ff6600" VerticalAlignment="Center" />
-                <TextBlock Text="v0.1.0-pre" FontSize="12" Foreground="#666"
-                           VerticalAlignment="Center" Margin="0,4,0,0" />
-            </StackPanel>
+    <Grid ColumnDefinitions="220,*">
+        <!-- ===== LINKE SIDEBAR ===== -->
+        <Border Grid.Column="0" Background="#0a0a0f" Padding="0">
+            <Grid RowDefinitions="Auto,*,Auto">
+                <!-- Header -->
+                <Border Grid.Row="0" Padding="16,14" Background="#050507">
+                    <StackPanel Orientation="Vertical" Spacing="2">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <TextBlock Text="🔥" FontSize="22" VerticalAlignment="Center" />
+                            <TextBlock Text="FlipsiForge" FontSize="18" FontWeight="Bold"
+                                       Foreground="#ff6600" VerticalAlignment="Center" />
+                        </StackPanel>
+                        <TextBlock Text="{Binding AppVersion}" FontSize="11" Foreground="#666"
+                                   Margin="30,0,0,0" />
+                    </StackPanel>
+                </Border>
+
+                <!-- Nav-Buttons als ListBox -->
+                <ListBox Grid.Row="1"
+                         x:Name="NavList"
+                         ItemsSource="{Binding NavItems}"
+                         SelectedIndex="0"
+                         Background="Transparent"
+                         BorderThickness="0"
+                         Padding="0"
+                         SelectionChanged="NavList_SelectionChanged">
+                    <ListBox.ItemContainerTheme>
+                        <ControlTheme TargetType="{x:Type ListBoxItem}" BasedOn="{StaticResource {x:Type ListBoxItem}}">
+                            <Setter Property="Padding" Value="16,10" />
+                            <Setter Property="Margin" Value="4,2" />
+                            <Setter Property="Background" Value="#1a1a2e" />
+                            <Setter Property="Foreground" Value="#aaa" />
+                            <Setter Property="FontSize" Value="14" />
+                            <Setter Property="BorderThickness" Value="0" />
+                            <Setter Property="CornerRadius" Value="6" />
+                            <Setter Property="(ToolTip.Tip)" Value="{Binding Name}" />
+                            <Style Selector="^:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+                                <Setter Property="Background" Value="#252540" />
+                                <Setter Property="Foreground" Value="#fff" />
+                            </Style>
+                            <Style Selector="^:selected /template/ ContentPresenter#PART_ContentPresenter">
+                                <Setter Property="Background" Value="#ff6600" />
+                                <Setter Property="Foreground" Value="#050507" />
+                                <Setter Property="FontWeight" Value="Bold" />
+                            </Style>
+                        </ControlTheme>
+                    </ListBox.ItemContainerTheme>
+                    <ListBox.ItemTemplate>
+                        <DataTemplate DataType="{x:Type vm:NavItem}">
+                            <TextBlock Text="{Binding DisplayText}" />
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+
+                <!-- Settings-Button unten -->
+                <Border Grid.Row="2" Padding="8" Background="#050507">
+                    <Button Background="#1a1a2e"
+                            Foreground="#aaa"
+                            BorderThickness="0"
+                            CornerRadius="6"
+                            Padding="12,10"
+                            HorizontalAlignment="Stretch"
+                            HorizontalContentAlignment="Left"
+                            Command="{Binding OpenSettingsCommand}">
+                        <StackPanel Orientation="Horizontal" Spacing="10">
+                            <TextBlock Text="⚙️" FontSize="16" VerticalAlignment="Center" />
+                            <TextBlock Text="Einstellungen" FontSize="14" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </Button>
+                </Border>
+            </Grid>
         </Border>
 
-        <!-- TabControl mit 7 Tabs -->
-        <TabControl Grid.Row="1" Background="#050507" Padding="4">
-            <TabItem Header="📁 Datei-Manager">
-                <views:FileManagerView />
-            </TabItem>
-            <TabItem Header="🖨️ Drucker">
-                <views:PrinterView />
-            </TabItem>
-            <TabItem Header="🧶 Filament">
-                <views:FilamentView />
-            </TabItem>
-            <TabItem Header="🌐 Model-Repository">
-                <views:ModelRepoView />
-            </TabItem>
-            <TabItem Header="📊 Statistik">
-                <views:StatisticsView />
-            </TabItem>
-            <TabItem Header="🔥 Kosten-Rechner">
-                <views:CostCalculatorView />
-            </TabItem>
-            <TabItem Header="🤖 KI-Assistent">
-                <views:AiAssistantView />
-            </TabItem>
-        </TabControl>
+        <!-- ===== RECHTER CONTENT ===== -->
+        <Grid Grid.Column="1" Background="#050507">
+            <!-- Content-Bereich (vom MainViewModel gesetzt) -->
+            <ContentControl Content="{Binding CurrentView}" />
+
+            <!-- Forge-Bot Overlay (immer da, über Content) -->
+            <views:ForgeBotView Width="140" Height="180"
+                                VerticalAlignment="Bottom"
+                                HorizontalAlignment="Right"
+                                Margin="0,0,10,10"
+                                IsHitTestVisible="True"
+                                DataContext="{Binding ForgeBot}" />
+
+            <!-- ===== SETTINGS OVERLAY ===== -->
+            <Border Background="#80000000"
+                    IsVisible="{Binding IsSettingsOpen}"
+                    ZIndex="100">
+                <Grid Margin="40">
+                    <Border Background="#0a0a0f"
+                            CornerRadius="8"
+                            BorderBrush="#ff6600"
+                            BorderThickness="1">
+                        <Grid RowDefinitions="Auto,*">
+                            <!-- Settings-Header -->
+                            <Border Grid.Row="0" Background="#050507" Padding="20,14">
+                                <Grid ColumnDefinitions="*,Auto">
+                                    <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="10">
+                                        <TextBlock Text="⚙️" FontSize="22" VerticalAlignment="Center" />
+                                        <TextBlock Text="Einstellungen" FontSize="20" FontWeight="Bold"
+                                                   Foreground="#ff6600" VerticalAlignment="Center" />
+                                    </StackPanel>
+                                    <Button Grid.Column="1" Background="#1a1a2e" Foreground="#aaa"
+                                            BorderThickness="0" CornerRadius="6" Padding="14,8"
+                                            Command="{Binding CloseSettingsCommand}">✕ Schließen</Button>
+                                </Grid>
+                            </Border>
+                            <!-- Settings-Inhalt -->
+                            <ScrollViewer Grid.Row="1" Padding="20">
+                                <views:SettingsView DataContext="{Binding Settings}" />
+                            </ScrollViewer>
+                        </Grid>
+                    </Border>
+                </Grid>
+            </Border>
+        </Grid>
     </Grid>
 </Window>

@@ -1,10 +1,48 @@
 # FlipsiForge Server — Lite (reine Überwachung, keine KI, keine Web-UI)
-FROM flipsiforge/server:full AS base
+# .NET 10.0.300 SDK, Single-File-Publish für linux-x64
+# Baut auf dem Full-Image auf und überschreibt nur die Umgebungsvariablen,
+# sodass nur ein Binary gepflegt werden muss.
+# (c) 2026 TechFlipsi / Fabian Kirchweger — GPL-3.0
 
-# Lite-Modus aktivieren
+# === Build-Stage (gleich wie Full) ===
+FROM mcr.microsoft.com/dotnet/sdk:10.0.300 AS build
+WORKDIR /src
+
+COPY src/FlipsiForge.Core/FlipsiForge.Core.csproj src/FlipsiForge.Core/
+COPY src/FlipsiForge.Server/FlipsiForge.Server.csproj src/FlipsiForge.Server/
+RUN dotnet restore src/FlipsiForge.Server/FlipsiForge.Server.csproj
+
+COPY src/ src/
+# Lite benötigt wwwroot/StaticFiles nicht — werden aber ohnehin via ENV FLIPSIFORGE_WEBUI=false deaktiviert
+RUN dotnet publish src/FlipsiForge.Server/FlipsiForge.Server.csproj \
+    -c Release \
+    -r linux-x64 \
+    --self-contained false \
+    -p:PublishSingleFile=true \
+    -p:IncludeContentFilesInSingleFile=true \
+    -p:EnableCompressionInSingleFile=true \
+    -o /app \
+    --no-restore
+
+# === Runtime-Stage (gleich minimal wie Full) ===
+FROM mcr.microsoft.com/dotnet/aspnet:10.0-noble AS runtime
+WORKDIR /app
+COPY --from=build /app /app
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libsqlite3-0 \
+    ca-certificates \
+ && rm -rf /var/lib/apt/lists/*
+
+EXPOSE 5000
+ENV ASPNETCORE_URLS=http://+:5000
+# ASP.NET Core lädt appsettings.{Environment}.json automatisch — "Lite" lädt
+# appsettings.Lite.json mit Server:Mode=Lite, AI=false, WebUI=false.ENV-Variablen unten überschreiben ggf. sicher.
+ENV ASPNETCORE_ENVIRONMENT=Lite
+
+# Lite-Modus aktivieren — kein KI, keine Web-UI, nur Gateway API
 ENV FLIPSIFORGE_MODE=Lite
 ENV FLIPSIFORGE_AI=false
 ENV FLIPSIFORGE_WEBUI=false
 
-# Lite braucht weniger Ressourcen — ~200MB RAM
-ENTRYPOINT ["dotnet", "FlipsiForge.Server.dll"]
+ENTRYPOINT ["/app/FlipsiForge.Server"]

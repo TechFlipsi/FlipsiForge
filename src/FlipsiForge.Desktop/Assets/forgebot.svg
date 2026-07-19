@@ -1,0 +1,140 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 420" width="300" height="420">
+  <defs>
+    <!-- Ember orange glow for eyes -->
+    <filter id="eyeGlow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="3.5" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <!-- Body gradient: dark void with subtle depth -->
+    <radialGradient id="bodyGrad" cx="38%" cy="30%" r="75%">
+      <stop offset="0%" stop-color="#1c1c24"/>
+      <stop offset="55%" stop-color="#0e0e14"/>
+      <stop offset="100%" stop-color="#050507"/>
+    </radialGradient>
+    <radialGradient id="headGrad" cx="38%" cy="30%" r="75%">
+      <stop offset="0%" stop-color="#202028"/>
+      <stop offset="100%" stop-color="#0a0a0e"/>
+    </radialGradient>
+    <!-- Ember accent gradient -->
+    <linearGradient id="emberGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ff8533"/>
+      <stop offset="100%" stop-color="#cc5200"/>
+    </linearGradient>
+    <linearGradient id="emberGradH" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#cc5200"/>
+      <stop offset="50%" stop-color="#ff6600"/>
+      <stop offset="100%" stop-color="#cc5200"/>
+    </linearGradient>
+    <!-- Base shadow -->
+    <radialGradient id="baseShadow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#000000" stop-opacity="0.5"/>
+      <stop offset="100%" stop-color="#000000" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Base platform shadow -->
+  <ellipse cx="150" cy="395" rx="65" ry="11" fill="url(#baseShadow)"/>
+  <!-- Base platform -->
+  <ellipse cx="150" cy="388" rx="58" ry="9" fill="#1a1a22" stroke="#ff6600" stroke-width="0.5" stroke-opacity="0.35"/>
+  <ellipse cx="150" cy="386" rx="50" ry="6" fill="#0d0d12" stroke="#ff6600" stroke-width="0.4" stroke-opacity="0.2"/>
+
+  <!-- === BODY === -->
+  <!-- Body (egg-shaped, wider at bottom) -->
+  <path d="M 150 195
+           C 108 195, 92 245, 92 295
+           C 92 345, 112 383, 150 383
+           C 188 383, 208 345, 208 295
+           C 208 245, 192 195, 150 195 Z"
+        fill="url(#bodyGrad)" stroke="#ff6600" stroke-width="0.8" stroke-opacity="0.18"/>
+
+  <!-- Ember collar/scarf — smaller, ~50% reduced -->
+  <path d="M 128 212
+           C 138 209, 162 209, 172 212
+           L 170 222
+           C 160 224, 140 224, 130 222 Z"
+        fill="url(#emberGradH)" opacity="0.92"/>
+  <!-- Collar highlight line -->
+  <path d="M 132 214
+           C 142 212, 158 212, 168 214"
+          fill="none" stroke="#ffaa66" stroke-width="0.8" opacity="0.5"/>
+
+  <!-- Small sensor dot below collar -->
+  <circle cx="150" cy="245" r="2.5" fill="#ff6600" opacity="0.7"/>
+  <circle cx="150" cy="245" r="4.5" fill="#ff6600" opacity="0.15"/>
+
+  <!-- "FORGE" text on chest — centered under sensor dot -->
+  <text x="150" y="278" font-family="'Segoe UI', Arial, sans-serif" font-size="11" font-weight="600"
+        fill="#ff6600" opacity="0.65" text-anchor="middle" letter-spacing="2">FORGE</text>
+
+  <!-- === NECK (connects head to body, overlapping both) === -->
+  <rect x="134" y="178" width="32" height="32" rx="11" fill="#0d0d12" stroke="#ff6600" stroke-width="0.5" stroke-opacity="0.2"/>
+  <!-- Neck ember ring -->
+  <ellipse cx="150" cy="188" rx="15" ry="4" fill="url(#emberGradH)" opacity="0.6"/>
+
+  <!-- === ARMS === -->
+  <!-- Left arm (raised, waving) — viewer's left, anchored at shoulder -->
+  <path d="M 100 225
+           C 78 215, 62 190, 66 168
+           C 69 162, 79 162, 85 170
+           C 89 184, 96 205, 108 222 Z"
+        fill="url(#bodyGrad)" stroke="#ff6600" stroke-width="0.6" stroke-opacity="0.25"/>
+  <!-- Shoulder joint circle -->
+  <circle cx="103" cy="222" r="6" fill="#0d0d12" stroke="#ff6600" stroke-width="0.5" stroke-opacity="0.3"/>
+  <!-- Ember palm/inner on raised arm -->
+  <ellipse cx="76" cy="176" rx="5" ry="8" fill="url(#emberGrad)" opacity="0.75" transform="rotate(-25 76 176)"/>
+
+  <!-- Right arm (lowered, viewer's right, anchored at shoulder) -->
+  <path d="M 200 262
+           C 220 268, 232 290, 224 315
+           C 220 321, 210 319, 206 312
+           C 202 297, 200 278, 196 265 Z"
+        fill="url(#bodyGrad)" stroke="#ff6600" stroke-width="0.6" stroke-opacity="0.25"/>
+  <!-- Shoulder joint circle -->
+  <circle cx="197" cy="260" r="6" fill="#0d0d12" stroke="#ff6600" stroke-width="0.5" stroke-opacity="0.3"/>
+  <!-- Ember palm/inner on lowered arm -->
+  <ellipse cx="221" cy="290" rx="5" ry="8" fill="url(#emberGrad)" opacity="0.55" transform="rotate(20 221 290)"/>
+
+  <!-- === HEAD === -->
+  <!-- Head (rounded squircle) -->
+  <path d="M 150 60
+           C 112 60, 86 82, 86 122
+           C 86 162, 112 195, 150 195
+           C 188 195, 214 162, 214 122
+           C 214 82, 188 60, 150 60 Z"
+        fill="url(#headGrad)" stroke="#ff6600" stroke-width="0.8" stroke-opacity="0.22"/>
+
+  <!-- Top ember button/antenna cap -->
+  <ellipse cx="150" cy="67" rx="11" ry="5" fill="url(#emberGrad)" opacity="0.85"/>
+  <circle cx="150" cy="65" r="2" fill="#ffaa66" opacity="0.6"/>
+
+  <!-- Side ear/headphone protrusions -->
+  <ellipse cx="84" cy="122" rx="7" ry="14" fill="#1a1a22" stroke="#ff6600" stroke-width="0.5" stroke-opacity="0.25"/>
+  <ellipse cx="216" cy="122" rx="7" ry="14" fill="#1a1a22" stroke="#ff6600" stroke-width="0.5" stroke-opacity="0.25"/>
+  <!-- Ember ear accents -->
+  <circle cx="84" cy="122" r="3" fill="url(#emberGrad)" opacity="0.5"/>
+  <circle cx="216" cy="122" r="3" fill="url(#emberGrad)" opacity="0.5"/>
+
+  <!-- Face visor (black oval, rounded) -->
+  <ellipse cx="150" cy="128" rx="52" ry="40" fill="#030305" stroke="#ff6600" stroke-width="0.5" stroke-opacity="0.35"/>
+  <!-- Visor inner glow rim -->
+  <ellipse cx="150" cy="128" rx="49" ry="37" fill="none" stroke="#ff6600" stroke-width="0.3" stroke-opacity="0.15"/>
+
+  <!-- Happy glowing eyes (ember orange, arc shape — ^ ^) -->
+  <g filter="url(#eyeGlow)">
+    <!-- Left eye -->
+    <path d="M 122 132
+             Q 135 116, 148 132"
+          fill="none" stroke="#ff6600" stroke-width="4.5" stroke-linecap="round"/>
+    <!-- Right eye -->
+    <path d="M 152 132
+             Q 165 116, 178 132"
+          fill="none" stroke="#ff6600" stroke-width="4.5" stroke-linecap="round"/>
+  </g>
+
+  <!-- Subtle ember reflection on visor -->
+  <ellipse cx="132" cy="110" rx="10" ry="3.5" fill="#ff6600" opacity="0.06"/>
+  <ellipse cx="168" cy="110" rx="6" ry="2" fill="#ff6600" opacity="0.04"/>
+</svg>

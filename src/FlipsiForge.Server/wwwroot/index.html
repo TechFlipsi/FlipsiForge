@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>🔥 FlipsiForge Server v0.2.0</title>
+  <link rel="stylesheet" href="/css/app.css" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔥</text></svg>" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="logo">🔥</span>
+      <h1>FlipsiForge Server <span class="ver">v0.2.0</span></h1>
+    </div>
+    <div class="health" id="health">
+      <span class="dot" id="health-dot">●</span>
+      <span id="health-text">lade…</span>
+      <span class="meta" id="health-mode"></span>
+    </div>
+  </header>
+
+  <nav class="tabs" id="tabs">
+    <button class="tab active" data-tab="printers">🖨️ Drucker</button>
+    <button class="tab" data-tab="spools">🧶 Spulen</button>
+    <button class="tab" data-tab="filament">📚 Filament-DB</button>
+    <button class="tab" data-tab="stats">📊 Statistik</button>
+    <button class="tab" data-tab="files">📁 Files</button>
+    <button class="tab" data-tab="system">⚙️ System</button>
+  </nav>
+
+  <main class="content">
+    <!-- Drucker -->
+    <section class="panel active" id="panel-printers">
+      <div class="panel-head">
+        <h2>Drucker</h2>
+        <button class="cta" id="btn-add-printer">+ Drucker</button>
+      </div>
+      <table class="data-table">
+        <thead>
+          <tr><th>ID</th><th>Marke</th><th>Modell</th><th>Protokoll</th><th>IP/USB</th><th>Bauvolumen</th><th>Status</th><th>Aktionen</th></tr>
+        </thead>
+        <tbody id="printers-tbody"></tbody>
+      </table>
+      <div id="printer-form" class="modal hidden"></div>
+    </section>
+
+    <!-- Spulen -->
+    <section class="panel" id="panel-spools">
+      <div class="panel-head">
+        <h2>Filament-Spulen</h2>
+        <button class="cta" id="btn-add-spool">+ Spule</button>
+      </div>
+      <table class="data-table">
+        <thead>
+          <tr><th>ID</th><th>Marke</th><th>Material</th><th>Farbe</th><th>Restgewicht</th><th>Status</th><th>Aktionen</th></tr>
+        </thead>
+        <tbody id="spools-tbody"></tbody>
+      </table>
+    </section>
+
+    <!-- Filament-DB -->
+    <section class="panel" id="panel-filament">
+      <div class="panel-head">
+        <h2>Filament-Marken-Datenbank <span class="badge" id="filament-count">0</span></h2>
+        <input type="text" id="filament-filter" placeholder="Marke filtern…" />
+      </div>
+      <table class="data-table">
+        <thead>
+          <tr><th>Marke</th><th>Produkt</th><th>Material</th><th>Hotend</th><th>Bett</th><th>Speed</th><th>Layer</th><th>Eigenschaften</th></tr>
+        </thead>
+        <tbody id="filament-tbody"></tbody>
+      </table>
+    </section>
+
+    <!-- Statistik -->
+    <section class="panel" id="panel-stats">
+      <h2>Statistiken</h2>
+      <div class="stats-grid" id="stats-grid"></div>
+      <h3>Filament</h3>
+      <div class="stats-grid" id="filament-stats-grid"></div>
+      <h3>Dateien</h3>
+      <div class="stats-grid" id="files-stats-grid"></div>
+    </section>
+
+    <!-- Files -->
+    <section class="panel" id="panel-files">
+      <div class="panel-head">
+        <h2>Gescannte Dateien</h2>
+        <div class="row">
+          <input type="text" id="files-search" placeholder="Suche…" />
+          <input type="text" id="files-folder" placeholder="Ordner-Pfad" />
+          <button class="cta" id="btn-scan">Scan starten</button>
+        </div>
+      </div>
+      <table class="data-table">
+        <thead>
+          <tr><th>ID</th><th>Dateiname</th><th>Ext</th><th>Pfad</th><th>Größe</th><th>Geändert</th><th>★</th></tr>
+        </thead>
+        <tbody id="files-tbody"></tbody>
+      </table>
+    </section>
+
+    <!-- System -->
+    <section class="panel" id="panel-system">
+      <h2>System-Einstellungen</h2>
+      <p class="hint">Änderungen werden via PUT /api/settings gespeichert.</p>
+      <form id="settings-form" class="settings-form">
+        <fieldset>
+          <legend>KI</legend>
+          <label>AI-Modell
+            <select name="AiModel" id="set-aimodel">
+              <option value="Auto">Auto (RAM-basiert)</option>
+              <option value="E4B">E4B (Desktop, ~3.7GB)</option>
+              <option value="E2B">E2B (Mini-PC, ~2.6GB)</option>
+              <option value="E2BQat">E2B QAT (Pi, ~1.3GB)</option>
+              <option value="Off">Off</option>
+            </select>
+          </label>
+          <label><input type="checkbox" name="AiEnabled" /> KI aktiviert</label>
+        </fieldset>
+        <fieldset>
+          <legend>Server</legend>
+          <label>Server-Modus
+            <select name="ServerMode">
+              <option value="Full">Full (AI + Web-UI)</option>
+              <option value="Lite">Lite (nur Monitoring)</option>
+            </select>
+          </label>
+          <label><input type="checkbox" name="WebUiEnabled" /> Web-UI aktiviert</label>
+        </fieldset>
+        <fieldset>
+          <legend>Sprache & Cloud</legend>
+          <label>Sprache
+            <select name="Language">
+              <option value="de">Deutsch</option>
+              <option value="en">English</option>
+            </select>
+          </label>
+          <label>Watch-Folders (kommasepariert)
+            <input type="text" name="WatchFolders" />
+          </label>
+          <label>Nextcloud URL <input type="text" name="NextcloudUrl" /></label>
+          <label>Nextcloud User <input type="text" name="NextcloudUser" /></label>
+          <label>Nextcloud Passwort <input type="password" name="NextcloudPassword" /></label>
+          <label>Telegram Bot-Token <input type="text" name="TelegramBotToken" /></label>
+          <label>Telegram Chat-ID <input type="text" name="TelegramChatId" /></label>
+        </fieldset>
+        <div class="actions">
+          <button type="submit" class="cta">Speichern (PUT /api/settings)</button>
+          <button type="button" id="btn-export" class="cta ghost">Export (JSON)</button>
+          <button type="button" id="btn-backup" class="cta ghost">Backup</button>
+          <button type="button" id="btn-cache-clear" class="cta ghost danger">Cache leeren</button>
+        </div>
+      </form>
+      <pre id="system-out" class="out"></pre>
+    </section>
+  </main>
+
+  <footer class="botbar">
+    <small>FlipsiForge v0.2.0 · TechFlipsi / Fabian Kirchweger · GPL-3.0 · <a href="https://techflipsi.kirchweger.de">techflipsi.kirchweger.de</a></small>
+  </footer>
+
+  <script src="/js/api.js"></script>
+  <script src="/js/app.js"></script>
+</body>
+</html>

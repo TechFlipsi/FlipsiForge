@@ -1,0 +1,111 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="FlipsiForge.Desktop.Dialogs.PrinterDialog"
+             x:CompileBindings="False"
+        Title="Drucker bearbeiten"
+        Width="560" Height="640"
+        CanResize="False"
+        WindowStartupLocation="CenterOwner"
+        Background="#050507"
+        ShowInTaskbar="False">
+
+    <Window.Styles>
+        <Style Selector="TextBlock.label">
+            <Setter Property="Foreground" Value="#aaa" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+        <Style Selector="TextBox">
+            <Setter Property="Background" Value="#0a0a0f" />
+            <Setter Property="BorderBrush" Value="#1a1a2e" />
+            <Setter Property="Foreground" Value="#fff" />
+            <Setter Property="CornerRadius" Value="4" />
+            <Setter Property="Padding" Value="8,6" />
+        </Style>
+        <Style Selector="ComboBox">
+            <Setter Property="Background" Value="#0a0a0f" />
+            <Setter Property="BorderBrush" Value="#1a1a2e" />
+            <Setter Property="Foreground" Value="#fff" />
+            <Setter Property="CornerRadius" Value="4" />
+            <Setter Property="Padding" Value="8,6" />
+            <Setter Property="MinWidth" Value="180" />
+        </Style>
+        <Style Selector="CheckBox">
+            <Setter Property="Foreground" Value="#fff" />
+        </Style>
+        <Style Selector="Button">
+            <Setter Property="Background" Value="#1a1a2e" />
+            <Setter Property="Foreground" Value="#fff" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="CornerRadius" Value="4" />
+            <Setter Property="Padding" Value="16,8" />
+        </Style>
+    </Window.Styles>
+
+    <Grid RowDefinitions="*,Auto" Margin="20">
+        <ScrollViewer Grid.Row="0">
+            <StackPanel Spacing="8">
+                <TextBlock Text="Drucker bearbeiten" Foreground="#ff6600" FontWeight="Bold" FontSize="16"
+                           Margin="0,0,0,8" />
+                <Grid ColumnDefinitions="180,*">
+                    <TextBlock Grid.Column="0" Classes="label" Text="Marke" />
+                    <TextBox Grid.Column="1" x:Name="BrandBox" />
+                </Grid>
+                <Grid ColumnDefinitions="180,*">
+                    <TextBlock Grid.Column="0" Classes="label" Text="Modell" />
+                    <TextBox Grid.Column="1" x:Name="ModelBox" />
+                </Grid>
+                <Grid ColumnDefinitions="180,*">
+                    <TextBlock Grid.Column="0" Classes="label" Text="Protokoll" />
+                    <ComboBox Grid.Column="1" x:Name="ProtocolCombo" HorizontalAlignment="Stretch">
+                        <ComboBoxItem Content="KlipperMoonraker" />
+                        <ComboBoxItem Content="Marlin" />
+                        <ComboBoxItem Content="BambuLab" />
+                        <ComboBoxItem Content="PrusaLink" />
+                        <ComboBoxItem Content="OctoPrint" />
+                    </ComboBox>
+                </Grid>
+                <Grid ColumnDefinitions="180,*">
+                    <TextBlock Grid.Column="0" Classes="label" Text="IP-Adresse" />
+                    <TextBox Grid.Column="1" x:Name="IpBox" PlaceholderText="z.B. 192.168.1.50" />
+                </Grid>
+                <Grid ColumnDefinitions="180,*">
+                    <TextBlock Grid.Column="0" Classes="label" Text="USB-Port" />
+                    <TextBox Grid.Column="1" x:Name="UsbBox" PlaceholderText="/dev/ttyACM0" />
+                </Grid>
+                <Grid ColumnDefinitions="180,*">
+                    <TextBlock Grid.Column="0" Classes="label" Text="Düsen-Durchmesser (mm)" />
+                    <NumericUpDown Grid.Column="1" x:Name="NozzleBox"
+                                   Minimum="0.1" Maximum="2.0"
+                                   Increment="0.05" FormatString="0.##" />
+                </Grid>
+                <TextBlock Text="Bauvolumen (mm)" Foreground="#ff6600" FontWeight="Bold" Margin="0,8,0,2" />
+                <Grid ColumnDefinitions="180,*,*,*" Margin="0,2">
+                    <TextBlock Grid.Column="0" Classes="label" Text="X / Y / Z" />
+                    <NumericUpDown Grid.Column="1" x:Name="BvX" Minimum="1" Maximum="2000" />
+                    <NumericUpDown Grid.Column="2" x:Name="BvY" Minimum="1" Maximum="2000" Margin="6,0,0,0" />
+                    <NumericUpDown Grid.Column="3" x:Name="BvZ" Minimum="1" Maximum="2000" Margin="6,0,0,0" />
+                </Grid>
+                <TextBlock Text="Eigenschaften" Foreground="#ff6600" FontWeight="Bold" Margin="0,8,0,2" />
+                <CheckBox x:Name="EnclosedCheck" Content="Enclosure (geschlossen)" />
+                <CheckBox x:Name="DirectDriveCheck" Content="Direct Drive Extruder" />
+                <Grid ColumnDefinitions="180,*" Margin="0,4">
+                    <TextBlock Grid.Column="0" Classes="label" Text="Max Hotend-Temp (°C)" />
+                    <NumericUpDown Grid.Column="1" x:Name="MaxHotendBox" Minimum="100" Maximum="500" />
+                </Grid>
+                <Grid ColumnDefinitions="180,*" Margin="0,4">
+                    <TextBlock Grid.Column="0" Classes="label" Text="Max Bett-Temp (°C)" />
+                    <NumericUpDown Grid.Column="1" x:Name="MaxBedBox" Minimum="20" Maximum="200" />
+                </Grid>
+                <TextBlock Text="Notizen" Foreground="#ff6600" FontWeight="Bold" Margin="0,8,0,2" />
+                <TextBox x:Name="NotesBox" AcceptsReturn="True" Height="80" TextWrapping="Wrap" />
+            </StackPanel>
+        </ScrollViewer>
+
+        <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="10" Margin="0,14,0,0">
+            <Button Content="Abbrechen" Click="Cancel_Click" Foreground="#aaa" />
+            <Button Content="Speichern" Background="#ff6600" Foreground="#050507" FontWeight="Bold"
+                    Click="Save_Click" />
+        </StackPanel>
+    </Grid>
+</Window>

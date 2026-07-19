@@ -4,21 +4,35 @@
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <Version>0.1.0-pre</Version>
+    <Version>0.2.0</Version>
     <Company>TechFlipsi</Company>
     <Authors>Fabian Kirchweger</Authors>
     <Product>FlipsiForge</Product>
-    <Description>3D printing management desktop app and server</Description>
+    <Description>3D printing management desktop app and server — Core library</Description>
     <PackageLicenseExpression>GPL-3.0-only</PackageLicenseExpression>
     <RepositoryUrl>https://github.com/TechFlipsi/FlipsiForge</RepositoryUrl>
+    <!-- Preview-Pakete erlauben (Microsoft.ML.OnnxRuntimeGenAI.Managed ist preview) -->
+    <NoWarn>$(NoWarn);NU1903;NU1603</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
+    <!-- EF Core (bestehend) -->
     <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.0-preview.6.25313.107" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.0-preview.6.25313.107">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
+
+    <!-- v0.2.0: KI / ONNX Runtime -->
+    <!-- Pitfall: Microsoft.ML.OnnxRuntime UND .DirectML NICHT zusammen referenzieren (DLL-Duplikat).
+         Wir nutzen nur das Basis-Paket (CPU). Für GPU-Support später .DirectML stattdessen. -->
+    <PackageReference Include="Microsoft.ML.OnnxRuntime" Version="1.27.1" />
+    <PackageReference Include="Microsoft.ML.OnnxRuntimeGenAI.Managed" Version="0.14.1" />
+
+    <!-- v0.2.0: Printer-Connections -->
+    <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.10" />
+    <PackageReference Include="System.IO.Ports" Version="10.0.10" />
+    <PackageReference Include="MQTTnet" Version="5.2.0.1603" />
   </ItemGroup>
 
 </Project>

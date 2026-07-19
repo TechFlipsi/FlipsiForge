@@ -1,15 +1,96 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:FlipsiForge.Desktop.ViewModels"
              x:Class="FlipsiForge.Desktop.Views.FilamentView"
-             Background="#050507">
-    <Grid Margin="8">
-        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="8">
-            <TextBlock Text="🧶" FontSize="48" HorizontalAlignment="Center" Opacity="0.3" />
-            <TextBlock Text="Kein Filament im Inventar" Foreground="#666" HorizontalAlignment="Center" />
-            <TextBlock Text="Füge deine erste Filament-Spule hinzu"
-                       Foreground="#444" FontSize="12" HorizontalAlignment="Center" />
-            <Button Content="+ Spule hinzufügen" Background="#ff6600" Foreground="#050507"
-                    Padding="16,6" Margin="0,8,0,0" />
-        </StackPanel>
+             x:CompileBindings="False"
+             Background="Transparent">
+
+    <UserControl.DataContext>
+        <vm:FilamentViewModel />
+    </UserControl.DataContext>
+
+    <UserControl.Styles>
+        <Style Selector="Button">
+            <Setter Property="Background" Value="#1a1a2e" />
+            <Setter Property="Foreground" Value="#fff" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="CornerRadius" Value="4" />
+            <Setter Property="Padding" Value="12,6" />
+        </Style>
+        <Style Selector="Button.primary">
+            <Setter Property="Background" Value="#ff6600" />
+            <Setter Property="Foreground" Value="#050507" />
+            <Setter Property="FontWeight" Value="Bold" />
+        </Style>
+        <Style Selector="DataGrid">
+            <Setter Property="Background" Value="#050507" />
+            <Setter Property="BorderBrush" Value="#1a1a2e" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Foreground" Value="#fff" />
+            <Setter Property="FontSize" Value="13" />
+        </Style>
+    </UserControl.Styles>
+
+    <Grid RowDefinitions="Auto,*" Margin="16">
+        <!-- Toolbar -->
+        <Border Grid.Row="0" Background="#0a0a0f" CornerRadius="6" Padding="12,8" Margin="0,0,0,10">
+            <Grid ColumnDefinitions="Auto,*,Auto">
+                <TextBlock Grid.Column="0" Text="🧶 Filament" Foreground="#ff6600" FontWeight="Bold"
+                           FontSize="18" VerticalAlignment="Center" />
+                <TextBlock Grid.Column="1" Text="{Binding Spools.Count, StringFormat='{}{0} Spulen'}"
+                           Foreground="#666" FontSize="12" VerticalAlignment="Center" Margin="16,0,0,0" />
+                <Button Grid.Column="2" Classes="primary" Content="+ Spule hinzufügen"
+                        Command="{Binding AddCommand}" />
+            </Grid>
+        </Border>
+
+        <!-- Spulen-Liste -->
+        <DataGrid Grid.Row="1"
+                  ItemsSource="{Binding Spools}"
+                  AutoGenerateColumns="False"
+                  IsReadOnly="True"
+                  CanUserSortColumns="True"
+                  GridLinesVisibility="Horizontal"
+                  BorderThickness="1"
+                  BorderBrush="#1a1a2e">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Marke" Binding="{Binding Brand}" Width="*" />
+                <DataGridTextColumn Header="Material" Binding="{Binding Material}" Width="*" />
+                <DataGridTemplateColumn Header="Farbe" Width="0.7*">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate DataType="{x:Type vm:SpoolRowVm}">
+                            <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                                <Border Width="18" Height="18" CornerRadius="3"
+                                        Background="{Binding ColorHex}" BorderBrush="#444" BorderThickness="1" />
+                                <TextBlock Text="{Binding ColorName}" Foreground="#aaa" FontSize="12"
+                                           VerticalAlignment="Center" />
+                            </StackPanel>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <DataGridTextColumn Header="Gewicht" Binding="{Binding Weight}" Width="0.8*" />
+                <DataGridTextColumn Header="Dichte" Binding="{Binding Density}" Width="0.8*" />
+                <DataGridTextColumn Header="Kosten" Binding="{Binding Cost}" Width="0.8*" />
+                <DataGridTextColumn Header="Status" Binding="{Binding StatusGlyph}" Width="*" />
+                <DataGridTemplateColumn Header="Aktion" Width="2.4*">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate DataType="{x:Type vm:SpoolRowVm}">
+                            <StackPanel Orientation="Horizontal" Spacing="4">
+                                <Button Content="🔄 Status"
+                                        Command="{Binding $parent[UserControl].DataContext.CycleStatusCommand}"
+                                        CommandParameter="{Binding}" />
+                                <Button Content="✎ Bearbeiten"
+                                        Command="{Binding $parent[UserControl].DataContext.EditCommand}"
+                                        CommandParameter="{Binding}" />
+                                <Button Content="✕ Löschen"
+                                        Background="#3a1a1a" Foreground="#ff8888"
+                                        Command="{Binding $parent[UserControl].DataContext.DeleteCommand}"
+                                        CommandParameter="{Binding}" />
+                            </StackPanel>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+            </DataGrid.Columns>
+        </DataGrid>
     </Grid>
 </UserControl>

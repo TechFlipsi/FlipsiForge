@@ -1,37 +1,202 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:FlipsiForge.Desktop.ViewModels"
              x:Class="FlipsiForge.Desktop.Views.FileManagerView"
-             Background="#050507">
+             x:CompileBindings="False"
+             Background="Transparent">
 
-    <Grid RowDefinitions="Auto,Auto,*" Margin="8">
-        <!-- Format-Filter Badges -->
-        <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="8" Margin="0,0,0,8">
-            <Button Content="Alle" Background="#1a1a2e" Foreground="#ff6600"
-                    BorderBrush="#ff6600" BorderThickness="1" Padding="12,4" />
-            <Button Content="STL: 0" Background="#1a1a2e" Foreground="#aaa"
-                    BorderBrush="#333" BorderThickness="1" Padding="12,4" />
-            <Button Content="3MF: 0" Background="#1a1a2e" Foreground="#aaa"
-                    BorderBrush="#333" BorderThickness="1" Padding="12,4" />
-            <Button Content="G-code: 0" Background="#1a1a2e" Foreground="#aaa"
-                    BorderBrush="#333" BorderThickness="1" Padding="12,4" />
-            <Button Content="OBJ: 0" Background="#1a1a2e" Foreground="#aaa"
-                    BorderBrush="#333" BorderThickness="1" Padding="12,4" />
+    <UserControl.DataContext>
+        <vm:FileManagerViewModel />
+    </UserControl.DataContext>
+
+    <UserControl.Styles>
+        <Style Selector="Button">
+            <Setter Property="Background" Value="#1a1a2e" />
+            <Setter Property="Foreground" Value="#fff" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="CornerRadius" Value="4" />
+            <Setter Property="Padding" Value="10,5" />
+        </Style>
+        <Style Selector="Button.badge">
+            <Setter Property="Background" Value="#0a0a0f" />
+            <Setter Property="BorderBrush" Value="#1a1a2e" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Foreground" Value="#aaa" />
+            <Setter Property="Padding" Value="10,4" />
+            <Setter Property="Margin" Value="0,0,6,0" />
+            <Setter Property="FontSize" Value="12" />
+        </Style>
+        <Style Selector="Button.badge:selected">
+            <Setter Property="Background" Value="#ff6600" />
+            <Setter Property="Foreground" Value="#050507" />
+            <Setter Property="BorderBrush" Value="#ff6600" />
+        </Style>
+        <Style Selector="TextBox">
+            <Setter Property="Background" Value="#0a0a0f" />
+            <Setter Property="BorderBrush" Value="#1a1a2e" />
+            <Setter Property="Foreground" Value="#fff" />
+            <Setter Property="CornerRadius" Value="4" />
+            <Setter Property="Padding" Value="10,6" />
+        </Style>
+        <Style Selector="ComboBox">
+            <Setter Property="Background" Value="#0a0a0f" />
+            <Setter Property="BorderBrush" Value="#1a1a2e" />
+            <Setter Property="Foreground" Value="#fff" />
+            <Setter Property="CornerRadius" Value="4" />
+        </Style>
+        <Style Selector="ToggleSwitch">
+            <Setter Property="Foreground" Value="#fff" />
+        </Style>
+        <Style Selector="Border.card">
+            <Setter Property="Background" Value="#0a0a0f" />
+            <Setter Property="BorderBrush" Value="#1a1a2e" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Padding" Value="12" />
+            <Setter Property="Margin" Value="0,0,0,8" />
+        </Style>
+        <Style Selector="ItemsControl.list">
+            <Setter Property="Foreground" Value="#fff" />
+        </Style>
+        <Style Selector="ItemsControl.list Border.row">
+            <Setter Property="Background" Value="#0a0a0f" />
+            <Setter Property="BorderBrush" Value="#1a1a2e" />
+            <Setter Property="BorderThickness" Value="0,0,0,1" />
+            <Setter Property="Padding" Value="12,8" />
+        </Style>
+        <Style Selector="ItemsControl.grid ItemsControl">
+            <Setter Property="Foreground" Value="#fff" />
+        </Style>
+    </UserControl.Styles>
+
+    <Grid RowDefinitions="Auto,Auto,*" Margin="16">
+
+        <!-- Header -->
+        <Border Grid.Row="0" Background="#0a0a0f" CornerRadius="6" Padding="12,10" Margin="0,0,0,10">
+            <Grid ColumnDefinitions="Auto,*,Auto">
+                <TextBlock Grid.Column="0" Text="📁 Datei-Manager" Foreground="#ff6600" FontWeight="Bold"
+                           FontSize="18" VerticalAlignment="Center" />
+                <TextBlock Grid.Column="1" Text="{Binding Files.Count, StringFormat='{}{0} Dateien'}"
+                           Foreground="#666" FontSize="12" VerticalAlignment="Center" Margin="16,0,0,0" />
+                <ToggleSwitch Grid.Column="2" IsChecked="{Binding AutoScan}" Content="Auto-Scan" />
+            </Grid>
+        </Border>
+
+        <!-- Toolbar: Filter-Badges + Suche + Sort/View -->
+        <StackPanel Grid.Row="1" Spacing="8" Margin="0,0,0,10">
+            <!-- Filter-Badges -->
+            <ItemsControl ItemsSource="{Binding FilterBadges}">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <WrapPanel />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate DataType="{x:Type vm:FilterBadgeVm}">
+                        <Button Classes="badge" Content="{Binding Display}"
+                                Command="{Binding $parent[UserControl].DataContext.ApplyFilterCommand}"
+                                CommandParameter="{Binding Key}" />
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
+            <!-- Suche + Toolbar -->
+            <Grid ColumnDefinitions="*,Auto,Auto,Auto,Auto">
+                <TextBox Grid.Column="0" Text="{Binding SearchText}"
+                         PlaceholderText="Suche... (Dateiname + 🤖 KI-Suche automatisch)"
+                         KeyUp="SearchBox_KeyUp" />
+                <Button Grid.Column="1" Content="🔍" Command="{Binding SearchCommand}" Margin="6,0,0,0" />
+                <ComboBox Grid.Column="2" x:Name="SortCombo" ItemsSource="{Binding SortOptions}"
+                          SelectedItem="{Binding SelectedSort}" Margin="6,0,0,0"
+                          SelectionChanged="SortCombo_SelectionChanged" />
+                <Button Grid.Column="3" Content="📋 List" Margin="6,0,0,0" Click="ListBtn_Click" />
+                <Button Grid.Column="4" Content="▦ Grid" Margin="6,0,0,0" Click="GridBtn_Click" />
+            </Grid>
         </StackPanel>
 
-        <!-- Suche -->
-        <TextBox Grid.Row="1" Watermark="Suche... (Dateiname + 🤖 KI-Suche automatisch)"
-                 Background="#1a1a2e" Foreground="#fff" BorderBrush="#333"
-                 Margin="0,0,0,8" />
+        <!-- Datei-Liste: LIST-Modus -->
+        <Border Grid.Row="2" Classes="card" Padding="0" IsVisible="{Binding !IsGrid}">
+            <ScrollViewer>
+                <ItemsControl ItemsSource="{Binding Files}" Background="Transparent">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate DataType="{x:Type vm:FileRowVm}">
+                            <Border Classes="row">
+                                <Grid ColumnDefinitions="*,Auto,Auto,Auto,Auto,Auto">
+                                    <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                                        <TextBlock Text="{Binding Name}" Foreground="#fff" VerticalAlignment="Center"
+                                                   FontSize="14" />
+                                        <Border Background="#ff6600" CornerRadius="3" Padding="6,2"
+                                                IsVisible="{Binding IsAiHit}">
+                                            <TextBlock Text="🤖 KI" Foreground="#050507" FontSize="10" FontWeight="Bold" />
+                                        </Border>
+                                    </StackPanel>
+                                    <TextBlock Grid.Column="1" Text="{Binding SizeDisplay}" Foreground="#aaa"
+                                               FontSize="12" VerticalAlignment="Center" Margin="0,0,16,0" />
+                                    <TextBlock Grid.Column="2" Text="{Binding ModifiedDisplay}" Foreground="#888"
+                                               FontSize="12" VerticalAlignment="Center" Margin="0,0,16,0" />
+                                    <TextBlock Grid.Column="3" Text="{Binding OpenCount, StringFormat='×{0}'}"
+                                               Foreground="#888" FontSize="12" VerticalAlignment="Center"
+                                               Margin="0,0,16,0" />
+                                    <Button Grid.Column="4" Content="{Binding FavoriteGlyph}"
+                                            Background="Transparent" Foreground="#ff6600" Padding="6,2"
+                                            FontSize="16"
+                                            Command="{Binding $parent[UserControl].DataContext.ToggleFavoriteCommand}"
+                                            CommandParameter="{Binding}" />
+                                    <Button Grid.Column="5" Content="Öffnen"
+                                            Background="#1a1a2e" Foreground="#fff" Padding="10,4" FontSize="12"
+                                            Margin="8,0,0,0"
+                                            Command="{Binding $parent[UserControl].DataContext.OpenCommand}"
+                                            CommandParameter="{Binding}" />
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+        </Border>
 
-        <!-- Datei-Liste (Platzhalter) -->
-        <Border Grid.Row="2" Background="#0a0a0f" BorderBrush="#222" BorderThickness="1" CornerRadius="4">
-            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="8">
-                <TextBlock Text="📁" FontSize="48" HorizontalAlignment="Center" Opacity="0.3" />
-                <TextBlock Text="Keine Dateien gefunden" Foreground="#666" HorizontalAlignment="Center" />
-                <TextBlock Text="Scanne Laufwerke oder füge Ordner hinzu" Foreground="#444"
-                           FontSize="12" HorizontalAlignment="Center" />
-                <Button Content="+ Ordner durchsuchen" Background="#ff6600" Foreground="#050507"
-                        Padding="16,6" Margin="0,8,0,0" />
+        <!-- Datei-Liste: GRID-Modus -->
+        <Border Grid.Row="2" Classes="card" Padding="0" IsVisible="{Binding IsGrid}">
+            <ScrollViewer>
+                <ItemsControl ItemsSource="{Binding Files}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <WrapPanel />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate DataType="{x:Type vm:FileRowVm}">
+                            <Border Width="180" Height="220" Margin="6"
+                                    Background="#1a1a2e" CornerRadius="6" Padding="10">
+                                <StackPanel Spacing="4">
+                                    <Border Height="120" Background="#050507" CornerRadius="4" BorderBrush="#333" BorderThickness="1">
+                                        <TextBlock Text="🖼️" FontSize="40" HorizontalAlignment="Center"
+                                                   VerticalAlignment="Center" Foreground="#444" />
+                                    </Border>
+                                    <TextBlock Text="{Binding Name}" Foreground="#fff" FontSize="12"
+                                               TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" />
+                                    <TextBlock Text="{Binding SizeDisplay}" Foreground="#888" FontSize="11" />
+                                    <Button Content="{Binding FavoriteGlyph}"
+                                            Background="Transparent" Foreground="#ff6600" Padding="4,2"
+                                            FontSize="14" HorizontalAlignment="Right"
+                                            Command="{Binding $parent[UserControl].DataContext.ToggleFavoriteCommand}"
+                                            CommandParameter="{Binding}" />
+                                </StackPanel>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+        </Border>
+
+        <!-- Empty State (nur wenn Files.Count == 0) -->
+        <Border Grid.Row="2" Background="Transparent" IsVisible="{Binding Files.Count, Converter={x:Static vm:ZeroToBoolConverter.Instance}}">
+            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="10">
+                <TextBlock Text="📁" FontSize="60" HorizontalAlignment="Center" Foreground="#444" />
+                <TextBlock Text="Keine Dateien gefunden" Foreground="#666" FontSize="16"
+                           HorizontalAlignment="Center" />
+                <TextBlock Text="Ordner in den Einstellungen → Datei-Manager hinzufügen"
+                           Foreground="#444" FontSize="12" HorizontalAlignment="Center" />
             </StackPanel>
         </Border>
     </Grid>
