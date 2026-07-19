@@ -6,7 +6,41 @@ FlipsiForge is a cross-platform 3D printing management tool that handles files, 
 
 ## Status
 
-🚧 **v0.2.0 in Entwicklung** — Server erweitert (Settings, Files, Maintenance, KI, Bot, Backup), Desktop-App + Core.Services parallel in Arbeit.
+📦 **v0.3.0 released** — DruckWächter Tab (Shelly + Moonraker Integration ohne HA), KI-Integration verifiziert, Windows Installer gebaut.
+
+## v0.3.0 Highlights — DruckWächter
+
+**🛡️ DruckWächter** — Steuert Shelly-Schalter und Moonraker-Drucker **direkt**, ohne Home Assistant, ohne Cloud.
+
+- **Multi-Drucker**: Jeder Drucker bekommt seinen eigenen Shelly zugeordnet
+- **Schieberegler** für Drucker AN/AUS (Shelly) und Licht AN/AUS (Moonraker Macro)
+- **Filament-Buttons** (Laden/Entladen) — rausgehoben, mit Multi-Extruder Popup (auto-detected via Moonraker `/printer/objects/list`)
+- **Dynamische Temperatur-Balken** für alle Extruder + alle Betten (z.B. Snapmaker U1: 4 Köpfe, Prusa XL: 5 Köpfe)
+- **Auto-Aus bei Druck-Ende**: Mit Telegram (Buttons + Timeout) oder ohne (15 Min Timer, einstellbar)
+- **Abkühl-Wartezeit**: Alle Extruder müssen unter Schwelle°C sinken vor Shutdown
+- **Nacht-Modus**: Auto-Aus ohne Nachfrage im Zeitfenster (z.B. 00:00–06:00)
+- **Graceful Shutdown**: Moonraker `/server/shutdown` → warten → Shelly aus (Fallback: direkt Shelly aus)
+- **Kostenrechner**: Strom (wenn Shelly PM) + Filament (immer) — Shelly PM auto-detect
+- **Design**: Bento-Cards im TechFlipsi Dark Void + Ember Theme
+
+### Core Services (neu in v0.3.0)
+
+| Service | Beschreibung |
+|---------|-------------|
+| `ShellyClient` | HTTP RPC Client für Shelly Gen2/3/4 — Switch.Set/Get, PM auto-detect |
+| `DruckWaechterService` | Automation Engine — Status, Steuerung, Kosten, Multi-Extruder auto-detect |
+| `DruckWaechterConfig` | Global (Strompreis, Nacht-Modus, Auto-Aus-Timer) + Per-Printer (Shelly-IP, Macros) |
+
+### KI-Integration (verifiziert ✓)
+
+- **OnnxGenAiChatEngine** mit `Microsoft.ML.OnnxRuntimeGenAI` 0.14.1
+- **3-Tier Modell-Auswahl** je nach RAM:
+  - **E4B** (~3.7GB) — Desktop ≥8GB → [HuggingFace](https://huggingface.co/onnx-community/gemma-4-E4B-it-ONNX)
+  - **E2B** (~2.6GB) — Mini-PC 4–8GB → [HuggingFace](https://huggingface.co/onnx-community/gemma-4-E2B-it-ONNX)
+  - **E2B QAT** (~1.3GB) — Raspberry Pi 4 2–4GB → [HuggingFace](https://huggingface.co/onnx-community/gemma-4-E4B-it-qat-mobile-ONNX)
+- **KI komplett ausschaltbar** in Einstellungen
+- **Robust**: Fehlende native libs → Stub-Modus (`IsLoaded=false`)
+- **Lokal**: Kein Ollama, kein externer Service, kein Internet nötig
 
 ## v0.2.0 Highlights (Server)
 
@@ -427,10 +461,10 @@ server:
 
 ## Roadmap
 
-### Phase 1: Grundgerüst + KI (v0.1.0-pre → v0.2.0 — aktuell)
+### Phase 1: Grundgerüst + KI (v0.1.0 → v0.3.0 — ✅ erledigt)
 - ✅ Projekt-Struktur (Core, Desktop, Server)
 - ✅ FlipsiForge.Core — Models, DbContext, Filament-Marken-Datenbank (41 Einträge)
-- ✅ FlipsiForge.Desktop — Avalonia UI 12, 7 Tabs scaffolded
+- ✅ FlipsiForge.Desktop — Avalonia UI 12, 8 Tabs scaffolded (Datei-Manager, Drucker, Filament, Model-Repo, Statistik, Kosten-Rechner, DruckWächter, KI-Assistent)
 - ✅ FlipsiForge.Server — ASP.NET Core Minimal API (Full/Lite) v0.1.0-pre
 - ✅ Docker (Full + Lite) auf .NET 10.0.300 SDK
 - ✅ Linux Build getestet
@@ -443,12 +477,17 @@ server:
 - ✅ Server-Stubs für Core.Services (`IPrinterConnectionManager`, `IAIChatEngine`,
   `IEmbeddingProvider`) — Server läuft eigenständig, echte Core-Implementierungen via
   `TryAdd`-Lifecycle einschwenkbar
-- ⬜ Gemma 4 E4B/E2B via ONNX Runtime GenAI (Chat + Empfehlungen) — Core.Services parallel
-- ⬜ KI-Suche (Embeddings + Dateinamen kombiniert) — Core.Services parallel
-- ⬜ Drucker-Protokolle (Moonraker, Marlin, Bambu, PrusaLink, OctoPrint) — Core.Services parallel
-- ⬜ Drucker/Filament CRUD in Desktop UI
+- ✅ **v0.3.0 DruckWächter:** ShellyClient (HTTP RPC), DruckWaechterService (Automation Engine),
+  DruckWaechterConfig (Global + Per-Printer), DruckWaechterView (Bento-Cards, Schieberegler,
+  Filament-Buttons, Multi-Extruder Popup, Temperatur-Balken), DesktopSettings-Erweiterung
+  (Strompreis, Auto-Aus-Timer, Nacht-Modus, Telegram)
+- ✅ **v0.3.0 KI-Integration:** OnnxGenAiChatEngine (Microsoft.ML.OnnxRuntimeGenAI 0.14.1),
+  3-Tier Modell-Auswahl (E4B/E2B/E2B QAT), HuggingFace Download-Links verifiziert,
+  KI ausschaltbar, Robust gegen fehlende native libs
+- ✅ **v0.3.0 Windows Installer:** GitHub Actions Build (dotnet publish + Inno Setup),
+  `FlipsiForge-0.3.0-win-x64-setup.exe` verfügbar
 
-### Phase 2: Home Assistant
+### Phase 2: Home Assistant + Erweiterte Features
 - ⬜ HACS Integration (Python custom component — Sensoren für Filament, Drucker, Kosten)
 - ⬜ HA Add-on Full (Docker Container, nur auf starken HA-Hosts — NUC/VM)
 - ⬜ HA Add-on Lite (Docker Container, OK auf Raspberry Pi)
