@@ -104,6 +104,28 @@ public sealed class DesktopSettings
     public string LogLevel { get; set; } = "Info";
     public bool DebugMode { get; set; } = false;
 
+    // === 10. DruckWächter ===
+    /// <summary>Strompreis pro kWh in Euro.</summary>
+    public decimal DwStrompreis { get; set; } = 0.15m;
+    /// <summary>Filamentpreis pro 1kg Rolle (330m).</summary>
+    public decimal DwFilamentPreis { get; set; } = 20.0m;
+    /// <summary>Auto-Aus Timer in Minuten (nach Abkühlung, wenn kein Telegram).</summary>
+    public int DwAutoAusTimerMinuten { get; set; } = 15;
+    /// <summary>Abkühl-Schwelle in °C — alle Extruder müssen darunter.</summary>
+    public int DwAbkuehlSchwelleC { get; set; } = 50;
+    /// <summary>Nacht-Modus aktiv (Auto-Aus ohne Nachfrage).</summary>
+    public bool DwNachtModusAktiv { get; set; } = true;
+    /// <summary>Nacht-Modus Start (HH:mm).</summary>
+    public string DwNachtModusVon { get; set; } = "00:00";
+    /// <summary>Nacht-Modus Ende (HH:mm).</summary>
+    public string DwNachtModusBis { get; set; } = "06:00";
+    /// <summary>Telegram für DruckWächter-Benachrichtigungen aktiv.</summary>
+    public bool DwTelegramAktiv { get; set; } = false;
+    /// <summary>Telegram Bot Token.</summary>
+    public string? DwTelegramBotToken { get; set; }
+    /// <summary>Telegram Chat ID.</summary>
+    public long? DwTelegramChatId { get; set; }
+
     // === Meta ===
     public DateTime LastSaved { get; set; } = DateTime.UtcNow;
 

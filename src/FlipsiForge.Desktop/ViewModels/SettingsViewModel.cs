@@ -16,7 +16,7 @@ public partial class SettingsViewModel : ViewModelBase
 
     // === Dropdown-Options-Listen ===
     public IReadOnlyList<string> LanguageOptions { get; } = new[] { "Deutsch", "English", "Español", "Français" };
-    public IReadOnlyList<string> StartTabOptions { get; } = new[] { "Datei-Manager", "Drucker", "Filament", "Model-Repo", "Statistik", "Kosten-Rechner", "KI-Assistent", "Forge-Bot" };
+    public IReadOnlyList<string> StartTabOptions { get; } = new[] { "Datei-Manager", "Drucker", "Filament", "Model-Repo", "Statistik", "Kosten-Rechner", "DruckWächter", "KI-Assistent", "Forge-Bot" };
     public IReadOnlyList<string> CurrencyOptions { get; } = new[] { "EUR", "USD", "CHF", "GBP" };
     public IReadOnlyList<string> DateFormatOptions { get; } = new[] { "dd.MM.yyyy", "yyyy-MM-dd", "MM/dd/yyyy", "d. MMMM yyyy" };
     public IReadOnlyList<string> LogLevelOptions { get; } = new[] { "Trace", "Debug", "Info", "Warning", "Error" };
@@ -169,6 +169,18 @@ public partial class SettingsViewModel : ViewModelBase
     public string Developer => "TechFlipsi (Fabian Kirchweger)";
     public string Website => "https://techflipsi.at";
     public string GitHub => "https://github.com/TechFlipsi/FlipsiForge";
+
+    // 10. DruckWächter
+    public decimal DwStrompreis { get => _settings.DwStrompreis; set => SetSetting(s => s.DwStrompreis = value); }
+    public decimal DwFilamentPreis { get => _settings.DwFilamentPreis; set => SetSetting(s => s.DwFilamentPreis = value); }
+    public int DwAutoAusTimerMinuten { get => _settings.DwAutoAusTimerMinuten; set => SetSetting(s => s.DwAutoAusTimerMinuten = value); }
+    public int DwAbkuehlSchwelleC { get => _settings.DwAbkuehlSchwelleC; set => SetSetting(s => s.DwAbkuehlSchwelleC = value); }
+    public bool DwNachtModusAktiv { get => _settings.DwNachtModusAktiv; set => SetSetting(s => s.DwNachtModusAktiv = value); }
+    public string DwNachtModusVon { get => _settings.DwNachtModusVon; set => SetSetting(s => s.DwNachtModusVon = value); }
+    public string DwNachtModusBis { get => _settings.DwNachtModusBis; set => SetSetting(s => s.DwNachtModusBis = value); }
+    public bool DwTelegramAktiv { get => _settings.DwTelegramAktiv; set => SetSetting(s => s.DwTelegramAktiv = value); }
+    public string? DwTelegramBotToken { get => _settings.DwTelegramBotToken; set => SetSetting(s => s.DwTelegramBotToken = value); }
+    public long? DwTelegramChatId { get => _settings.DwTelegramChatId; set => SetSetting(s => s.DwTelegramChatId = value); }
 
     // === Status ===
     [ObservableProperty]

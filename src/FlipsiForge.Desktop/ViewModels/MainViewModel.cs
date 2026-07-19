@@ -42,6 +42,7 @@ public partial class MainViewModel : ViewModelBase
         new("Model-Repo", "🌐"),
         new("Statistik", "📊"),
         new("Kosten-Rechner", "🔥"),
+        new("DruckWächter", "🛡️"),
         new("KI-Assistent", "🤖"),
         new("Forge-Bot", "🔥")
     };
@@ -86,6 +87,7 @@ public partial class MainViewModel : ViewModelBase
         "Model-Repo" => new ModelRepoView(),
         "Statistik" => new StatisticsView(),
         "Kosten-Rechner" => new CostCalculatorView(),
+        "DruckWächter" => new DruckWaechterView(),
         "KI-Assistent" => new AiAssistantView(),
         "Forge-Bot" => new ForgeBotView(),
         _ => null
