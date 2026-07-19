@@ -2,11 +2,14 @@
 // DruckWaechterViewModel: Bento-Card ViewModel für den DruckWächter-Tab.
 // Zeigt alle Drucker als Karten mit Schiebereglern (Shelly/Licht),
 // Filament-Buttons, Temperaturen und Druck-Historie.
+// Verdrahtet mit Core.Services.DruckWaechter.DruckWaechterService.
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using FlipsiForge.Core.Data;
 using FlipsiForge.Core.Models;
+using FlipsiForge.Core.Services.DruckWaechter;
+using FlipsiForge.Core.Services.Printing;
 using FlipsiForge.Desktop.Services;
 
 namespace FlipsiForge.Desktop.ViewModels;
@@ -77,7 +80,6 @@ public sealed class DruckWaechterCardVm : ObservableObject
         set => SetProperty(ref _statusText, value);
     }
 
-    /// <summary>"printing", "idle", "paused", "error", "offline".</summary>
     private string _statusClass = "offline";
     public string StatusClass
     {
@@ -123,12 +125,55 @@ public sealed class DruckWaechterCardVm : ObservableObject
     {
         Printer = printer;
     }
+
+    /// <summary>Aktualisiert die Karte aus einem DruckWaechterStatus-Snapshot.</summary>
+    public void UpdateFromStatus(DruckWaechterStatus status)
+    {
+        IsShellyOn = status.IsShellyOn;
+        PowerW = status.PowerW;
+        HasPowerMeter = status.PowerW.HasValue;
+        HasLightMacro = status.HasLightMacro;
+        HasFilamentMacro = status.HasFilamentMacro;
+        ExtruderCount = status.ExtruderCount;
+
+        (StatusText, StatusClass) = status.State switch
+        {
+            DruckWaechterPrinterState.Printing => ("Druck läuft", "printing"),
+            DruckWaechterPrinterState.Idle => ("Bereit", "idle"),
+            DruckWaechterPrinterState.Paused => ("Pausiert", "paused"),
+            DruckWaechterPrinterState.Error => ("Fehler", "error"),
+            _ => ("Offline", "offline")
+        };
+
+        // Temperaturen aktualisieren
+        ExtruderTemps.Clear();
+        for (int i = 0; i < status.ExtruderTemps.Count; i++)
+        {
+            var (name, temp) = status.ExtruderTemps[i];
+            var label = status.ExtruderTemps.Count > 1
+                ? $"Kopf {i + 1}"
+                : "Extruder";
+            ExtruderTemps.Add(new TempRowVm { Label = label, Current = temp });
+        }
+
+        BedTemps.Clear();
+        for (int i = 0; i < status.BedTemps.Count; i++)
+        {
+            var (name, temp) = status.BedTemps[i];
+            var label = status.BedTemps.Count > 1
+                ? $"Bett {i + 1}"
+                : "Bett";
+            BedTemps.Add(new TempRowVm { Label = label, Current = temp });
+        }
+    }
 }
 
 /// <summary>ViewModel für den DruckWächter-Tab.</summary>
 public partial class DruckWaechterViewModel : ViewModelBase
 {
     private readonly FlipsiForgeDbContext _db;
+    private DruckWaechterService? _service;
+    private readonly HttpClient _httpClient = new();
 
     /// <summary>Alle Drucker als Bento-Cards.</summary>
     public ObservableCollection<DruckWaechterCardVm> Cards { get; } = new();
@@ -160,6 +205,7 @@ public partial class DruckWaechterViewModel : ViewModelBase
     {
         _db = db;
         Load();
+        _ = RefreshAllAsync();
     }
 
     /// <summary>Lädt alle aktiven Drucker aus der DB als Karten.</summary>
@@ -170,14 +216,107 @@ public partial class DruckWaechterViewModel : ViewModelBase
         {
             var card = new DruckWaechterCardVm(p)
             {
-                StatusText = "Bereit",
+                StatusText = "Lade…",
                 StatusClass = "idle",
                 LastPrintInfo = "—"
             };
-            // Default Temperaturen
-            card.ExtruderTemps.Add(new TempRowVm { Label = "Extruder", Current = 24, Target = 0 });
-            card.BedTemps.Add(new TempRowVm { Label = "Bett", Current = 22, Target = 0 });
+            card.ExtruderTemps.Add(new TempRowVm { Label = "Extruder", Current = 0 });
+            card.BedTemps.Add(new TempRowVm { Label = "Bett", Current = 0 });
             Cards.Add(card);
+        }
+    }
+
+    /// <summary>
+    /// Initialisiert den DruckWaechterService aus den Desktop-Settings.
+    /// Wird beim ersten Refresh aufgerufen.
+    /// </summary>
+    private DruckWaechterService GetOrCreateService()
+    {
+        if (_service is not null) return _service;
+
+        var settings = DesktopSettings.Load();
+        var config = BuildConfigFromSettings(settings);
+        var printers = _db.Printers.Where(x => x.IsActive).ToList();
+
+        _service = new DruckWaechterService(
+            _httpClient,
+            config,
+            printerId => CreateMoonrakerConnection(printerId, printers)
+        );
+
+        return _service;
+    }
+
+    /// <summary>Erzeugt eine DruckWaechterConfig aus den Desktop-Settings.</summary>
+    private DruckWaechterConfig BuildConfigFromSettings(DesktopSettings settings)
+    {
+        var printers = _db.Printers.Where(x => x.IsActive).ToList();
+        var config = new DruckWaechterConfig
+        {
+            Global = new DruckWaechterGlobalConfig
+            {
+                Strompreis = settings.DwStrompreis,
+                FilamentPreis = settings.DwFilamentPreis,
+                AutoAusTimerMinuten = settings.DwAutoAusTimerMinuten,
+                AbkuehlSchwelleC = settings.DwAbkuehlSchwelleC,
+                NachtModusAktiv = settings.DwNachtModusAktiv,
+                NachtModusVon = ParseTimeOnly(settings.DwNachtModusVon, 0, 0),
+                NachtModusBis = ParseTimeOnly(settings.DwNachtModusBis, 6, 0),
+                TelegramAktiv = settings.DwTelegramAktiv,
+                TelegramBotToken = settings.DwTelegramBotToken,
+                TelegramChatId = settings.DwTelegramChatId
+            },
+            Printers = printers.Select(p => new DruckWaechterPrinterConfig
+            {
+                PrinterId = p.Id,
+                // Shelly-IP und Macros werden aus der DB/Settings geladen
+                // Für jetzt Defaults — später über PrinterDialog konfigurierbar
+                ShellyIp = null, // TODO: Printer Model um ShellyIp erweitern
+                ShellySwitchId = 0,
+                ShutdownVerfuegbar = p.Protocol == PrinterProtocol.KlipperMoonraker,
+                ShutdownDelaySek = 60,
+                LichtMacroAn = "FLASHLIGHT_ON",
+                LichtMacroAus = "FLASHLIGHT_OFF",
+                FilamentMacroLaden = "LOAD_FILAMENT",
+                FilamentMacroEntladen = "UNLOAD_FILAMENT"
+            }).ToList()
+        };
+        return config;
+    }
+
+    /// <summary>Erzeugt eine MoonrakerConnection für den gegebenen Drucker.</summary>
+    private MoonrakerConnection CreateMoonrakerConnection(int printerId, List<Printer> printers)
+    {
+        var printer = printers.FirstOrDefault(p => p.Id == printerId);
+        var baseUrl = printer?.IpAddress ?? "http://localhost:7125";
+        if (!baseUrl.StartsWith("http"))
+            baseUrl = $"http://{baseUrl}";
+        return new MoonrakerConnection(_httpClient, baseUrl);
+    }
+
+    /// <summary>Parst einen "HH:mm" String zu TimeOnly.</summary>
+    private static TimeOnly ParseTimeOnly(string? s, int defaultH, int defaultM)
+    {
+        if (TimeOnly.TryParse(s, out var t)) return t;
+        return new TimeOnly(defaultH, defaultM);
+    }
+
+    /// <summary>Aktualisiert alle Drucker-Karten asynchron.</summary>
+    private async Task RefreshAllAsync()
+    {
+        var svc = GetOrCreateService();
+        foreach (var card in Cards)
+        {
+            try
+            {
+                var status = await svc.GetPrinterStatusAsync(card.PrinterId);
+                card.UpdateFromStatus(status);
+            }
+            catch
+            {
+                card.StatusText = "Offline";
+                card.StatusClass = "offline";
+            }
         }
     }
 
@@ -215,9 +354,19 @@ public partial class DruckWaechterViewModel : ViewModelBase
     [RelayCommand]
     public async Task ConfirmFilamentAsync()
     {
-        // TODO: Core.DruckWaechterService.LoadFilamentAsync(printerId, extruderIndex)
-        // Vorübergehend: nur Popup schließen
-        await Task.Delay(100);
+        if (PopupCard is null) return;
+        var svc = GetOrCreateService();
+        try
+        {
+            if (PopupIsLoad)
+                await svc.LoadFilamentAsync(PopupCard.PrinterId, PopupSelectedExtruder);
+            else
+                await svc.UnloadFilamentAsync(PopupCard.PrinterId, PopupSelectedExtruder);
+        }
+        catch
+        {
+            // Best-effort — UI schließen trotzdem
+        }
         CloseFilamentPopup();
     }
 
@@ -226,9 +375,17 @@ public partial class DruckWaechterViewModel : ViewModelBase
     public async Task ToggleShellyAsync(DruckWaechterCardVm? card)
     {
         if (card is null || !card.HasShelly) return;
-        // TODO: Core.DruckWaechterService.SetShellyAsync(printerId, !card.IsShellyOn)
-        card.IsShellyOn = !card.IsShellyOn;
-        await Task.Delay(50);
+        var svc = GetOrCreateService();
+        var newState = !card.IsShellyOn;
+        try
+        {
+            var ok = await svc.SetShellyAsync(card.PrinterId, newState);
+            if (ok) card.IsShellyOn = newState;
+        }
+        catch
+        {
+            // Best-effort
+        }
     }
 
     /// <summary>Schaltet das Licht für einen Drucker.</summary>
@@ -236,8 +393,16 @@ public partial class DruckWaechterViewModel : ViewModelBase
     public async Task ToggleLightAsync(DruckWaechterCardVm? card)
     {
         if (card is null || !card.HasLightMacro) return;
-        // TODO: Core.DruckWaechterService.SetLightAsync(printerId, !card.IsLightOn)
-        card.IsLightOn = !card.IsLightOn;
-        await Task.Delay(50);
+        var svc = GetOrCreateService();
+        var newState = !card.IsLightOn;
+        try
+        {
+            var ok = await svc.SetLightAsync(card.PrinterId, newState);
+            if (ok) card.IsLightOn = newState;
+        }
+        catch
+        {
+            // Best-effort
+        }
     }
 }
