@@ -5,6 +5,9 @@ on:
     types: [published]
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build-windows-exe:
     runs-on: windows-latest
@@ -29,15 +32,15 @@ jobs:
       - name: Compile .exe Installer
         run: iscc installer/flipsiforge.iss
 
-      - name: Upload .exe to GitHub Release v0.3.0
+      - name: Upload .exe to GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v0.3.0
-          files: dist/FlipsiForge-0.3.0-win-x64-setup.exe
+          tag_name: ${{ github.event.release.tag_name || 'v0.3.0' }}
+          files: dist/FlipsiForge-*-win-x64-setup.exe
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Upload .exe as Artifact (fallback)
         uses: actions/upload-artifact@v4
         with:
-          name: FlipsiForge-0.3.0-win-x64-setup
-          path: dist/FlipsiForge-0.3.0-win-x64-setup.exe
+          name: FlipsiForge-win-x64-setup
+          path: dist/FlipsiForge-*-win-x64-setup.exe
