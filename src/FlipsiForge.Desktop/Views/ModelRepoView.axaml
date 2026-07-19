@@ -9,7 +9,7 @@
             <TextBlock Text="Model-Repository" Foreground="#666" HorizontalAlignment="Center" />
             <TextBlock Text="Unified Search: Thingiverse + Printables + MakerWorld"
                        Foreground="#444" FontSize="12" HorizontalAlignment="Center" />
-            <TextBox Watermark="Modell suchen..." Width="300" Background="#1a1a2e"
+            <TextBox PlaceholderText="Modell suchen..." Width="300" Background="#1a1a2e"
                      Foreground="#fff" BorderBrush="#333" Margin="0,8,0,0" />
         </StackPanel>
     </Grid>

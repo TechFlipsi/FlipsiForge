@@ -34,7 +34,7 @@ public sealed class StubAIChatEngine : IAIChatEngine
     public bool IsModelLoaded => false;
 
     /// <inheritdoc />
-    public async IAsyncEnumerable<AiChatChunk> StreamAsync(string userPrompt, System.Threading.CancellationToken ct = default)
+    public async IAsyncEnumerable<AiChatChunk> StreamAsync(string userPrompt, [System.Runtime.CompilerServices.EnumeratorCancellation] System.Threading.CancellationToken ct = default)
     {
         const string msg = "KI-Modell nicht geladen. Bitte in Einstellungen konfigurieren.";
         // Simuliere Streaming: Wort für Wort

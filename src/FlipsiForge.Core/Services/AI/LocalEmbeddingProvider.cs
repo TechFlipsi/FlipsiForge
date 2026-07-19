@@ -18,13 +18,16 @@ public sealed class LocalEmbeddingProvider : IEmbeddingProvider
     private InferenceSession? _session;
     private string _modelPath = "";
     private readonly object _lock = new();
-    private bool _loadAttempted;
+    private bool _loadAttempted = false;
 
     /// <inheritdoc />
     public bool IsLoaded
     {
         get { lock (_lock) { return _session is not null; } }
     }
+
+    /// <summary>Ob bereits ein Ladeversuch unternommen wurde (auch wenn er fehlgeschlagen ist).</summary>
+    public bool HasAttemptedLoad => _loadAttempted;
 
     /// <inheritdoc />
     public async Task InitializeAsync(string modelPath)

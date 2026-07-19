@@ -19,14 +19,14 @@ AppUpdatesURL=https://github.com/TechFlipsi/FlipsiForge
 DefaultDirName={autopf}\FlipsiForge
 DefaultGroupName=FlipsiForge
 DisableProgramGroupPage=yes
-OutputDir=dist
+OutputDir=..\dist
 OutputBaseFilename=FlipsiForge-0.2.0-win-x64-setup
 Compression=lzma2
 SolidCompression=yes
 WizardStyle=modern
 ArchitecturesInstallIn64BitMode=x64
 ArchitecturesAllowed=x64
-LicenseFile=LICENSE
+LicenseFile=..\LICENSE
 
 [Languages]
 Name: "german"; MessagesFile: "compiler:Languages\German.isl"
@@ -36,7 +36,7 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 
 [Files]
-Source: "dist\win-desktop\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "..\dist\win-desktop\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 [Icons]
 Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"
