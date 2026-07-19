@@ -4,7 +4,7 @@
         xmlns:views="using:FlipsiForge.Desktop.Views"
         x:Class="FlipsiForge.Desktop.MainWindow"
         x:CompileBindings="False"
-        Title="FlipsiForge v0.3.0"
+        Title="FlipsiForge v0.4.0"
         Width="1280" Height="800"
         MinWidth="1024" MinHeight="600"
         Background="#050507"

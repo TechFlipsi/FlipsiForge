@@ -343,7 +343,7 @@ public class FarmSettings
 
   1) Neue DbSet-Properties (z.B. nach den v0.2.0 DbSets, um 19:50 Uhr):
 
-     // === v0.3.0 Farm DbSets ===
+     // === v0.4.0 Farm DbSets ===
      public DbSet<PrinterCluster> PrinterClusters => Set<PrinterCluster>();
      public DbSet<PrintBatch> PrintBatches => Set<PrintBatch>();
      public DbSet<BatchItem> BatchItems => Set<BatchItem>();

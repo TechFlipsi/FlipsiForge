@@ -619,7 +619,7 @@ app.MapPatch("/api/bot/settings", async (
     };
     // Wir legen die Settings auch in der AppSettings.WatchFolders-Liste als
     // Tag "bot:enabled=true|false" ab, damit sie via GET /api/settings sichtbar
-    // sind (Stub-Variante — echte Persistenz folgt mit v0.3.0).
+    // sind (Stub-Variante — echte Persistenz folgt mit v0.4.0).
     var s = await GetSettingsAsync(db);
     var wf = s.WatchFolders;
     wf.RemoveAll(t => t.StartsWith("bot:", StringComparison.Ordinal));

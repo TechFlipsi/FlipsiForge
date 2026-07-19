@@ -164,7 +164,7 @@ public partial class SettingsViewModel : ViewModelBase
     public bool DebugMode { get => _settings.DebugMode; set => SetSetting(s => s.DebugMode = value); }
 
     // 10. Über
-    public string AppVersion => "v0.3.0";
+    public string AppVersion => "v0.4.0";
     public string License => "GPL-3.0-or-later";
     public string Developer => "TechFlipsi (Fabian Kirchweger)";
     public string Website => "https://techflipsi.at";

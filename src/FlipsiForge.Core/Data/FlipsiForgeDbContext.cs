@@ -28,7 +28,7 @@ public class FlipsiForgeDbContext : DbContext
     /// <summary>Forge-Bot Historie.</summary>
     public DbSet<BotMessage> BotMessages => Set<BotMessage>();
 
-    // === v0.3.0 Farm DbSets ===
+    // === v0.4.0 Farm DbSets ===
     /// <summary>Drucker-Cluster (Gruppen für Produktion/Tests/etc.).</summary>
     public DbSet<PrinterCluster> PrinterClusters => Set<PrinterCluster>();
     /// <summary>Print-Batches (Auftragsgruppen mit mehreren Teilen).</summary>
@@ -75,7 +75,7 @@ public class FlipsiForgeDbContext : DbContext
         modelBuilder.Entity<ScannedFile>()
             .HasIndex(f => f.ContentHash);
 
-        // v0.3.0: Farm - PrinterCluster.PrinterIds als JSON speichern
+        // v0.4.0: Farm - PrinterCluster.PrinterIds als JSON speichern
         modelBuilder.Entity<PrinterCluster>()
             .Property(c => c.PrinterIds)
             .HasConversion(
