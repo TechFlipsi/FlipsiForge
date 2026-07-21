@@ -27,8 +27,8 @@
                        FontSize="11" TextWrapping="Wrap" />
         </Border>
 
-        <!-- Mascot: SVG-Image -->
-        <Image Source="avares://FlipsiForge.Desktop/Assets/forgebot.svg"
+        <!-- Mascot: PNG-Image (SVG wird von Avalonia Image.Source nicht als Bitmap geladen) -->
+        <Image Source="avares://FlipsiForge.Desktop/Assets/forgebot.png"
                Width="120" Height="160"
                HorizontalAlignment="Center" VerticalAlignment="Bottom"
                PointerPressed="Mascot_PointerPressed"
