@@ -292,6 +292,43 @@ public partial class SettingsViewModel : ViewModelBase
         OnPropertiesChanged(nameof(SaveStatus));
     }
 
+    /// <summary>Oeffnet den Logs-Ordner im System-Explorer (Erweitert-Sektion).</summary>
+    [RelayCommand]
+    public void OpenLogs()
+    {
+        try
+        {
+            var logDir = Services.LoggerService.GetLogDirectory();
+            if (!Directory.Exists(logDir))
+                Directory.CreateDirectory(logDir);
+
+            // Plattform-spezifischer Aufruf des System-Explorers
+            if (System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(
+                System.Runtime.InteropServices.OSPlatform.Windows))
+            {
+                System.Diagnostics.Process.Start("explorer.exe", logDir);
+            }
+            else if (System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(
+                System.Runtime.InteropServices.OSPlatform.Linux))
+            {
+                // xdg-open oeffnet den Standard-File-Manager
+                System.Diagnostics.Process.Start("xdg-open", logDir);
+            }
+            else if (System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(
+                System.Runtime.InteropServices.OSPlatform.OSX))
+            {
+                System.Diagnostics.Process.Start("open", logDir);
+            }
+
+            SaveStatus = $"✓ Logs-Ordner geoeffnet: {logDir}";
+        }
+        catch (Exception ex)
+        {
+            SaveStatus = $"✗ Konnte Logs-Ordner nicht oeffnen: {ex.Message}";
+        }
+        OnPropertiesChanged(nameof(SaveStatus));
+    }
+
     // === Hilfs-Methoden ===
 
     private void SyncScanFolders()

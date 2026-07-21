@@ -21,7 +21,10 @@ public partial class PrinterDialog : Window
     {
         InitializeComponent();
         _printer = printer;
-        Title = isNew ? "Drucker hinzufügen" : $"Drucker bearbeiten — {printer.Brand} {printer.Model}";
+        // Titel dynamisch setzen — "Drucker hinzufuegen" bei neuem, sonst "Drucker bearbeiten — {Brand} {Model}"
+        var title = this.FindControl<TextBlock>("DialogTitle");
+        if (title != null)
+            title.Text = isNew ? "Drucker hinzufuegen" : $"Drucker bearbeiten — {printer.Brand} {printer.Model}".Trim();
         LoadFromPrinter();
     }
 
@@ -51,9 +54,10 @@ public partial class PrinterDialog : Window
         var mh = this.FindControl<NumericUpDown>("MaxHotendBox"); if (mh != null) mh.Value = _printer.MaxHotendTemp;
         var mb = this.FindControl<NumericUpDown>("MaxBedBox"); if (mb != null) mb.Value = _printer.MaxBedTemp;
         var notes = this.FindControl<TextBox>("NotesBox"); if (notes != null) notes.Text = _printer.Notes ?? "";
-        // Shelly
+        // Shelly — NUR die IP, kein Switch-Kanal-Feld mehr (wird auto-detected)
         var shellyIp = this.FindControl<TextBox>("ShellyIpBox"); if (shellyIp != null) shellyIp.Text = _printer.ShellyIp ?? "";
-        var shellySwitch = this.FindControl<NumericUpDown>("ShellySwitchIdBox"); if (shellySwitch != null) shellySwitch.Value = _printer.ShellySwitchId;
+        // ShellySwitchId NumericUpDown wurde aus dem Dialog entfernt — default 0
+        _printer.ShellySwitchId = 0;
     }
 
     private void SaveToPrinter()
@@ -74,9 +78,10 @@ public partial class PrinterDialog : Window
         var mh = this.FindControl<NumericUpDown>("MaxHotendBox"); if (mh != null) _printer.MaxHotendTemp = (int)(mh.Value ?? 300);
         var mb = this.FindControl<NumericUpDown>("MaxBedBox"); if (mb != null) _printer.MaxBedTemp = (int)(mb.Value ?? 120);
         var notes = this.FindControl<TextBox>("NotesBox"); if (notes != null) _printer.Notes = string.IsNullOrWhiteSpace(notes.Text) ? null : notes.Text;
-        // Shelly
+        // Shelly — NUR die IP speichern. Switch-Kanal wird auto-detected (default 0).
         var shellyIp = this.FindControl<TextBox>("ShellyIpBox"); if (shellyIp != null) _printer.ShellyIp = string.IsNullOrWhiteSpace(shellyIp.Text) ? null : shellyIp.Text;
-        var shellySwitch = this.FindControl<NumericUpDown>("ShellySwitchIdBox"); if (shellySwitch != null) _printer.ShellySwitchId = (int)(shellySwitch.Value ?? 0);
+        // ShellySwitchId bleibt auf 0 — wird via Shelly-Service auto-detected
+        _printer.ShellySwitchId = 0;
     }
 
     private void Save_Click(object? sender, RoutedEventArgs e)
@@ -92,7 +97,7 @@ public partial class PrinterDialog : Window
         Close();
     }
 
-    /// <summary>Öffnet den Dialog modal über dem Hauptfenster und wartet auf Close.</summary>
+    /// <summary>oeffnet den Dialog modal ueber dem Hauptfenster und wartet auf Close.</summary>
     public async Task<bool?> ShowDialogAsync()
     {
         var main = (Avalonia.Application.Current?.ApplicationLifetime

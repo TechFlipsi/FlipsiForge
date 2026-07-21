@@ -3,6 +3,7 @@
 // Format-Filter, Ansicht (List/Grid), Sortierung, Favorit & Häufigkeit.
 using System.Collections.ObjectModel;
 using Avalonia.Media;
+using Avalonia.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using FlipsiForge.Core.Data;
@@ -11,7 +12,7 @@ using FlipsiForge.Desktop.Services;
 
 namespace FlipsiForge.Desktop.ViewModels;
 
-/// <summary>Display-Row für eine gescannte Datei inkl. Usage-Infos.</summary>
+/// <summary>Display-Row fuer eine gescannte Datei inkl. Usage-Infos + Thumbnail.</summary>
 public sealed class FileRowVm : ObservableObject
 {
     public ScannedFile File { get; }
@@ -26,6 +27,30 @@ public sealed class FileRowVm : ObservableObject
     public string FavoriteGlyph => IsFavorite ? "★" : "☆";
     public string Extension => File.Extension;
     public bool IsAiHit { get; set; }
+
+    private Bitmap? _thumbnail;
+    /// <summary>Thumbnail-Bild (STL/3MF/OBJ gerendert, andere = null).</summary>
+    public Bitmap? Thumbnail
+    {
+        get => _thumbnail;
+        set { _thumbnail = value; OnPropertyChanged(); OnPropertyChanged(nameof(HasThumbnail)); }
+    }
+    public bool HasThumbnail => _thumbnail != null;
+
+    /// <summary>Emoji-Icon basierend auf Dateierweiterung (Fallback wenn kein Thumbnail).</summary>
+    public string FileIcon => File.Extension?.ToLowerInvariant() switch
+    {
+        ".stl" => "📐",
+        ".3mf" => "📦",
+        ".gcode" => "⚙️",
+        ".gco" => "⚙️",
+        ".obj" => "📐",
+        ".ply" => "📐",
+        ".step" => "📐",
+        ".stp" => "📐",
+        ".amf" => "📦",
+        _ => "📄"
+    };
 
     public FileRowVm(ScannedFile f, FileUsageEntry u)
     {
@@ -112,7 +137,7 @@ public partial class FileManagerViewModel : ViewModelBase
         });
     }
 
-    /// <summary>Lädt alle Dateien aus der DB und initialisiert Filter-Badges.</summary>
+    /// <summary>Lädt alle Dateien aus der DB und generiert Thumbnails.</summary>
     public void Load()
     {
         Files.Clear();
@@ -120,10 +145,36 @@ public partial class FileManagerViewModel : ViewModelBase
         foreach (var f in _db.ScannedFiles.ToList())
         {
             var u = FileUsageStore.GetOrNew(usage, f.Id);
-            Files.Add(new FileRowVm(f, u));
+            var row = new FileRowVm(f, u);
+            // Thumbnail asynchron generieren
+            _ = LoadThumbnailAsync(row);
+            Files.Add(row);
         }
         FileUsageStore.SaveAll(usage);
         RebuildFilterBadges();
+    }
+
+    /// <summary>Generiert Thumbnail fuer eine Datei asynchron.</summary>
+    private async Task LoadThumbnailAsync(FileRowVm row)
+    {
+        // Nur STL/3MF/OBJ rendern
+        var ext = row.File.Extension?.ToLowerInvariant();
+        if (ext != ".stl" && ext != ".3mf" && ext != ".obj") return;
+
+        await Task.Run(() =>
+        {
+            try
+            {
+                var thumb = StlThumbnailService.GetOrGenerate(
+                    row.File.Path,
+                    row.File.LastModified.Ticks);
+                if (thumb != null)
+                {
+                    Avalonia.Threading.Dispatcher.UIThread.Post(() => row.Thumbnail = thumb);
+                }
+            }
+            catch { /* Best-effort */ }
+        });
     }
 
     private void RebuildFilterBadges()

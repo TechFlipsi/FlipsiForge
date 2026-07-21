@@ -3,7 +3,7 @@
         x:Class="FlipsiForge.Desktop.Dialogs.SpoolDialog"
              x:CompileBindings="False"
         Title="Spule bearbeiten"
-        Width="560" Height="720"
+        Width="640" Height="820"
         CanResize="False"
         WindowStartupLocation="CenterOwner"
         Background="#050507"
@@ -44,6 +44,13 @@
             <Setter Property="Foreground" Value="#ff6600" />
             <Setter Property="MinWidth" Value="80" />
         </Style>
+        <Style Selector="Border.auto-badge">
+            <Setter Property="Background" Value="#22c55e15" />
+            <Setter Property="BorderBrush" Value="#22c55e" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="999" />
+            <Setter Property="Padding" Value="6,2" />
+        </Style>
     </Window.Styles>
 
     <Grid RowDefinitions="*,Auto" Margin="20">
@@ -52,20 +59,44 @@
                 <TextBlock Text="Spule bearbeiten" Foreground="#ff6600" FontWeight="Bold" FontSize="16"
                            Margin="0,0,0,8" />
 
-                <Grid ColumnDefinitions="180,*">
+                <!-- ===== MARKE (ComboBox + Other TextBox) ===== -->
+                <Grid ColumnDefinitions="180,*" Margin="0,2">
                     <TextBlock Grid.Column="0" Classes="label" Text="Marke" />
-                    <TextBox Grid.Column="1" x:Name="BrandBox" />
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6">
+                        <ComboBox x:Name="BrandCombo" HorizontalAlignment="Stretch" MinWidth="220"
+                                  SelectionChanged="BrandCombo_SelectionChanged" />
+                        <TextBox x:Name="BrandOtherBox" PlaceholderText="Eigene Marke"
+                                 IsVisible="False" MinWidth="140" />
+                    </StackPanel>
                 </Grid>
-                <Grid ColumnDefinitions="180,*">
+
+                <!-- ===== MATERIAL-NAME ===== -->
+                <Grid ColumnDefinitions="180,*" Margin="0,2">
                     <TextBlock Grid.Column="0" Classes="label" Text="Material-Name" />
                     <TextBox Grid.Column="1" x:Name="MaterialBox" PlaceholderText="z.B. PLA Matte" />
                 </Grid>
-                <Grid ColumnDefinitions="180,*">
+
+                <!-- ===== MATERIAL-TYP (ComboBox + Other TextBox) ===== -->
+                <Grid ColumnDefinitions="180,*" Margin="0,2">
                     <TextBlock Grid.Column="0" Classes="label" Text="Material-Typ" />
-                    <ComboBox Grid.Column="1" x:Name="MaterialTypeCombo" HorizontalAlignment="Stretch" />
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6">
+                        <ComboBox x:Name="MaterialTypeCombo" HorizontalAlignment="Stretch" MinWidth="220"
+                                  SelectionChanged="MaterialTypeCombo_SelectionChanged" />
+                        <TextBox x:Name="MaterialTypeOtherBox" PlaceholderText="Eigenes Material"
+                                 IsVisible="False" MinWidth="140" />
+                    </StackPanel>
                 </Grid>
 
-                <!-- Color-Picker (RGB-Slider) -->
+                <!-- ===== AUTO-FILL BADGE ===== -->
+                <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,2" IsVisible="False"
+                            x:Name="AutoFillBadgePanel">
+                    <Border Classes="auto-badge">
+                        <TextBlock x:Name="AutoFillBadgeText" Text="&#x2713; Auto"
+                                  Foreground="#22c55e" FontSize="11" FontWeight="Bold" />
+                    </Border>
+                </StackPanel>
+
+                <!-- ===== FARBE ===== -->
                 <TextBlock Text="Farbe" Foreground="#ff6600" FontWeight="Bold" Margin="0,8,0,2" />
                 <Grid ColumnDefinitions="60,*,40" Margin="0,2">
                     <TextBlock Grid.Column="0" Classes="label" Text="R" />
@@ -85,19 +116,21 @@
                     <TextBlock Grid.Column="2" x:Name="BText" Foreground="#fff" VerticalAlignment="Center"
                                HorizontalAlignment="Center" />
                 </Grid>
-                <Grid ColumnDefinitions="180,*,60" Margin="0,6">
+                <!-- ===== HEX-CODE Eingabe + Vorschau (neben dem Farbschieber) ===== -->
+                <Grid ColumnDefinitions="180,*,120" Margin="0,6">
                     <TextBlock Grid.Column="0" Classes="label" Text="Vorschau" />
                     <Border Grid.Column="1" x:Name="ColorPreview" Height="28" CornerRadius="4"
                             Background="#000000" />
-                    <TextBlock Grid.Column="2" x:Name="HexText" Foreground="#fff"
-                               VerticalAlignment="Center" HorizontalAlignment="Center" FontFamily="monospace" />
+                    <TextBox Grid.Column="2" x:Name="HexInputBox" PlaceholderText="#FF5500"
+                             FontFamily="monospace" Margin="6,0,0,0"
+                             TextChanged="HexInput_TextChanged" />
                 </Grid>
                 <Grid ColumnDefinitions="180,*" Margin="0,4">
                     <TextBlock Grid.Column="0" Classes="label" Text="Farbname" />
                     <TextBox Grid.Column="1" x:Name="ColorNameBox" PlaceholderText="z.B. Ember Orange" />
                 </Grid>
 
-                <!-- Gewicht / Dichte / Kosten -->
+                <!-- ===== PHYSIKALISCHE WERTE ===== -->
                 <TextBlock Text="Physische Werte" Foreground="#ff6600" FontWeight="Bold" Margin="0,8,0,2" />
                 <Grid ColumnDefinitions="180,*" Margin="0,4">
                     <TextBlock Grid.Column="0" Classes="label" Text="Durchmesser (mm)" />
@@ -112,13 +145,17 @@
                     <TextBlock Grid.Column="0" Classes="label" Text="Restgewicht (g)" />
                     <NumericUpDown Grid.Column="1" x:Name="RemainingBox" Minimum="0" Maximum="100000" />
                 </Grid>
-                <Grid ColumnDefinitions="180,*" Margin="0,4">
-                    <TextBlock Grid.Column="0" Classes="label" Text="Dichte (g/cm³)" />
+                <Grid ColumnDefinitions="180,Auto,*" Margin="0,4">
+                    <TextBlock Grid.Column="0" Classes="label" Text="Dichte (g/cm&#xB3;)" />
                     <NumericUpDown Grid.Column="1" x:Name="DensityBox" Minimum="0.1" Maximum="10"
                                    Increment="0.01" FormatString="0.##" />
+                    <Border Grid.Column="2" Classes="auto-badge" Margin="8,0,0,0" IsVisible="False"
+                            x:Name="DensityAutoBadge" VerticalAlignment="Center">
+                        <TextBlock Text="&#x2713;" Foreground="#22c55e" FontSize="10" FontWeight="Bold" />
+                    </Border>
                 </Grid>
                 <Grid ColumnDefinitions="180,*" Margin="0,4">
-                    <TextBlock Grid.Column="0" Classes="label" Text="Kosten (€)" />
+                    <TextBlock Grid.Column="0" Classes="label" Text="Kosten (&#x20AC;)" />
                     <NumericUpDown Grid.Column="1" x:Name="CostBox" Minimum="0" Maximum="10000"
                                    Increment="1" FormatString="F2" />
                 </Grid>
@@ -127,18 +164,47 @@
                     <DatePicker Grid.Column="1" x:Name="PurchaseDatePicker" />
                 </Grid>
 
-                <!-- QR / NFC -->
-                <TextBlock Text="QR / NFC" Foreground="#ff6600" FontWeight="Bold" Margin="0,8,0,2" />
-                <Grid ColumnDefinitions="180,*" Margin="0,4">
+                <!-- ===== DRUCK-EINSTELLUNGEN (Auto-Fill) ===== -->
+                <TextBlock Text="Druck-Einstellungen" Foreground="#ff6600" FontWeight="Bold" Margin="0,8,0,2" />
+                <Grid ColumnDefinitions="180,Auto,*" Margin="0,4">
+                    <TextBlock Grid.Column="0" Classes="label" Text="Drucktemp (&#xB0;C)" />
+                    <NumericUpDown Grid.Column="1" x:Name="HotendTempBox" Minimum="0" Maximum="400" />
+                    <Border Grid.Column="2" Classes="auto-badge" Margin="8,0,0,0" IsVisible="False"
+                            x:Name="HotendAutoBadge" VerticalAlignment="Center">
+                        <TextBlock Text="&#x2713;" Foreground="#22c55e" FontSize="10" FontWeight="Bold" />
+                    </Border>
+                </Grid>
+                <Grid ColumnDefinitions="180,Auto,*" Margin="0,4">
+                    <TextBlock Grid.Column="0" Classes="label" Text="Bett-Temp (&#xB0;C)" />
+                    <NumericUpDown Grid.Column="1" x:Name="BedTempBox" Minimum="0" Maximum="200" />
+                    <Border Grid.Column="2" Classes="auto-badge" Margin="8,0,0,0" IsVisible="False"
+                            x:Name="BedAutoBadge" VerticalAlignment="Center">
+                        <TextBlock Text="&#x2713;" Foreground="#22c55e" FontSize="10" FontWeight="Bold" />
+                    </Border>
+                </Grid>
+
+                <!-- ===== NFC / QR TAG ZUWEISUNG ===== -->
+                <TextBlock Text="NFC / QR Tag" Foreground="#ff6600" FontWeight="Bold" Margin="0,8,0,2" />
+                <Grid ColumnDefinitions="180,*,Auto" Margin="0,4">
+                    <TextBlock Grid.Column="0" Classes="label" Text="Tag-Zuweisung" />
+                    <ComboBox Grid.Column="1" x:Name="TagCombo" HorizontalAlignment="Stretch" />
+                    <Button Grid.Column="2" Content="+" Click="AddTag_Click"
+                            Background="#ff6600" Foreground="#050507" FontWeight="Bold"
+                            Padding="12,4" Margin="6,0,0,0" />
+                </Grid>
+
+                <!-- ===== LEGACY QR / NFC TEXT (kompatibel) ===== -->
+                <TextBlock Text="QR / NFC (Text)" Foreground="#888" FontWeight="Bold" FontSize="11" Margin="0,8,0,2" />
+                <Grid ColumnDefinitions="180,*" Margin="0,2">
                     <TextBlock Grid.Column="0" Classes="label" Text="QR-Code" />
                     <TextBox Grid.Column="1" x:Name="QrBox" PlaceholderText="optional" />
                 </Grid>
-                <Grid ColumnDefinitions="180,*" Margin="0,4">
+                <Grid ColumnDefinitions="180,*" Margin="0,2">
                     <TextBlock Grid.Column="0" Classes="label" Text="NFC-Tag" />
                     <TextBox Grid.Column="1" x:Name="NfcBox" PlaceholderText="optional" />
                 </Grid>
 
-                <!-- Notizen -->
+                <!-- ===== NOTIZEN ===== -->
                 <TextBlock Text="Notizen" Foreground="#ff6600" FontWeight="Bold" Margin="0,8,0,2" />
                 <TextBox x:Name="NotesBox" AcceptsReturn="True" Height="60" TextWrapping="Wrap" />
             </StackPanel>

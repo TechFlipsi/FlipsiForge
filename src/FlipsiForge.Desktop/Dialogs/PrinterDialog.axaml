@@ -10,52 +10,142 @@
         ShowInTaskbar="False">
 
     <Window.Styles>
+        <!-- ===== TechFlipsi Design Tokens ===== -->
         <Style Selector="TextBlock.label">
-            <Setter Property="Foreground" Value="#aaa" />
-            <Setter Property="FontSize" Value="13" />
+            <Setter Property="Foreground" Value="#7a7a8a" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="FontFamily" Value="Space Grotesk, sans-serif" />
+            <Setter Property="FontWeight" Value="SemiBold" />
             <Setter Property="VerticalAlignment" Value="Center" />
         </Style>
+        <Style Selector="TextBlock.section-head">
+            <Setter Property="Foreground" Value="#ff6600" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="FontFamily" Value="Space Grotesk, sans-serif" />
+            <Setter Property="FontWeight" Value="Bold" />
+        </Style>
+        <Style Selector="TextBlock.hint">
+            <Setter Property="Foreground" Value="#55555f" />
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="FontFamily" Value="Inter, sans-serif" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+        </Style>
         <Style Selector="TextBox">
-            <Setter Property="Background" Value="#0a0a0f" />
-            <Setter Property="BorderBrush" Value="#1a1a2e" />
-            <Setter Property="Foreground" Value="#fff" />
-            <Setter Property="CornerRadius" Value="4" />
-            <Setter Property="Padding" Value="8,6" />
+            <Setter Property="Background" Value="#0c0c10" />
+            <Setter Property="BorderBrush" Value="#15ff6600" />
+            <Setter Property="Foreground" Value="#e8e8ed" />
+            <Setter Property="CaretBrush" Value="#ff6600" />
+            <Setter Property="CornerRadius" Value="10" />
+            <Setter Property="Padding" Value="12,8" />
+            <Setter Property="FontFamily" Value="Inter, sans-serif" />
+            <Setter Property="FontSize" Value="13" />
+        </Style>
+        <Style Selector="TextBox:focus">
+            <Setter Property="BorderBrush" Value="#40ff6600" />
         </Style>
         <Style Selector="ComboBox">
-            <Setter Property="Background" Value="#0a0a0f" />
-            <Setter Property="BorderBrush" Value="#1a1a2e" />
-            <Setter Property="Foreground" Value="#fff" />
-            <Setter Property="CornerRadius" Value="4" />
-            <Setter Property="Padding" Value="8,6" />
+            <Setter Property="Background" Value="#0c0c10" />
+            <Setter Property="BorderBrush" Value="#15ff6600" />
+            <Setter Property="Foreground" Value="#e8e8ed" />
+            <Setter Property="CornerRadius" Value="10" />
+            <Setter Property="Padding" Value="12,8" />
             <Setter Property="MinWidth" Value="180" />
+            <Setter Property="FontFamily" Value="Inter, sans-serif" />
+            <Setter Property="FontSize" Value="13" />
+        </Style>
+        <Style Selector="NumericUpDown">
+            <Setter Property="Background" Value="#0c0c10" />
+            <Setter Property="BorderBrush" Value="#15ff6600" />
+            <Setter Property="Foreground" Value="#e8e8ed" />
+            <Setter Property="CornerRadius" Value="10" />
+            <Setter Property="Padding" Value="12,8" />
+            <Setter Property="FontFamily" Value="Inter, sans-serif" />
+            <Setter Property="FontSize" Value="13" />
         </Style>
         <Style Selector="CheckBox">
-            <Setter Property="Foreground" Value="#fff" />
+            <Setter Property="Foreground" Value="#e8e8ed" />
+            <Setter Property="FontFamily" Value="Inter, sans-serif" />
+            <Setter Property="FontSize" Value="13" />
         </Style>
+        <!-- ===== Pill-shaped Buttons ===== -->
         <Style Selector="Button">
-            <Setter Property="Background" Value="#1a1a2e" />
-            <Setter Property="Foreground" Value="#fff" />
-            <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="CornerRadius" Value="4" />
-            <Setter Property="Padding" Value="16,8" />
+            <Setter Property="Background" Value="#111116" />
+            <Setter Property="Foreground" Value="#e8e8ed" />
+            <Setter Property="BorderBrush" Value="#15ff6600" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="999" />
+            <Setter Property="Padding" Value="18,10" />
+            <Setter Property="FontFamily" Value="Space Grotesk, sans-serif" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+        </Style>
+        <Style Selector="Button:pointerover">
+            <Setter Property="Background" Value="#18181f" />
+            <Setter Property="BorderBrush" Value="#40ff6600" />
+            <Setter Property="Foreground" Value="#ff8533" />
+        </Style>
+        <Style Selector="Button.primary">
+            <Setter Property="Background" Value="#ff6600" />
+            <Setter Property="Foreground" Value="#050507" />
+            <Setter Property="BorderBrush" Value="#ff6600" />
+            <Setter Property="FontWeight" Value="Bold" />
+        </Style>
+        <Style Selector="Button.primary:pointerover">
+            <Setter Property="Background" Value="#ff8533" />
+            <Setter Property="Foreground" Value="#050507" />
+        </Style>
+        <Style Selector="Button.ghost">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+            <Setter Property="Foreground" Value="#7a7a8a" />
+        </Style>
+        <Style Selector="Button.ghost:pointerover">
+            <Setter Property="Background" Value="#111116" />
+            <Setter Property="Foreground" Value="#e8e8ed" />
+        </Style>
+        <!-- ===== Expander (Erweiterte Einstellungen) ===== -->
+        <Style Selector="Expander">
+            <Setter Property="Background" Value="#0c0c10" />
+            <Setter Property="BorderBrush" Value="#15ff6600" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="14" />
+            <Setter Property="Padding" Value="16,12" />
+            <Setter Property="FontFamily" Value="Space Grotesk, sans-serif" />
+        </Style>
+        <Style Selector="Expander /template/ ToggleButton#PART_expander">
+            <Setter Property="Foreground" Value="#ff6600" />
+            <Setter Property="FontWeight" Value="Bold" />
+            <Setter Property="FontSize" Value="13" />
         </Style>
     </Window.Styles>
 
-    <Grid RowDefinitions="*,Auto" Margin="20">
-        <ScrollViewer Grid.Row="0">
-            <StackPanel Spacing="8">
-                <TextBlock Text="Drucker bearbeiten" Foreground="#ff6600" FontWeight="Bold" FontSize="16"
-                           Margin="0,0,0,8" />
-                <Grid ColumnDefinitions="180,*">
+    <Grid RowDefinitions="Auto,*,Auto" Margin="20">
+        <!-- ===== TITLE ===== -->
+        <StackPanel Grid.Row="0" Margin="0,0,0,16">
+            <TextBlock x:Name="DialogTitle" Text="Drucker hinzufuegen"
+                       FontFamily="Space Grotesk, sans-serif"
+                       Foreground="#ff6600" FontWeight="Bold" FontSize="18" />
+            <TextBlock Text="WLAN-Drucker benoetigen eine IP-Adresse. USB-Drucker sind optional."
+                       FontFamily="Inter, sans-serif"
+                       Foreground="#55555f" FontSize="11" Margin="0,4,0,0" TextWrapping="Wrap" />
+        </StackPanel>
+
+        <!-- ===== SCROLL AREA ===== -->
+        <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Disabled">
+            <StackPanel Spacing="14">
+
+                <!-- ===== BASIS-FELDER (immer sichtbar) ===== -->
+                <TextBlock Classes="section-head" Text="Basis-Einstellungen" Margin="0,0,0,2" />
+
+                <Grid ColumnDefinitions="120,*">
                     <TextBlock Grid.Column="0" Classes="label" Text="Marke" />
-                    <TextBox Grid.Column="1" x:Name="BrandBox" />
+                    <TextBox Grid.Column="1" x:Name="BrandBox" PlaceholderText="z.B. Prusa, Bambu Lab" />
                 </Grid>
-                <Grid ColumnDefinitions="180,*">
+                <Grid ColumnDefinitions="120,*">
                     <TextBlock Grid.Column="0" Classes="label" Text="Modell" />
-                    <TextBox Grid.Column="1" x:Name="ModelBox" />
+                    <TextBox Grid.Column="1" x:Name="ModelBox" PlaceholderText="z.B. MK4S, P1S" />
                 </Grid>
-                <Grid ColumnDefinitions="180,*">
+                <Grid ColumnDefinitions="120,*">
                     <TextBlock Grid.Column="0" Classes="label" Text="Protokoll" />
                     <ComboBox Grid.Column="1" x:Name="ProtocolCombo" HorizontalAlignment="Stretch">
                         <ComboBoxItem Content="KlipperMoonraker" />
@@ -65,61 +155,80 @@
                         <ComboBoxItem Content="OctoPrint" />
                     </ComboBox>
                 </Grid>
-                <Grid ColumnDefinitions="180,*">
+                <Grid ColumnDefinitions="120,*">
                     <TextBlock Grid.Column="0" Classes="label" Text="IP-Adresse" />
                     <TextBox Grid.Column="1" x:Name="IpBox" PlaceholderText="z.B. 192.168.1.50" />
                 </Grid>
-                <Grid ColumnDefinitions="180,*">
-                    <TextBlock Grid.Column="0" Classes="label" Text="USB-Port" />
-                    <TextBox Grid.Column="1" x:Name="UsbBox" PlaceholderText="/dev/ttyACM0" />
-                </Grid>
-                <Grid ColumnDefinitions="180,*">
-                    <TextBlock Grid.Column="0" Classes="label" Text="Düsen-Durchmesser (mm)" />
-                    <NumericUpDown Grid.Column="1" x:Name="NozzleBox"
-                                   Minimum="0.1" Maximum="2.0"
-                                   Increment="0.05" FormatString="0.##" />
-                </Grid>
-                <TextBlock Text="Bauvolumen (mm)" Foreground="#ff6600" FontWeight="Bold" Margin="0,8,0,2" />
-                <Grid ColumnDefinitions="180,*,*,*" Margin="0,2">
-                    <TextBlock Grid.Column="0" Classes="label" Text="X / Y / Z" />
-                    <NumericUpDown Grid.Column="1" x:Name="BvX" Minimum="1" Maximum="2000" />
-                    <NumericUpDown Grid.Column="2" x:Name="BvY" Minimum="1" Maximum="2000" Margin="6,0,0,0" />
-                    <NumericUpDown Grid.Column="3" x:Name="BvZ" Minimum="1" Maximum="2000" Margin="6,0,0,0" />
-                </Grid>
-                <TextBlock Text="Eigenschaften" Foreground="#ff6600" FontWeight="Bold" Margin="0,8,0,2" />
-                <CheckBox x:Name="EnclosedCheck" Content="Enclosure (geschlossen)" />
-                <CheckBox x:Name="DirectDriveCheck" Content="Direct Drive Extruder" />
-                <Grid ColumnDefinitions="180,*" Margin="0,4">
-                    <TextBlock Grid.Column="0" Classes="label" Text="Max Hotend-Temp (°C)" />
-                    <NumericUpDown Grid.Column="1" x:Name="MaxHotendBox" Minimum="100" Maximum="500" />
-                </Grid>
-                <Grid ColumnDefinitions="180,*" Margin="0,4">
-                    <TextBlock Grid.Column="0" Classes="label" Text="Max Bett-Temp (°C)" />
-                    <NumericUpDown Grid.Column="1" x:Name="MaxBedBox" Minimum="20" Maximum="200" />
-                </Grid>
-                <TextBlock Text="Notizen" Foreground="#ff6600" FontWeight="Bold" Margin="0,8,0,2" />
-                <TextBox x:Name="NotesBox" AcceptsReturn="True" Height="80" TextWrapping="Wrap" />
 
-                <!-- === DruckWächter / Shelly === -->
-                <TextBlock Text="DruckWächter (Shelly)" Foreground="#ff6600" FontWeight="Bold" Margin="0,12,0,2" />
-                <TextBlock Text="Shelly-IP eintragen um den Drucker automatisch auszuschalten."
-                           Foreground="#7a7a8a" FontSize="11" Margin="0,0,0,4" />
-                <Grid ColumnDefinitions="180,*">
-                    <TextBlock Grid.Column="0" Classes="label" Text="Shelly IP-Adresse" />
-                    <TextBox Grid.Column="1" x:Name="ShellyIpBox" PlaceholderText="z.B. 192.168.178.60" />
-                </Grid>
-                <Grid ColumnDefinitions="180,*">
-                    <TextBlock Grid.Column="0" Classes="label" Text="Shelly Switch-Kanal" />
-                    <NumericUpDown Grid.Column="1" x:Name="ShellySwitchIdBox"
-                                   Minimum="0" Maximum="10" Value="0" />
-                </Grid>
+                <!-- ===== EXPANDER: ERWEITERTE EINSTELLUNGEN ===== -->
+                <Expander x:Name="AdvancedExpander" Header="Erweiterte Einstellungen" IsExpanded="False" Margin="0,8,0,0">
+                    <StackPanel Spacing="12" Margin="0,12,0,0">
+
+                        <!-- USB-Port (optional) -->
+                        <Grid ColumnDefinitions="120,*">
+                            <TextBlock Grid.Column="0" Classes="label" Text="USB-Port" />
+                            <StackPanel Grid.Column="1" Orientation="Vertical" Spacing="2">
+                                <TextBox x:Name="UsbBox" PlaceholderText="/dev/ttyACM0 (optional)" />
+                                <TextBlock Classes="hint" Text="Nur fuer USB-verbundene Drucker. WLAN-Drucker brauchen keine Angabe." />
+                            </StackPanel>
+                        </Grid>
+
+                        <!-- Duessen-Durchmesser -->
+                        <Grid ColumnDefinitions="120,*">
+                            <TextBlock Grid.Column="0" Classes="label" Text="Duesen-Durchm." />
+                            <NumericUpDown Grid.Column="1" x:Name="NozzleBox"
+                                           Minimum="0.1" Maximum="2.0"
+                                           Increment="0.05" FormatString="0.## mm" />
+                        </Grid>
+
+                        <!-- Bauvolumen X/Y/Z -->
+                        <TextBlock Classes="section-head" Text="Bauvolumen (mm)" Margin="0,2,0,0" />
+                        <Grid ColumnDefinitions="120,*,*,*">
+                            <TextBlock Grid.Column="0" Classes="label" Text="X / Y / Z" />
+                            <NumericUpDown Grid.Column="1" x:Name="BvX" Minimum="1" Maximum="2000" FormatString="0 mm" />
+                            <NumericUpDown Grid.Column="2" x:Name="BvY" Minimum="1" Maximum="2000" Margin="6,0,0,0" FormatString="0 mm" />
+                            <NumericUpDown Grid.Column="3" x:Name="BvZ" Minimum="1" Maximum="2000" Margin="6,0,0,0" FormatString="0 mm" />
+                        </Grid>
+
+                        <!-- Temperaturen -->
+                        <TextBlock Classes="section-head" Text="Temperatur-Limits" Margin="0,2,0,0" />
+                        <Grid ColumnDefinitions="120,*">
+                            <TextBlock Grid.Column="0" Classes="label" Text="Max Hotend (&#176;C)" />
+                            <NumericUpDown Grid.Column="1" x:Name="MaxHotendBox" Minimum="100" Maximum="500" FormatString="0 &#176;C" />
+                        </Grid>
+                        <Grid ColumnDefinitions="120,*">
+                            <TextBlock Grid.Column="0" Classes="label" Text="Max Bett (&#176;C)" />
+                            <NumericUpDown Grid.Column="1" x:Name="MaxBedBox" Minimum="20" Maximum="200" FormatString="0 &#176;C" />
+                        </Grid>
+
+                        <!-- Eigenschaften -->
+                        <TextBlock Classes="section-head" Text="Eigenschaften" Margin="0,2,0,0" />
+                        <StackPanel Orientation="Horizontal" Spacing="20" Margin="0,2,0,0">
+                            <CheckBox x:Name="EnclosedCheck" Content="Enclosure (geschlossen)" />
+                            <CheckBox x:Name="DirectDriveCheck" Content="Direct Drive Extruder" />
+                        </StackPanel>
+
+                        <!-- Notizen -->
+                        <TextBlock Classes="section-head" Text="Notizen" Margin="0,2,0,0" />
+                        <TextBox x:Name="NotesBox" AcceptsReturn="True" Height="80" TextWrapping="Wrap"
+                                 PlaceholderText="Zusaetzliche Notizen zum Drucker (optional)" />
+
+                        <!-- === DruckWaechter / Shelly === -->
+                        <TextBlock Classes="section-head" Text="DruckWaechter (Shelly)" Margin="0,4,0,0" />
+                        <TextBlock Classes="hint" Text="Shelly-IP eintragen um den Drucker automatisch auszuschalten. Switch-Kanal wird automatisch erkannt." />
+                        <Grid ColumnDefinitions="120,*">
+                            <TextBlock Grid.Column="0" Classes="label" Text="Shelly IP-Adresse" />
+                            <TextBox Grid.Column="1" x:Name="ShellyIpBox" PlaceholderText="z.B. 192.168.178.60" />
+                        </Grid>
+                    </StackPanel>
+                </Expander>
             </StackPanel>
         </ScrollViewer>
 
-        <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="10" Margin="0,14,0,0">
-            <Button Content="Abbrechen" Click="Cancel_Click" Foreground="#aaa" />
-            <Button Content="Speichern" Background="#ff6600" Foreground="#050507" FontWeight="Bold"
-                    Click="Save_Click" />
+        <!-- ===== ACTION BUTTONS ===== -->
+        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="12" Margin="0,16,0,0">
+            <Button Classes="ghost" Content="Abbrechen" Click="Cancel_Click" />
+            <Button Classes="primary" Content="Speichern" Click="Save_Click" />
         </StackPanel>
     </Grid>
 </Window>

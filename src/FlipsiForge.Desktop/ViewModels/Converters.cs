@@ -20,3 +20,21 @@ public sealed class ZeroToBoolConverter : IValueConverter
     public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
         => throw new NotSupportedException();
 }
+
+/// <summary>
+/// Konvertiert bool → opacity: true → 0.4 (gesperrt/schwach), false → 1.0 (normal).
+/// Wird für gesperrte Felder verwendet, die aus einer geladenen Datei stammen.
+/// </summary>
+public sealed class LockOpacityConverter : IValueConverter
+{
+    public static readonly LockOpacityConverter Instance = new();
+
+    public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        if (value is bool b) return b ? 0.4 : 1.0;
+        return 1.0;
+    }
+
+    public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+        => throw new NotSupportedException();
+}

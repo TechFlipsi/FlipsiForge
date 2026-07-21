@@ -1,0 +1,72 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="FlipsiForge.Desktop.Dialogs.TagAddDialog"
+             x:CompileBindings="False"
+        Title="Tag hinzufuegen"
+        Width="480" Height="320"
+        CanResize="False"
+        WindowStartupLocation="CenterOwner"
+        Background="#050507"
+        ShowInTaskbar="False">
+
+    <Window.Styles>
+        <Style Selector="TextBlock.label">
+            <Setter Property="Foreground" Value="#aaa" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+        <Style Selector="TextBox">
+            <Setter Property="Background" Value="#0a0a0f" />
+            <Setter Property="BorderBrush" Value="#1a1a2e" />
+            <Setter Property="Foreground" Value="#fff" />
+            <Setter Property="CornerRadius" Value="4" />
+            <Setter Property="Padding" Value="8,6" />
+        </Style>
+        <Style Selector="ComboBox">
+            <Setter Property="Background" Value="#0a0a0f" />
+            <Setter Property="BorderBrush" Value="#1a1a2e" />
+            <Setter Property="Foreground" Value="#fff" />
+            <Setter Property="CornerRadius" Value="4" />
+            <Setter Property="Padding" Value="8,6" />
+            <Setter Property="MinWidth" Value="180" />
+        </Style>
+        <Style Selector="Button">
+            <Setter Property="Background" Value="#1a1a2e" />
+            <Setter Property="Foreground" Value="#fff" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="CornerRadius" Value="4" />
+            <Setter Property="Padding" Value="16,8" />
+        </Style>
+    </Window.Styles>
+
+    <Grid RowDefinitions="*,Auto" Margin="20">
+        <StackPanel Grid.Row="0" Spacing="10">
+            <TextBlock Text="Tag hinzufuegen" Foreground="#ff6600" FontWeight="Bold" FontSize="16" />
+
+            <Grid ColumnDefinitions="120,*">
+                <TextBlock Grid.Column="0" Classes="label" Text="Code" />
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6">
+                    <TextBox x:Name="CodeBox" PlaceholderText="Tag-ID oder Code" MinWidth="220" />
+                    <Button Content="Scan" Click="Scan_Click" Padding="10,4" Foreground="#aaa" />
+                </StackPanel>
+            </Grid>
+
+            <Grid ColumnDefinitions="120,*">
+                <TextBlock Grid.Column="0" Classes="label" Text="Typ" />
+                <ComboBox Grid.Column="1" x:Name="TypeCombo" HorizontalAlignment="Stretch"
+                          SelectionChanged="TypeCombo_SelectionChanged" />
+            </Grid>
+
+            <Grid ColumnDefinitions="120,*">
+                <TextBlock Grid.Column="0" Classes="label" Text="Filament" />
+                <ComboBox Grid.Column="1" x:Name="SpoolCombo" HorizontalAlignment="Stretch" />
+            </Grid>
+        </StackPanel>
+
+        <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="10" Margin="0,14,0,0">
+            <Button Content="Abbrechen" Click="Cancel_Click" Foreground="#aaa" />
+            <Button Content="Speichern" Background="#ff6600" Foreground="#050507" FontWeight="Bold"
+                    Click="Save_Click" />
+        </StackPanel>
+    </Grid>
+</Window>

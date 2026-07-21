@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// PrinterViewModel: CRUD-Listen-ViewModel für die Drucker-Übersicht.
+// PrinterViewModel: CRUD-Listen-ViewModel fuer die Drucker-Uebersicht.
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -10,7 +10,7 @@ using FlipsiForge.Desktop.Services;
 
 namespace FlipsiForge.Desktop.ViewModels;
 
-/// <summary>Display-Row für einen Drucker inkl. Verbindungsstatus.</summary>
+/// <summary>Display-Row fuer einen Drucker inkl. Verbindungsstatus.</summary>
 public sealed class PrinterRowVm : ObservableObject
 {
     public Printer Printer { get; }
@@ -20,6 +20,9 @@ public sealed class PrinterRowVm : ObservableObject
     public string IpUsb => Printer.IpAddress ?? Printer.UsbPort ?? "—";
     public string Nozzle => Printer.NozzleDiameter.ToString("0.##") + " mm";
     public string BuildVolume => $"{Printer.BuildVolumeX} × {Printer.BuildVolumeY} × {Printer.BuildVolumeZ} mm";
+
+    /// <summary>true wenn der Drucker eine IP-Adresse hat (fuer "Daten abrufen" Button-Sichtbarkeit).</summary>
+    public bool HasIp => !string.IsNullOrWhiteSpace(Printer.IpAddress);
 
     private ConnectionTestState _conn = ConnectionTestState.Unknown;
     public ConnectionTestState Connection
@@ -36,6 +39,14 @@ public sealed class PrinterRowVm : ObservableObject
         _ => "⚪ unbekannt"
     };
 
+    private bool _isDetecting;
+    /// <summary>true waehrend AutoDetect laeuft — fuer Loading-Spinner im Button.</summary>
+    public bool IsDetecting
+    {
+        get => _isDetecting;
+        set => SetProperty(ref _isDetecting, value);
+    }
+
     public PrinterRowVm(Printer p) { Printer = p; }
 
     public void RefreshFromPrinter()
@@ -46,15 +57,16 @@ public sealed class PrinterRowVm : ObservableObject
         OnPropertyChanged(nameof(Nozzle));
         OnPropertyChanged(nameof(BuildVolume));
         OnPropertyChanged(nameof(StatusGlyph));
+        OnPropertyChanged(nameof(HasIp));
     }
 
-    /// <summary>Public Wrapper für protected OnPropertyChanged — erlaubt externen ViewModels
+    /// <summary>Public Wrapper fuer protected OnPropertyChanged — erlaubt externen ViewModels
     /// (z.B. PrinterViewModel) einzelne Properties dieses RowVm zu refreshen.</summary>
     public void RaisePropertyChanged(string propertyName)
         => OnPropertyChanged(propertyName);
 }
 
-/// <summary>ViewModel für die Drucker-Übersicht (CRUD + Verbindungstest).</summary>
+/// <summary>ViewModel fuer die Drucker-Uebersicht (CRUD + Verbindungstest + Auto-Detect).</summary>
 public partial class PrinterViewModel : ViewModelBase
 {
     private readonly FlipsiForgeDbContext _db;
@@ -63,9 +75,21 @@ public partial class PrinterViewModel : ViewModelBase
     /// <summary>Alle Drucker als Display-Rows.</summary>
     public ObservableCollection<PrinterRowVm> Printers { get; } = new();
 
-    /// <summary>Protokoll-Auswahl für Dialoge.</summary>
+    /// <summary>Protokoll-Auswahl fuer Dialoge.</summary>
     public IReadOnlyList<string> ProtocolOptions { get; } =
         new[] { "KlipperMoonraker", "Marlin", "BambuLab", "PrusaLink", "OctoPrint" };
+
+    /// <summary>Toast-/Status-Nachricht fuer User-Feedback (Erfolg/Fehler bei Auto-Detect).</summary>
+    [ObservableProperty]
+    private string? _toastMessage;
+
+    /// <summary>CSS-klasse fuer Toast-Farbe: "success" oder "error".</summary>
+    [ObservableProperty]
+    private string _toastKind = "success";
+
+    /// <summary>true solange Toast sichtbar ist (fuer Auto-Hide via Timer).</summary>
+    [ObservableProperty]
+    private bool _isToastVisible;
 
     public PrinterViewModel()
         : this(ServiceLocator.CreateDb(), ServiceLocator.Require<IPrinterService>())
@@ -87,7 +111,7 @@ public partial class PrinterViewModel : ViewModelBase
             Printers.Add(new PrinterRowVm(p));
     }
 
-    /// <summary>Öffnet den Add-Dialog.</summary>
+    /// <summary>Oeffnet den Add-Dialog.</summary>
     [RelayCommand]
     public async Task AddAsync()
     {
@@ -100,7 +124,7 @@ public partial class PrinterViewModel : ViewModelBase
         Printers.Add(new PrinterRowVm(p));
     }
 
-    /// <summary>Öffnet den Edit-Dialog für eine Row.</summary>
+    /// <summary>Oeffnet den Edit-Dialog fuer eine Row.</summary>
     [RelayCommand]
     public async Task EditAsync(PrinterRowVm row)
     {
@@ -111,7 +135,7 @@ public partial class PrinterViewModel : ViewModelBase
         row.RefreshFromPrinter();
     }
 
-    /// <summary>Löscht einen Drucker (ohne Historie — wird von Core gehalten).</summary>
+    /// <summary>Loescht einen Drucker (ohne Historie — wird von Core gehalten).</summary>
     [RelayCommand]
     public async Task DeleteAsync(PrinterRowVm row)
     {
@@ -143,6 +167,71 @@ public partial class PrinterViewModel : ViewModelBase
             row.Connection = ConnectionTestState.Offline;
         }
         row.RaisePropertyChanged(nameof(row.StatusGlyph));
+    }
+
+    /// <summary>
+    /// Ruft Drucker-Daten per Auto-Detect ab (Bauvolumen, Duese, Temperaturen, Firmware)
+    /// und schreibt die Ergebnisse in die DB. Zeigt Toast bei Erfolg/Fehler.
+    /// </summary>
+    [RelayCommand]
+    public async Task AutoDetectAsync(PrinterRowVm row)
+    {
+        if (row == null) return;
+        var ip = row.Printer.IpAddress;
+        if (string.IsNullOrWhiteSpace(ip))
+        {
+            ShowToast("Drucker hat keine IP-Adresse — kann nicht abrufen.", "error");
+            return;
+        }
+
+        row.IsDetecting = true;
+        try
+        {
+            var result = await _printerService.AutoDetectAsync(ip, row.Printer.Protocol);
+            if (result.HasData)
+            {
+                // Gefundene Werte in den Drucker uebernehmen (nur Werte > 0 / nicht null)
+                if (result.BuildVolumeX > 0) row.Printer.BuildVolumeX = result.BuildVolumeX;
+                if (result.BuildVolumeY > 0) row.Printer.BuildVolumeY = result.BuildVolumeY;
+                if (result.BuildVolumeZ > 0) row.Printer.BuildVolumeZ = result.BuildVolumeZ;
+                if (result.MaxHotendTemp > 0) row.Printer.MaxHotendTemp = result.MaxHotendTemp;
+                if (result.MaxBedTemp > 0) row.Printer.MaxBedTemp = result.MaxBedTemp;
+                if (result.NozzleDiameter > 0) row.Printer.NozzleDiameter = result.NozzleDiameter;
+                if (!string.IsNullOrEmpty(result.FirmwareVersion)) row.Printer.FirmwareVersion = result.FirmwareVersion;
+                row.Printer.IsEnclosed = result.IsEnclosed;
+                row.Printer.IsDirectDrive = result.IsDirectDrive;
+
+                _db.SaveChanges();
+                row.RefreshFromPrinter();
+                ShowToast("Drucker-Daten aktualisiert", "success");
+            }
+            else
+            {
+                ShowToast("Drucker nicht erreichbar", "error");
+            }
+        }
+        catch
+        {
+            ShowToast("Drucker nicht erreichbar", "error");
+        }
+        finally
+        {
+            row.IsDetecting = false;
+        }
+    }
+
+    /// <summary>Zeigt einen Toast fuer 4 Sekunden an.</summary>
+    private void ShowToast(string message, string kind)
+    {
+        ToastMessage = message;
+        ToastKind = kind;
+        IsToastVisible = true;
+        // Auto-Hide nach 4 Sekunden
+        _ = Task.Run(async () =>
+        {
+            await Task.Delay(4000);
+            await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() => IsToastVisible = false);
+        });
     }
 
     // === Hilfs-Methoden: Dialoge ===

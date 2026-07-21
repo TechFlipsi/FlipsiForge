@@ -6,7 +6,7 @@
              Background="Transparent">
 
     <UserControl.Styles>
-        <!-- Section-Expander -->
+        <!-- Section-Expander: VOLLE BREITE (HorizontalStretch) -->
         <Style Selector="Expander">
             <Setter Property="Background" Value="#0a0a0f" />
             <Setter Property="BorderBrush" Value="#1a1a2e" />
@@ -15,19 +15,28 @@
             <Setter Property="Margin" Value="0,0,0,10" />
             <Setter Property="Foreground" Value="#fff" />
             <Setter Property="FontSize" Value="14" />
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
         </Style>
-        <Style Selector="Expander /template/ ToggleButton#PART.toggleExpander">
+        <Style Selector="Expander /template/ ToggleButton#PART_toggleExpander">
             <Setter Property="Background" Value="#050507" />
             <Setter Property="Foreground" Value="#ff6600" />
             <Setter Property="FontWeight" Value="Bold" />
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="HorizontalContentAlignment" Value="Left" />
         </Style>
         <Style Selector="Expander /template/ ToggleButton#PART.toggleExpander:checked">
             <Setter Property="Background" Value="#1a1a2e" />
         </Style>
-        <!-- Section-Inhalt -->
+        <!-- Section-Inhalt: volle Breite -->
         <Style Selector="Expander > StackPanel">
             <Setter Property="Spacing" Value="8" />
             <Setter Property="Margin" Value="0,10,0,0" />
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+        </Style>
+        <!-- Grids in Expandern: 220,* (Label + Wert) -->
+        <Style Selector="Expander Grid">
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
         </Style>
         <Style Selector="TextBlock.kicker">
             <Setter Property="Foreground" Value="#aaa" />
@@ -40,6 +49,7 @@
             <Setter Property="Foreground" Value="#fff" />
             <Setter Property="CornerRadius" Value="4" />
             <Setter Property="Padding" Value="8,6" />
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
         </Style>
         <Style Selector="ComboBox">
             <Setter Property="Background" Value="#050507" />
@@ -47,7 +57,10 @@
             <Setter Property="Foreground" Value="#fff" />
             <Setter Property="CornerRadius" Value="4" />
             <Setter Property="Padding" Value="8,6" />
-            <Setter Property="MinWidth" Value="180" />
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+        </Style>
+        <Style Selector="NumericUpDown">
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
         </Style>
         <Style Selector="Button">
             <Setter Property="Background" Value="#1a1a2e" />
@@ -77,14 +90,18 @@
         </Style>
     </UserControl.Styles>
 
-    <Grid RowDefinitions="*,Auto">
-        <!-- Settings-Sektionen (scrollbar) -->
-        <ScrollViewer Grid.Row="0">
-            <StackPanel Orientation="Vertical" Spacing="0" Margin="0,0,16,0">
+    <!-- Aeusserer Grid: volle Breite, ScrollViewer streckt sich -->
+    <Grid RowDefinitions="*,Auto" HorizontalAlignment="Stretch">
+        <!-- Settings-Sektionen (scrollbar, VOLLE BREITE) -->
+        <ScrollViewer Grid.Row="0" HorizontalScrollBarVisibility="Disabled"
+                      HorizontalAlignment="Stretch">
+            <StackPanel Orientation="Vertical" Spacing="0" Margin="16,16,16,0"
+                        HorizontalAlignment="Stretch">
 
                 <!-- === Save / Status-Leiste oben === -->
-                <Border Background="#1a1a2e" Padding="12,8" CornerRadius="6" Margin="0,0,0,14">
-                    <Grid ColumnDefinitions="*,Auto,Auto">
+                <Border Background="#1a1a2e" Padding="12,8" CornerRadius="6" Margin="0,0,0,14"
+                        HorizontalAlignment="Stretch">
+                    <Grid ColumnDefinitions="*,Auto,Auto" HorizontalAlignment="Stretch">
                         <TextBlock Grid.Column="0" Text="{Binding SaveStatus}" Foreground="#aaa"
                                    VerticalAlignment="Center" />
                         <Button Grid.Column="1" Classes="primary" Content="💾 Speichern"
@@ -100,7 +117,7 @@
                         <Grid ColumnDefinitions="220,*" Margin="0,4">
                             <TextBlock Text="Sprache" VerticalAlignment="Center" Foreground="#aaa" />
                             <ComboBox Grid.Column="1" ItemsSource="{Binding LanguageOptions}"
-                                      SelectedItem="{Binding Language}" />
+                                      SelectedItem="{Binding Language}" HorizontalAlignment="Stretch" />
                         </Grid>
                         <Grid ColumnDefinitions="220,*" Margin="0,4">
                             <TextBlock Text="Theme" VerticalAlignment="Center" Foreground="#aaa" />
@@ -110,17 +127,17 @@
                         <Grid ColumnDefinitions="220,*" Margin="0,4">
                             <TextBlock Text="Start-Tab" VerticalAlignment="Center" Foreground="#aaa" />
                             <ComboBox Grid.Column="1" ItemsSource="{Binding StartTabOptions}"
-                                      SelectedItem="{Binding StartTab}" />
+                                      SelectedItem="{Binding StartTab}" HorizontalAlignment="Stretch" />
                         </Grid>
                         <Grid ColumnDefinitions="220,*" Margin="0,4">
                             <TextBlock Text="Währung" VerticalAlignment="Center" Foreground="#aaa" />
                             <ComboBox Grid.Column="1" ItemsSource="{Binding CurrencyOptions}"
-                                      SelectedItem="{Binding Currency}" />
+                                      SelectedItem="{Binding Currency}" HorizontalAlignment="Stretch" />
                         </Grid>
                         <Grid ColumnDefinitions="220,*" Margin="0,4">
                             <TextBlock Text="Datumsformat" VerticalAlignment="Center" Foreground="#aaa" />
                             <ComboBox Grid.Column="1" ItemsSource="{Binding DateFormatOptions}"
-                                      SelectedItem="{Binding DateFormat}" />
+                                      SelectedItem="{Binding DateFormat}" HorizontalAlignment="Stretch" />
                         </Grid>
                         <CheckBox Content="Im Tray minimieren" IsChecked="{Binding MinimizeToTray}" Margin="0,8,0,0" />
                     </StackPanel>
@@ -139,14 +156,14 @@
                         </WrapPanel>
                         <Grid ColumnDefinitions="220,*" Margin="0,4">
                             <TextBlock Text="Standard-Ansicht" VerticalAlignment="Center" Foreground="#aaa" />
-                            <ComboBox Grid.Column="1">
+                            <ComboBox Grid.Column="1" HorizontalAlignment="Stretch">
                                 <ComboBoxItem Content="List" />
                                 <ComboBoxItem Content="Grid" />
                             </ComboBox>
                         </Grid>
                         <Grid ColumnDefinitions="220,*" Margin="0,4">
                             <TextBlock Text="Standard-Sortierung" VerticalAlignment="Center" Foreground="#aaa" />
-                            <ComboBox Grid.Column="1">
+                            <ComboBox Grid.Column="1" HorizontalAlignment="Stretch">
                                 <ComboBoxItem Content="Name ↑" />
                                 <ComboBoxItem Content="Name ↓" />
                                 <ComboBoxItem Content="Datum ↓" />
@@ -165,14 +182,15 @@
                         <CheckBox Content="Bestätigungspflicht für Druck-Jobs" IsChecked="{Binding RequirePrintConfirmation}" Margin="0,0,0,8" />
                         <Grid ColumnDefinitions="220,*" Margin="0,4">
                             <TextBlock Text="Temperatur-Einheit" VerticalAlignment="Center" Foreground="#aaa" />
-                            <ComboBox Grid.Column="1">
+                            <ComboBox Grid.Column="1" HorizontalAlignment="Stretch">
                                 <ComboBoxItem Content="Celsius" />
                                 <ComboBoxItem Content="Fahrenheit" />
                             </ComboBox>
                         </Grid>
                         <Grid ColumnDefinitions="220,*" Margin="0,4">
                             <TextBlock Text="Webcam-Refresh (Sek.)" VerticalAlignment="Center" Foreground="#aaa" />
-                            <NumericUpDown Grid.Column="1" Value="{Binding WebcamRefreshSeconds}" Minimum="1" Maximum="60" />
+                            <NumericUpDown Grid.Column="1" Value="{Binding WebcamRefreshSeconds}" Minimum="1" Maximum="60"
+                                           HorizontalAlignment="Stretch" />
                         </Grid>
                     </StackPanel>
                 </Expander>
@@ -183,7 +201,8 @@
                         <CheckBox Content="Kosten-Tracking aktiv" IsChecked="{Binding FilamentCostTracking}" Margin="0,0,0,8" />
                         <Grid ColumnDefinitions="220,*" Margin="0,4">
                             <TextBlock Text="Trocknungs-Log Aufbewahrung (Tage)" VerticalAlignment="Center" Foreground="#aaa" />
-                            <NumericUpDown Grid.Column="1" Value="{Binding DryingLogRetentionDays}" Minimum="1" Maximum="365" />
+                            <NumericUpDown Grid.Column="1" Value="{Binding DryingLogRetentionDays}" Minimum="1" Maximum="365"
+                                           HorizontalAlignment="Stretch" />
                         </Grid>
                         <CheckBox Content="QR/NFC Tags verwalten" IsChecked="{Binding EnableQrNfc}" Margin="0,8,0,0" />
                     </StackPanel>
@@ -198,7 +217,7 @@
                         <Grid ColumnDefinitions="220,*" Margin="0,4">
                             <TextBlock Text="Modell" VerticalAlignment="Center" Foreground="#aaa" />
                             <ComboBox Grid.Column="1" ItemsSource="{Binding AiModelOptions}"
-                                      SelectedItem="{Binding AiModel}" />
+                                      SelectedItem="{Binding AiModel}" HorizontalAlignment="Stretch" />
                         </Grid>
                         <CheckBox Content="KI-Suche" IsChecked="{Binding AiSearchEnabled}" Margin="0,8,0,4" />
                         <CheckBox Content="Wartungs-Empfehlungen" IsChecked="{Binding AiMaintenanceSuggestions}" Margin="0,0,0,4" />
@@ -206,15 +225,15 @@
                         <TextBlock Text="Externe Anbieter (optional)" Foreground="#ff6600" FontWeight="Bold" Margin="0,4,0,2" />
                         <Grid ColumnDefinitions="160,*" Margin="0,4">
                             <TextBlock Text="OpenAI API-Key" VerticalAlignment="Center" Foreground="#aaa" />
-                            <TextBox Grid.Column="1" Text="{Binding OpenAiApiKey}" PlaceholderText="sk-..." />
+                            <TextBox Grid.Column="1" Text="{Binding OpenAiApiKey}" PlaceholderText="sk-..." HorizontalAlignment="Stretch" />
                         </Grid>
                         <Grid ColumnDefinitions="160,*" Margin="0,4">
                             <TextBlock Text="Anthropic API-Key" VerticalAlignment="Center" Foreground="#aaa" />
-                            <TextBox Grid.Column="1" Text="{Binding AnthropicApiKey}" PlaceholderText="sk-ant-..." />
+                            <TextBox Grid.Column="1" Text="{Binding AnthropicApiKey}" PlaceholderText="sk-ant-..." HorizontalAlignment="Stretch" />
                         </Grid>
                         <Grid ColumnDefinitions="160,*" Margin="0,4">
                             <TextBlock Text="Ollama URL" VerticalAlignment="Center" Foreground="#aaa" />
-                            <TextBox Grid.Column="1" Text="{Binding OllamaUrl}" PlaceholderText="http://localhost:11434" />
+                            <TextBox Grid.Column="1" Text="{Binding OllamaUrl}" PlaceholderText="http://localhost:11434" HorizontalAlignment="Stretch" />
                         </Grid>
                     </StackPanel>
                 </Expander>
@@ -225,16 +244,17 @@
                         <Grid ColumnDefinitions="220,*" Margin="0,4">
                             <TextBlock Text="Modus" VerticalAlignment="Center" Foreground="#aaa" />
                             <ComboBox Grid.Column="1" ItemsSource="{Binding ServerModeOptions}"
-                                      SelectedItem="{Binding ServerMode}" />
+                                      SelectedItem="{Binding ServerMode}" HorizontalAlignment="Stretch" />
                         </Grid>
                         <Grid ColumnDefinitions="220,*" Margin="0,4">
                             <TextBlock Text="Port" VerticalAlignment="Center" Foreground="#aaa" />
-                            <NumericUpDown Grid.Column="1" Value="{Binding ServerPort}" Minimum="1" Maximum="65535" />
+                            <NumericUpDown Grid.Column="1" Value="{Binding ServerPort}" Minimum="1" Maximum="65535"
+                                           HorizontalAlignment="Stretch" />
                         </Grid>
                         <CheckBox Content="Web-UI aktiv" IsChecked="{Binding WebUiEnabled}" Margin="0,8,0,8" />
                         <Grid ColumnDefinitions="220,*,Auto" Margin="0,4">
                             <TextBlock Text="API-Key" VerticalAlignment="Center" Foreground="#aaa" />
-                            <TextBox Grid.Column="1" Text="{Binding ApiKey}" IsReadOnly="True" />
+                            <TextBox Grid.Column="1" Text="{Binding ApiKey}" IsReadOnly="True" HorizontalAlignment="Stretch" />
                             <Button Grid.Column="2" Content="🔄 Neu generieren" Margin="6,0,0,0"
                                     Command="{Binding RegenerateApiKeyCommand}" />
                         </Grid>
@@ -250,13 +270,14 @@
                         <CheckBox Content="Druck fehlgeschlagen" IsChecked="{Binding NotifyPrintFailed}" Margin="0,0,0,8" />
                         <Grid ColumnDefinitions="220,*" Margin="0,4">
                             <TextBlock Text="Filament-Warngrenze (%)" VerticalAlignment="Center" Foreground="#aaa" />
-                            <NumericUpDown Grid.Column="1" Value="{Binding FilamentWarningPercent}" Minimum="1" Maximum="100" />
+                            <NumericUpDown Grid.Column="1" Value="{Binding FilamentWarningPercent}" Minimum="1" Maximum="100"
+                                           HorizontalAlignment="Stretch" />
                         </Grid>
                         <CheckBox Content="Wartungs-Erinnerung" IsChecked="{Binding NotifyMaintenanceReminder}" Margin="0,8,0,8" />
                         <Grid ColumnDefinitions="220,*" Margin="0,4">
                             <TextBlock Text="Art" VerticalAlignment="Center" Foreground="#aaa" />
                             <ComboBox Grid.Column="1" ItemsSource="{Binding NotificationKindOptions}"
-                                      SelectedItem="{Binding NotificationKind}" />
+                                      SelectedItem="{Binding NotificationKind}" HorizontalAlignment="Stretch" />
                         </Grid>
                     </StackPanel>
                 </Expander>
@@ -266,21 +287,26 @@
                     <StackPanel>
                         <Grid ColumnDefinitions="220,*" Margin="0,4">
                             <TextBlock Text="Backup-Intervall (Tage)" VerticalAlignment="Center" Foreground="#aaa" />
-                            <NumericUpDown Grid.Column="1" Value="{Binding BackupIntervalDays}" Minimum="1" Maximum="365" />
+                            <NumericUpDown Grid.Column="1" Value="{Binding BackupIntervalDays}" Minimum="1" Maximum="365"
+                                           HorizontalAlignment="Stretch" />
                         </Grid>
                         <Grid ColumnDefinitions="220,*" Margin="0,4">
                             <TextBlock Text="Backup-Pfad" VerticalAlignment="Center" Foreground="#aaa" />
-                            <TextBox Grid.Column="1" Text="{Binding BackupPath}" />
+                            <TextBox Grid.Column="1" Text="{Binding BackupPath}" HorizontalAlignment="Stretch" />
                         </Grid>
                         <Grid ColumnDefinitions="220,*" Margin="0,4">
                             <TextBlock Text="Log-Level" VerticalAlignment="Center" Foreground="#aaa" />
                             <ComboBox Grid.Column="1" ItemsSource="{Binding LogLevelOptions}"
-                                      SelectedItem="{Binding LogLevel}" />
+                                      SelectedItem="{Binding LogLevel}" HorizontalAlignment="Stretch" />
                         </Grid>
                         <CheckBox Content="Debug-Modus" IsChecked="{Binding DebugMode}" Margin="0,8,0,8" />
-                        <StackPanel Orientation="Horizontal" Spacing="8">
+                        <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,4,0,4">
                             <Button Content="🗑️ Cache leeren" Command="{Binding ClearCacheCommand}" />
                             <Button Content="📤 Export" Command="{Binding ExportSettingsCommand}" />
+                        </StackPanel>
+                        <!-- Logs anzeigen Button -->
+                        <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,4,0,4">
+                            <Button Content="📂 Logs anzeigen" Command="{Binding OpenLogsCommand}" />
                         </StackPanel>
                     </StackPanel>
                 </Expander>

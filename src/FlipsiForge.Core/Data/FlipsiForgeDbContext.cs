@@ -18,6 +18,7 @@ public class FlipsiForgeDbContext : DbContext
     public DbSet<MaintenanceRecord> MaintenanceRecords => Set<MaintenanceRecord>();
     public DbSet<ChatMessage> ChatMessages => Set<ChatMessage>();
     public DbSet<FilamentBrandSpec> FilamentBrandSpecs => Set<FilamentBrandSpec>();
+    public DbSet<NfcQrTag> NfcQrTags => Set<NfcQrTag>();
     public DbSet<AppSettings> Settings => Set<AppSettings>();
 
     // === v0.2.0 DbSets ===

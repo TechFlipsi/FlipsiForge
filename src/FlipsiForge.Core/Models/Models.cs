@@ -49,6 +49,12 @@ public class Spool
     public string? QrCode { get; set; }
     public string? NfcTag { get; set; }
     public string? Notes { get; set; }
+
+    // === v0.5.0 Erweiterungen: Druck-Einstellungen (Auto-Fill aus FilamentBrandSpec) ===
+    /// <summary>Empfohlene Drucktemperatur in °C (Auto-Fill aus Marken-Profil, editierbar).</summary>
+    public int RecommendedHotendTemp { get; set; }
+    /// <summary>Empfohlene Bett-Temperatur in °C (Auto-Fill aus Marken-Profil, editierbar).</summary>
+    public int RecommendedBedTemp { get; set; }
 }
 
 /// <summary>Gescannte 3D-Druck-Datei.</summary>
