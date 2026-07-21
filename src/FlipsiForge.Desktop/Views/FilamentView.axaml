@@ -25,6 +25,29 @@
             <Setter Property="BoxShadow" Value="0 12 40 #00000055" />
         </Style>
 
+        <!-- ===== GROUP HEADER CARD ===== -->
+        <Style Selector="Border.group-header">
+            <Setter Property="Background" Value="#0a0a0f" />
+            <Setter Property="BorderBrush" Value="#25ff6600" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="16" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="BoxShadow" Value="0 2 8 #00000022" />
+            <Setter Property="ClipToBounds" Value="True" />
+        </Style>
+
+        <!-- ===== SMALL SPOOL CARD (in groups) ===== -->
+        <Style Selector="Border.bento-sm">
+            <Setter Property="Background" Value="#0c0c10" />
+            <Setter Property="BorderBrush" Value="#10ff6600" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="12" />
+            <Setter Property="Padding" Value="0" />
+        </Style>
+        <Style Selector="Border.bento-sm:pointerover">
+            <Setter Property="BorderBrush" Value="#30ff6600" />
+        </Style>
+
         <!-- ===== CARD ACTION BUTTON (pill) ===== -->
         <Style Selector="Button.card-btn">
             <Setter Property="Background" Value="#111116" />
@@ -55,6 +78,24 @@
             <Setter Property="Background" Value="#ff8533" />
         </Style>
 
+        <!-- ===== TOGGLE BUTTON (Group View) ===== -->
+        <Style Selector="Button.toggle">
+            <Setter Property="Background" Value="#111116" />
+            <Setter Property="BorderBrush" Value="#15ff6600" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="999" />
+            <Setter Property="Padding" Value="12,6" />
+            <Setter Property="Foreground" Value="#ff8533" />
+            <Setter Property="FontFamily" Value="Space Grotesk, sans-serif" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+        </Style>
+        <Style Selector="Button.toggle.active">
+            <Setter Property="Background" Value="#ff6600" />
+            <Setter Property="Foreground" Value="#050507" />
+            <Setter Property="BorderBrush" Value="#ff6600" />
+        </Style>
+
         <!-- ===== DANGER BUTTON ===== -->
         <Style Selector="Button.danger">
             <Setter Property="Background" Value="#22ef4444" />
@@ -81,20 +122,26 @@
         <!-- ===== HEADER / TOOLBAR ===== -->
         <Border Grid.Row="0" Background="#0a0a0f" CornerRadius="12" Padding="16,12"
                 BorderBrush="#15ff6600" BorderThickness="1" Margin="0,0,0,10">
-            <Grid ColumnDefinitions="Auto,*,Auto">
+            <Grid ColumnDefinitions="Auto,*,Auto,Auto">
                 <TextBlock Grid.Column="0" Text="🧶 Filament" FontFamily="Space Grotesk, sans-serif"
                            Foreground="#ff6600" FontWeight="Bold"
                            FontSize="18" VerticalAlignment="Center" />
                 <TextBlock Grid.Column="1" Text="{Binding Spools.Count, StringFormat='{}{0} Spulen'}"
                            FontFamily="Space Grotesk, sans-serif"
                            Foreground="#7a7a8a" FontSize="12" VerticalAlignment="Center" Margin="16,0,0,0" />
-                <Button Grid.Column="2" Classes="primary" Content="+ Spule hinzufügen"
+                <!-- ===== GROUP VIEW TOGGLE ===== -->
+                <Button Grid.Column="2" Classes="toggle" Classes.active="{Binding IsGroupView}"
+                        Content="📂 Gruppen-Ansicht"
+                        Command="{Binding ToggleGroupViewCommand}"
+                        Margin="0,0,10,0" />
+                <Button Grid.Column="3" Classes="primary" Content="+ Spule hinzufuegen"
                         Command="{Binding AddCommand}" />
             </Grid>
         </Border>
 
-        <!-- ===== SPOOL CARDS (WrapPanel) ===== -->
-        <ScrollViewer Grid.Row="1" Padding="0,0,16,16" HorizontalScrollBarVisibility="Disabled">
+        <!-- ===== SPOOL CARDS (WrapPanel) - einzelne Spulen ===== -->
+        <ScrollViewer Grid.Row="1" Padding="0,0,16,16" HorizontalScrollBarVisibility="Disabled"
+                      IsVisible="{Binding !IsGroupView}">
             <Panel>
                 <ItemsControl ItemsSource="{Binding Spools}">
                     <ItemsControl.ItemsPanel>
@@ -107,15 +154,14 @@
                             <Border Classes="bento-card" Margin="0,0,16,16" Width="380">
                                 <StackPanel Orientation="Vertical" Spacing="0">
 
-                                    <!-- ===== COLOR BAR (volle Breite, oben — Spoolman-Style) ===== -->
+                                    <!-- ===== COLOR BAR (volle Breite, oben - Spoolman-Style) ===== -->
                                     <Border Height="8" Background="{Binding ColorHex}" />
 
                                     <!-- ===== CARD BODY ===== -->
                                     <StackPanel Orientation="Vertical" Spacing="14" Margin="24,16,24,20">
 
-                                        <!-- ===== CARD HEADER: Großer Farbswatch + Brand + Material ===== -->
+                                        <!-- ===== CARD HEADER: Farbswatch + Brand + Material ===== -->
                                         <StackPanel Orientation="Horizontal" Spacing="14">
-                                            <!-- Großer runder Farbswatch mit Glow in Filamentfarbe -->
                                             <Border Width="52" Height="52" CornerRadius="14"
                                                     Background="{Binding ColorHex}"
                                                     BorderBrush="#30ffffff" BorderThickness="2"
@@ -148,7 +194,7 @@
                                                        VerticalAlignment="Center" />
                                         </StackPanel>
 
-                                        <!-- ===== WEIGHT PROGRESS (Spoolman-Style) ===== -->
+                                        <!-- ===== WEIGHT PROGRESS ===== -->
                                         <StackPanel Orientation="Vertical" Spacing="6" Margin="0,4">
                                             <Grid ColumnDefinitions="*,Auto">
                                                 <TextBlock Grid.Column="0" Text="Restgewicht" FontFamily="Space Grotesk, sans-serif"
@@ -165,7 +211,6 @@
                                         <!-- ===== DETAILS ===== -->
                                         <Border BorderBrush="#15ff6600" BorderThickness="0,1,0,0" Padding="0,12,0,0" Margin="0,4">
                                             <StackPanel Orientation="Vertical" Spacing="8">
-                                                <!-- Durchmesser -->
                                                 <Grid ColumnDefinitions="90,*">
                                                     <TextBlock Grid.Column="0" Text="Durchmesser" FontFamily="Space Grotesk, sans-serif"
                                                                FontSize="11" FontWeight="SemiBold" Foreground="#55555f"
@@ -174,7 +219,6 @@
                                                                FontSize="13" Foreground="#e8e8ed"
                                                                VerticalAlignment="Center" />
                                                 </Grid>
-                                                <!-- Dichte -->
                                                 <Grid ColumnDefinitions="90,*">
                                                     <TextBlock Grid.Column="0" Text="Dichte" FontFamily="Space Grotesk, sans-serif"
                                                                FontSize="11" FontWeight="SemiBold" Foreground="#55555f"
@@ -183,7 +227,6 @@
                                                                FontSize="13" Foreground="#e8e8ed"
                                                                VerticalAlignment="Center" />
                                                 </Grid>
-                                                <!-- Kosten -->
                                                 <Grid ColumnDefinitions="90,*">
                                                     <TextBlock Grid.Column="0" Text="Kosten" FontFamily="Space Grotesk, sans-serif"
                                                                FontSize="11" FontWeight="SemiBold" Foreground="#55555f"
@@ -195,7 +238,7 @@
                                             </StackPanel>
                                         </Border>
 
-                                        <!-- ===== ACTION BUTTONS (zentriert, pill-shaped) ===== -->
+                                        <!-- ===== ACTION BUTTONS ===== -->
                                         <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Center" Margin="0,4">
                                             <Button Classes="card-btn" Content="🔄 Status"
                                                     Command="{Binding $parent[UserControl].DataContext.CycleStatusCommand}"
@@ -203,7 +246,7 @@
                                             <Button Classes="card-btn" Content="✎ Bearbeiten"
                                                     Command="{Binding $parent[UserControl].DataContext.EditCommand}"
                                                     CommandParameter="{Binding}" />
-                                            <Button Classes="danger" Content="✕ Löschen"
+                                            <Button Classes="danger" Content="✕ Loeschen"
                                                     Command="{Binding $parent[UserControl].DataContext.DeleteCommand}"
                                                     CommandParameter="{Binding}" />
                                         </StackPanel>
@@ -225,12 +268,116 @@
                         <TextBlock Text="Keine Spulen konfiguriert" FontFamily="Space Grotesk, sans-serif"
                                    FontSize="16" FontWeight="SemiBold" Foreground="#e8e8ed"
                                    HorizontalAlignment="Center" />
-                        <TextBlock Text="Klicke auf &quot;+ Spule hinzufügen&quot; um dein erstes Filament einzurichten."
+                        <TextBlock Text="Klicke auf &quot;+ Spule hinzufuegen&quot; um dein erstes Filament einzurichten."
                                    FontFamily="Inter, sans-serif" FontSize="12" Foreground="#7a7a8a"
                                    TextWrapping="Wrap" TextAlignment="Center" MaxWidth="300" />
                     </StackPanel>
                 </Border>
             </Panel>
+        </ScrollViewer>
+
+        <!-- ===== GROUP VIEW (Gruppen-Ansicht) ===== -->
+        <ScrollViewer Grid.Row="1" Padding="0,0,16,16" HorizontalScrollBarVisibility="Disabled"
+                      IsVisible="{Binding IsGroupView}">
+            <StackPanel Orientation="Vertical" Spacing="16">
+                <ItemsControl ItemsSource="{Binding Groups}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate DataType="{x:Type vm:SpoolGroupVm}">
+                            <Border Classes="group-header" Margin="0,0,0,16">
+                                <StackPanel Orientation="Vertical" Spacing="0">
+
+                                    <!-- ===== GROUP HEADER: Farbbar + Brand/Material/Farbe + Gesamtgewicht ===== -->
+                                    <Border Height="6" Background="{Binding ColorHex}" />
+                                    <StackPanel Orientation="Horizontal" Spacing="16" Margin="24,16">
+                                        <!-- Farbswatch -->
+                                        <Border Width="48" Height="48" CornerRadius="12"
+                                                Background="{Binding ColorHex}"
+                                                BorderBrush="#30ffffff" BorderThickness="2"
+                                                VerticalAlignment="Center">
+                                            <TextBlock Text="🧶" FontSize="18" HorizontalAlignment="Center"
+                                                       VerticalAlignment="Center" Opacity="0.5" />
+                                        </Border>
+                                        <StackPanel Orientation="Vertical" Spacing="4" VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding Header}" FontFamily="Space Grotesk, sans-serif"
+                                                       FontSize="18" FontWeight="Bold" Foreground="#e8e8ed" />
+                                            <TextBlock Text="{Binding TotalWeightDisplay}" FontFamily="Space Grotesk, sans-serif"
+                                                       FontSize="13" FontWeight="SemiBold" Foreground="#ff8533" />
+                                        </StackPanel>
+                                    </StackPanel>
+
+                                    <!-- ===== SMALL SPOOL CARDS (innerhalb der Gruppe) ===== -->
+                                    <WrapPanel Orientation="Horizontal" Margin="24,0,24,20">
+                                        <ItemsControl ItemsSource="{Binding Spools}">
+                                            <ItemsControl.ItemsPanel>
+                                                <ItemsPanelTemplate>
+                                                    <WrapPanel Orientation="Horizontal" />
+                                                </ItemsPanelTemplate>
+                                            </ItemsControl.ItemsPanel>
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate DataType="{x:Type vm:SpoolRowVm}">
+                                                    <Border Classes="bento-sm" Margin="0,0,12,12" Width="280">
+                                                        <StackPanel Orientation="Vertical" Spacing="8" Margin="16,12">
+                                                            <StackPanel Orientation="Horizontal" Spacing="10">
+                                                                <Border Width="24" Height="24" CornerRadius="6"
+                                                                        Background="{Binding ColorHex}"
+                                                                        BorderBrush="#20ffffff" BorderThickness="1"
+                                                                        VerticalAlignment="Center" />
+                                                                <TextBlock Text="{Binding Material}" FontFamily="Space Grotesk, sans-serif"
+                                                                           FontSize="12" FontWeight="SemiBold" Foreground="#e8e8ed"
+                                                                           VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                                                            </StackPanel>
+                                                            <TextBlock Text="{Binding StatusGlyph}" FontFamily="Space Grotesk, sans-serif"
+                                                                       FontSize="11" Foreground="#7a7a8a" />
+                                                            <StackPanel Orientation="Vertical" Spacing="4">
+                                                                <Grid ColumnDefinitions="*,Auto">
+                                                                    <TextBlock Grid.Column="0" Text="Restgewicht"
+                                                                               FontFamily="Space Grotesk, sans-serif"
+                                                                               FontSize="10" Foreground="#55555f"
+                                                                               VerticalAlignment="Center" />
+                                                                    <TextBlock Grid.Column="1" Text="{Binding Weight}"
+                                                                               FontFamily="Space Grotesk, sans-serif"
+                                                                               FontSize="11" FontWeight="Bold" Foreground="#e8e8ed"
+                                                                               VerticalAlignment="Center" />
+                                                                </Grid>
+                                                                <ProgressBar Classes="weight-bar" Value="{Binding RemainingPercent}"
+                                                                             Maximum="100" HorizontalAlignment="Stretch" />
+                                                            </StackPanel>
+                                                            <StackPanel Orientation="Horizontal" Spacing="6" HorizontalAlignment="Center">
+                                                                <Button Classes="card-btn" Content="🔄"
+                                                                        Command="{Binding $parent[UserControl].$parent[ItemsControl].$parent[UserControl].DataContext.CycleStatusCommand}"
+                                                                        CommandParameter="{Binding}" Padding="8,4" FontSize="10" />
+                                                                <Button Classes="card-btn" Content="✎"
+                                                                        Command="{Binding $parent[UserControl].$parent[ItemsControl].$parent[UserControl].DataContext.EditCommand}"
+                                                                        CommandParameter="{Binding}" Padding="8,4" FontSize="10" />
+                                                            </StackPanel>
+                                                        </StackPanel>
+                                                    </Border>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </WrapPanel>
+                                </StackPanel>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+                <!-- ===== EMPTY STATE: keine Gruppen ===== -->
+                <Border IsVisible="{Binding Groups.Count, Converter={x:Static vm:ZeroToBoolConverter.Instance}}"
+                        HorizontalAlignment="Center" VerticalAlignment="Center"
+                        Background="#0c0c10" CornerRadius="20" Padding="40"
+                        BorderBrush="#15ff6600" BorderThickness="1" Margin="20">
+                    <StackPanel Orientation="Vertical" Spacing="12" HorizontalAlignment="Center">
+                        <TextBlock Text="📂" FontSize="48" HorizontalAlignment="Center" />
+                        <TextBlock Text="Keine Gruppen vorhanden" FontFamily="Space Grotesk, sans-serif"
+                                   FontSize="16" FontWeight="SemiBold" Foreground="#e8e8ed"
+                                   HorizontalAlignment="Center" />
+                        <TextBlock Text="Fuege Spulen mit gleichen Marken/Material/Farbe hinzu um Gruppen zu bilden."
+                                   FontFamily="Inter, sans-serif" FontSize="12" Foreground="#7a7a8a"
+                                   TextWrapping="Wrap" TextAlignment="Center" MaxWidth="300" />
+                    </StackPanel>
+                </Border>
+            </StackPanel>
         </ScrollViewer>
     </Grid>
 </UserControl>

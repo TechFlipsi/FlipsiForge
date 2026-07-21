@@ -56,6 +56,29 @@
             <Setter Property="BorderBrush" Value="#40ff6600" />
             <Setter Property="Foreground" Value="#e8e8ed" />
         </Style>
+        <Style Selector="Button.card-btn:disabled">
+            <Setter Property="Opacity" Value="0.4" />
+        </Style>
+
+        <!-- ===== DETECT BUTTON (accent) ===== -->
+        <Style Selector="Button.detect-btn">
+            <Setter Property="Background" Value="#22ff6600" />
+            <Setter Property="BorderBrush" Value="#40ff6600" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="999" />
+            <Setter Property="Padding" Value="14,8" />
+            <Setter Property="Foreground" Value="#ff8533" />
+            <Setter Property="FontFamily" Value="Space Grotesk, sans-serif" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="FontWeight" Value="Bold" />
+        </Style>
+        <Style Selector="Button.detect-btn:pointerover">
+            <Setter Property="Background" Value="#40ff6600" />
+            <Setter Property="Foreground" Value="#050507" />
+        </Style>
+        <Style Selector="Button.detect-btn:disabled">
+            <Setter Property="Opacity" Value="0.5" />
+        </Style>
 
         <!-- ===== PRIMARY ADD BUTTON ===== -->
         <Style Selector="Button.primary">
@@ -80,6 +103,37 @@
             <Setter Property="Background" Value="#40ef4444" />
             <Setter Property="Foreground" Value="#ff8888" />
         </Style>
+
+        <!-- ===== SPINNER (ProgressBar) ===== -->
+        <Style Selector="ProgressBar.spinner">
+            <Setter Property="Width" Value="14" />
+            <Setter Property="Height" Value="14" />
+            <Setter Property="IsIndeterminate" Value="True" />
+            <Setter Property="Foreground" Value="#ff6600" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="CornerRadius" Value="999" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+
+        <!-- ===== TOAST ===== -->
+        <Style Selector="Border.toast">
+            <Setter Property="Background" Value="#0c0c10" />
+            <Setter Property="BorderBrush" Value="#40ff6600" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="12" />
+            <Setter Property="Padding" Value="20,12" />
+            <Setter Property="BoxShadow" Value="0 8 32 #00000088" />
+        </Style>
+        <Style Selector="Border.toast.error">
+            <Setter Property="BorderBrush" Value="#40ef4444" />
+        </Style>
+        <Style Selector="TextBlock.toast-text">
+            <Setter Property="FontFamily" Value="Space Grotesk, sans-serif" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Foreground" Value="#e8e8ed" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
     </UserControl.Styles>
 
     <Grid RowDefinitions="Auto,*" Margin="16">
@@ -93,7 +147,7 @@
                 <TextBlock Grid.Column="1" Text="{Binding Printers.Count, StringFormat='{}{0} Drucker'}"
                            FontFamily="Space Grotesk, sans-serif"
                            Foreground="#7a7a8a" FontSize="12" VerticalAlignment="Center" Margin="16,0,0,0" />
-                <Button Grid.Column="2" Classes="primary" Content="+ Drucker hinzufügen"
+                <Button Grid.Column="2" Classes="primary" Content="+ Drucker hinzufuegen"
                         Command="{Binding AddCommand}" />
             </Grid>
         </Border>
@@ -145,9 +199,9 @@
                                                            FontSize="13" Foreground="#e8e8ed"
                                                            VerticalAlignment="Center" />
                                             </Grid>
-                                            <!-- Düse -->
+                                            <!-- Duiese -->
                                             <Grid ColumnDefinitions="80,*">
-                                                <TextBlock Grid.Column="0" Text="Düse" FontFamily="Space Grotesk, sans-serif"
+                                                <TextBlock Grid.Column="0" Text="Duese" FontFamily="Space Grotesk, sans-serif"
                                                            FontSize="11" FontWeight="SemiBold" Foreground="#55555f"
                                                            VerticalAlignment="Center" />
                                                 <TextBlock Grid.Column="1" Text="{Binding Nozzle}" FontFamily="Inter, sans-serif"
@@ -174,9 +228,23 @@
                                         <Button Classes="card-btn" Content="✎ Bearbeiten"
                                                 Command="{Binding $parent[UserControl].DataContext.EditCommand}"
                                                 CommandParameter="{Binding}" />
-                                        <Button Classes="danger" Content="✕ Löschen"
+                                        <Button Classes="danger" Content="✕ Loeschen"
                                                 Command="{Binding $parent[UserControl].DataContext.DeleteCommand}"
                                                 CommandParameter="{Binding}" />
+                                    </StackPanel>
+
+                                    <!-- ===== DATEN ABRUFEN BUTTON (nur wenn IP vorhanden) ===== -->
+                                    <!-- IsVisible via HasIp-Property; IsDetecting deaktiviert Button + zeigt Spinner -->
+                                    <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Center"
+                                                IsVisible="{Binding HasIp}">
+                                        <Button Classes="detect-btn"
+                                                Content="📡 Daten abrufen"
+                                                IsEnabled="{Binding !IsDetecting}"
+                                                Command="{Binding $parent[UserControl].DataContext.AutoDetectCommand}"
+                                                CommandParameter="{Binding}" />
+                                        <ProgressBar Classes="spinner"
+                                                     IsVisible="{Binding IsDetecting}"
+                                                     IsIndeterminate="True" />
                                     </StackPanel>
 
                                 </StackPanel>
@@ -195,9 +263,32 @@
                         <TextBlock Text="Keine Drucker konfiguriert" FontFamily="Space Grotesk, sans-serif"
                                    FontSize="16" FontWeight="SemiBold" Foreground="#e8e8ed"
                                    HorizontalAlignment="Center" />
-                        <TextBlock Text="Klicke auf „+ Drucker hinzufügen“ um deinen ersten 3D-Drucker einzurichten."
+                        <TextBlock Text="Klicke auf „+ Drucker hinzufuegen“ um deinen ersten 3D-Drucker einzurichten."
                                    FontFamily="Inter, sans-serif" FontSize="12" Foreground="#7a7a8a"
                                    TextWrapping="Wrap" TextAlignment="Center" MaxWidth="300" />
+                    </StackPanel>
+                </Border>
+
+                <!-- ===== TOAST (Status-Nachricht) ===== -->
+                <!-- Rechts unten fixiert — zwei Toasts (error rot / success gruen) -->
+                <!-- Fehler-Toast (rot) -->
+                <Border Classes="toast error"
+                        IsVisible="{Binding IsErrorToastVisible}"
+                        HorizontalAlignment="Right" VerticalAlignment="Bottom"
+                        Margin="0,0,16,16" ZIndex="100">
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <TextBlock Text="📡" FontSize="18" VerticalAlignment="Center" />
+                        <TextBlock Classes="toast-text" Text="{Binding ToastMessage}" Foreground="#ef4444" />
+                    </StackPanel>
+                </Border>
+                <!-- Erfolgs-Toast (gruen) -->
+                <Border Classes="toast success"
+                        IsVisible="{Binding IsSuccessToastVisible}"
+                        HorizontalAlignment="Right" VerticalAlignment="Bottom"
+                        Margin="0,0,16,16" ZIndex="100">
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <TextBlock Text="📡" FontSize="18" VerticalAlignment="Center" />
+                        <TextBlock Classes="toast-text" Text="{Binding ToastMessage}" Foreground="#22c55e" />
                     </StackPanel>
                 </Border>
             </Panel>

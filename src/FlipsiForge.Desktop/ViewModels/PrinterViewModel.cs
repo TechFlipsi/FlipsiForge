@@ -83,13 +83,21 @@ public partial class PrinterViewModel : ViewModelBase
     [ObservableProperty]
     private string? _toastMessage;
 
-    /// <summary>CSS-klasse fuer Toast-Farbe: "success" oder "error".</summary>
-    [ObservableProperty]
-    private string _toastKind = "success";
-
     /// <summary>true solange Toast sichtbar ist (fuer Auto-Hide via Timer).</summary>
     [ObservableProperty]
     private bool _isToastVisible;
+
+    /// <summary>true = Erfolgs-Toast (gruen/orange), false = Fehler-Toast (rot).</summary>
+    [ObservableProperty]
+    private bool _isSuccessToast;
+
+    /// <summary>true = Erfolgs-Toast soll sichtbar sein (IsToastVisible &amp;&amp; IsSuccessToast).</summary>
+    [ObservableProperty]
+    private bool _isSuccessToastVisible;
+
+    /// <summary>true = Fehler-Toast soll sichtbar sein (IsToastVisible &amp;&amp; !IsSuccessToast).</summary>
+    [ObservableProperty]
+    private bool _isErrorToastVisible;
 
     public PrinterViewModel()
         : this(ServiceLocator.CreateDb(), ServiceLocator.Require<IPrinterService>())
@@ -224,14 +232,22 @@ public partial class PrinterViewModel : ViewModelBase
     private void ShowToast(string message, string kind)
     {
         ToastMessage = message;
-        ToastKind = kind;
-        IsToastVisible = true;
+        IsSuccessToast = kind == "success";
+        UpdateToastVisibility(show: true);
         // Auto-Hide nach 4 Sekunden
         _ = Task.Run(async () =>
         {
             await Task.Delay(4000);
-            await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() => IsToastVisible = false);
+            await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() => UpdateToastVisibility(show: false));
         });
+    }
+
+    /// <summary>Aktualisiert die Toast-Sichtbarkeit (erfolgs- vs fehler-toast).</summary>
+    private void UpdateToastVisibility(bool show)
+    {
+        IsToastVisible = show;
+        IsSuccessToastVisible = show && IsSuccessToast;
+        IsErrorToastVisible = show && !IsSuccessToast;
     }
 
     // === Hilfs-Methoden: Dialoge ===

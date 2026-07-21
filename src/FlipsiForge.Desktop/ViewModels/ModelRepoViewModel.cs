@@ -1,172 +1,329 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// ModelRepoViewModel: Model-Browser mit Dummy-Daten (die echte API ist noch
-// nicht implementiert). Zeigt sofort beim Öffnen TRENDING-Modelle — ohne
-// dass der User suchen muss. Suchzeile + Kategorie-Badge-Filter vorhanden.
+// ModelRepoViewModel: Echte 3Drop.com-Integration.
+// Laedt Trending-Modelle beim Oeffnen und sucht via 3Drop-API.
+// Bento-Cards mit Thumbnail, Name, Designer, Likes/Downloads, Quelle-Badge.
+// Klick auf Karte oeffnet die Original-URL im System-Browser.
 using System.Collections.ObjectModel;
+using System.Net.Http;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
 namespace FlipsiForge.Desktop.ViewModels;
 
-/// <summary>Kategorie für Model-Filter-Badges.</summary>
-public enum ModelCategory
+/// <summary>Sortier-Option fuer die 3Drop API.</summary>
+public enum ModelSortMode
 {
-    Alle,
-    Beliebt,
-    Neu,
-    Funktional,
-    Deko
+    TrendingDaily,
+    Trending,
+    Latest,
+    Popular
 }
 
-/// <summary>Display-Row für ein 3D-Modell (Thingiverse/Printables-Style).</summary>
+/// <summary>Display-Row fuer ein 3D-Modell aus der 3Drop API.</summary>
 public sealed class ModelCardVm : ObservableObject
 {
     public string Name { get; }
     public string Designer { get; }
-    public string Source { get; }      // Quelle-Badge: "Thingiverse", "Printables", "MakerWorld"
+    public string Source { get; }      // Quelle-Badge: "Printables", "Thingiverse", "MakerWorld", ...
     public int Likes { get; }
     public int Downloads { get; }
-    public ModelCategory Category { get; }
-    public string Emoji { get; }       // Thumbnail-Platzhalter
-    public DateTime PublishedAt { get; }
+    public string ThumbnailUrl { get; }
+    public string DetailUrl { get; }   // Original-URL auf der Quell-Plattform
+    public int Id { get; }              // 3Drop-Modell-ID
+
+    // Emoji-Platzhalter falls kein Thumbnail geladen werden kann
+    public string Emoji => Source switch
+    {
+        "Printables" => "🖨️",
+        "Thingiverse" => "🧩",
+        "MakerWorld" => "🏭",
+        "Cults" => "🎨",
+        "Thangs" => "🔍",
+        "MyMiniFactory" => "🏭",
+        "GrabCAD" => "📐",
+        _ => "📦"
+    };
 
     public string LikesDisplay => Likes >= 1000 ? $"{Likes / 1000.0:F1}k" : Likes.ToString();
     public string DownloadsDisplay => Downloads >= 1000 ? $"{Downloads / 1000.0:F1}k" : Downloads.ToString();
 
     public ModelCardVm(string name, string designer, string source, int likes, int downloads,
-                       ModelCategory cat, string emoji, DateTime publishedAt)
+                       string thumbnailUrl, string detailUrl, int id)
     {
         Name = name; Designer = designer; Source = source;
-        Likes = likes; Downloads = downloads; Category = cat;
-        Emoji = emoji; PublishedAt = publishedAt;
+        Likes = likes; Downloads = downloads;
+        ThumbnailUrl = thumbnailUrl; DetailUrl = detailUrl; Id = id;
     }
 }
 
-/// <summary>Display-Row für ein Kategorie-Filter-Badge.</summary>
+/// <summary>Display-Row fuer ein Kategorie-Filter-Badge.</summary>
 public sealed class ModelCategoryBadgeVm : ObservableObject
 {
     public string Label { get; }
-    public ModelCategory Category { get; }
-    public bool IsActive { get; set; }
-
-    public ModelCategoryBadgeVm(string label, ModelCategory cat, bool active = false)
+    public ModelSortMode SortMode { get; }
+    public bool _isActive;
+    public bool IsActive
     {
-        Label = label; Category = cat; IsActive = active;
+        get => _isActive;
+        set => SetProperty(ref _isActive, value);
+    }
+
+    public ModelCategoryBadgeVm(string label, ModelSortMode mode, bool active = false)
+    {
+        Label = label; SortMode = mode; _isActive = active;
     }
 }
 
-/// <summary>ViewModel für den Model-Repository-Browser.</summary>
+/// <summary>ViewModel fuer den Model-Repository-Browser (3Drop-Integration).</summary>
 public partial class ModelRepoViewModel : ViewModelBase
 {
-    /// <summary>Alle Modelle (ungefiltert, inkl. Trending-Dummy-Daten).</summary>
-    public ObservableCollection<ModelCardVm> AllModels { get; } = new();
+    private static readonly HttpClient _http = new()
+    {
+        Timeout = TimeSpan.FromSeconds(20)
+    };
 
-    /// <summary>Aktuell angezeigte Modelle (nach Filter + Suche).</summary>
+    /// <summary>Aktuell angezeigte Modelle (aus 3Drop API).</summary>
     public ObservableCollection<ModelCardVm> FilteredModels { get; } = new();
 
-    /// <summary>Kategorie-Filter-Badges.</summary>
+    /// <summary>Kategorie-Filter-Badges (Trending Daily / Trending / Latest / Alle).</summary>
     public ObservableCollection<ModelCategoryBadgeVm> CategoryBadges { get; } = new();
 
-    /// <summary>Aktiv ausgewählte Kategorie.</summary>
-    [ObservableProperty]
-    private ModelCategory _selectedCategory = ModelCategory.Alle;
-
-    /// <summary>Suchtext (leer = alle Modelle).</summary>
+    /// <summary>Suchtext (leer = Trending-Modelle).</summary>
     [ObservableProperty]
     private string _searchText = "";
 
+    /// <summary>True waehrend des API-Abrufs (Loading-Spinner).</summary>
+    [ObservableProperty]
+    private bool _isLoading;
+
+    /// <summary>Fehler-Status-Text (leer = OK).</summary>
+    [ObservableProperty]
+    private string _statusText = "";
+
+    /// <summary>Aktuell gewaehlte Sortierung.</summary>
+    [ObservableProperty]
+    private ModelSortMode _selectedSort = ModelSortMode.TrendingDaily;
+
+    /// <summary>
+    /// Wird von der View gesetzt, um eine URL im System-Browser zu oeffnen.
+    /// </summary>
+    public Action<string>? OpenUrlInBrowser { get; set; }
+
     public ModelRepoViewModel()
     {
-        LoadDummyData();
-    }
-
-    /// <summary>Lädt Dummy-Modelle (die echte API ist noch nicht implementiert).</summary>
-    private void LoadDummyData()
-    {
-        var now = DateTime.UtcNow;
-        var models = new List<ModelCardVm>
-        {
-            new("Benchy", "joris", "Printables", 8542, 154000, ModelCategory.Beliebt, "🚤", now.AddDays(-180)),
-            new("Calibration Cube", "aching", "Thingiverse", 5210, 98000, ModelCategory.Funktional, "🧊", now.AddDays(-200)),
-            new("Phone Stand", "pauljacobson", "Thingiverse", 3180, 56000, ModelCategory.Funktional, "📱", now.AddDays(-30)),
-            new("Articulated Dragon", "zhujb", "MakerWorld", 18200, 320000, ModelCategory.Beliebt, "🐉", now.AddDays(-90)),
-            new("Vase Spirograph", "roman", "Printables", 2440, 21000, ModelCategory.Deko, "🏺", now.AddDays(-10)),
-            new("Desk Cable Organizer", "dutchmogul", "Thingiverse", 1890, 15000, ModelCategory.Funktional, "🔌", now.AddDays(-15)),
-            new("Halloween Pumpkin", "makeal", "Thingiverse", 980, 8200, ModelCategory.Deko, "🎃", now.AddDays(-5)),
-            new("Keychain Tag Generator", "daniel", "Printables", 1500, 32000, ModelCategory.Neu, "🏷️", now.AddDays(-2)),
-            new("Planter Succulent", "sphynx", "MakerWorld", 3210, 18000, ModelCategory.Deko, "🌱", now.AddDays(-3)),
-            new("Tool Holder Wall", "sgbryan", "Thingiverse", 2750, 12500, ModelCategory.Funktional, "🔧", now.AddDays(-8)),
-            new("Flexi Rex", "DrLex", "Thingiverse", 12000, 210000, ModelCategory.Beliebt, "🦖", now.AddDays(-400)),
-            new("Lithophane Photo Frame", "jason", "Printables", 4200, 45000, ModelCategory.Funktional, "🖼️", now.AddDays(-60)),
-            new("Christmas Tree LED", "marco", "MakerWorld", 680, 4200, ModelCategory.Deko, "🎄", now.AddDays(-1)),
-            new("SD Card Holder", "wstein", "Thingiverse", 1340, 9800, ModelCategory.Funktional, "💾", now.AddDays(-12)),
-            new("Mini Castle Set", "elizabeth", "Printables", 2200, 16000, ModelCategory.Deko, "🏰", now.AddDays(-20))
-        };
-
-        AllModels.Clear();
-        foreach (var m in models)
-            AllModels.Add(m);
-
         // Kategorie-Badges initialisieren
         CategoryBadges.Clear();
-        CategoryBadges.Add(new ModelCategoryBadgeVm("Alle", ModelCategory.Alle, true));
-        CategoryBadges.Add(new ModelCategoryBadgeVm("Beliebt", ModelCategory.Beliebt));
-        CategoryBadges.Add(new ModelCategoryBadgeVm("Neu", ModelCategory.Neu));
-        CategoryBadges.Add(new ModelCategoryBadgeVm("Funktional", ModelCategory.Funktional));
-        CategoryBadges.Add(new ModelCategoryBadgeVm("Deko", ModelCategory.Deko));
+        CategoryBadges.Add(new ModelCategoryBadgeVm("Trending Daily", ModelSortMode.TrendingDaily, true));
+        CategoryBadges.Add(new ModelCategoryBadgeVm("Trending", ModelSortMode.Trending));
+        CategoryBadges.Add(new ModelCategoryBadgeVm("Latest", ModelSortMode.Latest));
+        CategoryBadges.Add(new ModelCategoryBadgeVm("Popular", ModelSortMode.Popular));
 
-        ApplyFilter();
+        // Trending Daily beim Oeffnen laden (fire-and-forget)
+        _ = Task.Run(async () =>
+        {
+            try { await LoadTrendingAsync(); }
+            catch { /* Best-effort */ }
+        });
     }
 
-    /// <summary>Setzt die aktive Kategorie (von Badge-Klick) und filtert neu.</summary>
+    /// <summary>Setzt die aktive Sortierung (von Badge-Klick) und laedt neu.</summary>
     [RelayCommand]
-    public void ApplyCategory(ModelCategory category)
+    public async Task ApplyCategoryAsync(ModelSortMode mode)
     {
-        SelectedCategory = category;
-        // Badges aktualisieren (IsActive togglen)
+        SelectedSort = mode;
         foreach (var b in CategoryBadges)
-            b.IsActive = b.Category == category;
-        ApplyFilter();
+            b.IsActive = b.SortMode == mode;
+
+        if (string.IsNullOrWhiteSpace(SearchText))
+            await LoadTrendingAsync();
+        else
+            await SearchAsync(SearchText);
     }
 
-    /// <summary>Wendet den Such- + Kategorie-Filter an und aktualisiert FilteredModels.</summary>
-    partial void OnSearchTextChanged(string value) => ApplyFilter();
-    partial void OnSelectedCategoryChanged(ModelCategory value) => ApplyFilter();
-
-    /// <summary>Filtert AllModels nach Kategorie + Suchtext → FilteredModels.</summary>
-    public void ApplyFilter()
+    /// <summary>Loest eine Suche aus (von Search-Button oder Enter).</summary>
+    [RelayCommand]
+    public async Task SearchAsync(string query)
     {
-        FilteredModels.Clear();
-
-        // "Neu" = in den letzten 7 Tagen veröffentlicht
-        var cutoff = DateTime.UtcNow.AddDays(-7);
-
-        var filtered = AllModels.AsEnumerable();
-
-        if (SelectedCategory != ModelCategory.Alle)
+        var q = (query ?? "").Trim();
+        if (string.IsNullOrEmpty(q))
         {
-            filtered = SelectedCategory switch
+            await LoadTrendingAsync();
+            return;
+        }
+
+        IsLoading = true;
+        StatusText = "Suche laeuft...";
+        try
+        {
+            var url = $"https://three-drop.com/api/models?q={Uri.EscapeDataString(q)}&sort={SortToApi(SelectedSort)}";
+            var results = await FetchFrom3DropAsync(url);
+            await Dispatcher.UIThread.InvokeAsync(() =>
             {
-                ModelCategory.Neu => filtered.Where(m => m.PublishedAt >= cutoff),
-                _ => filtered.Where(m => m.Category == SelectedCategory)
-            };
+                FilteredModels.Clear();
+                foreach (var m in results)
+                    FilteredModels.Add(m);
+                StatusText = results.Count == 0 ? "Keine Modelle gefunden" : $"✓ {results.Count} Modelle gefunden";
+            });
         }
-
-        // Suche (case-insensitive Contains in Name oder Designer)
-        var q = (SearchText ?? "").Trim();
-        if (!string.IsNullOrEmpty(q))
+        catch (Exception ex)
         {
-            filtered = filtered.Where(m =>
-                m.Name.Contains(q, StringComparison.OrdinalIgnoreCase) ||
-                m.Designer.Contains(q, StringComparison.OrdinalIgnoreCase));
+            await Dispatcher.UIThread.InvokeAsync(() =>
+            {
+                StatusText = $"✗ Suche fehlgeschlagen: {ex.Message}";
+            });
         }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
 
-        // "Beliebt" zuerst sortieren wenn "Alle" — sonst nach Likes
-        var sorted = SelectedCategory == ModelCategory.Alle
-            ? filtered.OrderByDescending(m => m.Likes).ToList()
-            : filtered.OrderByDescending(m => m.Likes).ToList();
+    /// <summary>Laedt Trending-Modelle (beim Oeffnen oder leerer Suche).</summary>
+    public async Task LoadTrendingAsync()
+    {
+        IsLoading = true;
+        StatusText = "Lade Trending-Modelle...";
+        try
+        {
+            var url = $"https://three-drop.com/api/models?sort={SortToApi(SelectedSort)}&w=b";
+            var results = await FetchFrom3DropAsync(url);
+            await Dispatcher.UIThread.InvokeAsync(() =>
+            {
+                FilteredModels.Clear();
+                foreach (var m in results)
+                    FilteredModels.Add(m);
+                StatusText = results.Count == 0 ? "Keine Modelle gefunden" : $"✓ {results.Count} Trending-Modelle";
+            });
+        }
+        catch (Exception ex)
+        {
+            await Dispatcher.UIThread.InvokeAsync(() =>
+            {
+                StatusText = $"✗ Abruf fehlgeschlagen: {ex.Message}";
+            });
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
 
-        foreach (var m in sorted)
-            FilteredModels.Add(m);
+    /// <summary>Oeffnet die Detail-URL eines Modells im System-Browser.</summary>
+    [RelayCommand]
+    public void OpenInBrowser(ModelCardVm? model)
+    {
+        if (model == null) return;
+        try
+        {
+            OpenUrlInBrowser?.Invoke(model.DetailUrl);
+        }
+        catch { /* Best-effort */ }
+    }
+
+    /// <summary>Ruft die 3Drop API auf und parst die JSON-Antwort in ModelCardVm-Liste.</summary>
+    private static async Task<List<ModelCardVm>> FetchFrom3DropAsync(string url)
+    {
+        using var req = new HttpRequestMessage(HttpMethod.Get, url);
+        req.Headers.UserAgent.ParseAdd("FlipsiForge/0.5.0 (https://techflipsi.at)");
+        using var resp = await _http.SendAsync(req);
+        resp.EnsureSuccessStatusCode();
+
+        var json = await resp.Content.ReadAsStringAsync();
+        var apiResp = JsonSerializer.Deserialize<ThreeDropApiResponse>(json,
+            new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+        var list = new List<ModelCardVm>();
+        if (apiResp?.Results == null) return list;
+
+        foreach (var r in apiResp.Results)
+        {
+            if (r == null) continue;
+            var source = CapitalizeFirst(r.WebsiteType ?? "Unknown");
+            var designer = r.Author?.Name ?? "Unbekannt";
+            var thumb = !string.IsNullOrEmpty(r.ThumbnailUrl) ? r.ThumbnailUrl
+                        : !string.IsNullOrEmpty(r.ImageUrl) ? r.ImageUrl : "";
+            list.Add(new ModelCardVm(
+                name: r.Name ?? "(ohne Name)",
+                designer: designer,
+                source: source,
+                likes: r.LikeCount,
+                downloads: r.DownloadCount,
+                thumbnailUrl: thumb,
+                detailUrl: r.Url ?? "",
+                id: r.Id));
+        }
+        return list;
+    }
+
+    /// <summary>Konvertiert ModelSortMode in den 3Drop API-Sort-String.</summary>
+    private static string SortToApi(ModelSortMode mode) => mode switch
+    {
+        ModelSortMode.TrendingDaily => "trendingDaily",
+        ModelSortMode.Trending => "trending",
+        ModelSortMode.Latest => "latest",
+        ModelSortMode.Popular => "popular",
+        _ => "trendingDaily"
+    };
+
+    /// <summary>Ersten Buchstaben gross, Rest klein (fuer Source-Badge).</summary>
+    private static string CapitalizeFirst(string s)
+    {
+        if (string.IsNullOrEmpty(s)) return s;
+        return char.ToUpperInvariant(s[0]) + s.Substring(1).ToLowerInvariant();
+    }
+
+    // === 3Drop API JSON DTOs ===
+
+    private sealed class ThreeDropApiResponse
+    {
+        [JsonPropertyName("success")]
+        public bool Success { get; set; }
+        [JsonPropertyName("results")]
+        public List<ThreeDropModel>? Results { get; set; }
+        [JsonPropertyName("totalResults")]
+        public int TotalResults { get; set; }
+    }
+
+    private sealed class ThreeDropModel
+    {
+        [JsonPropertyName("id")]
+        public int Id { get; set; }
+        [JsonPropertyName("name")]
+        public string? Name { get; set; }
+        [JsonPropertyName("websiteType")]
+        public string? WebsiteType { get; set; }
+        [JsonPropertyName("url")]
+        public string? Url { get; set; }
+        [JsonPropertyName("imageUrl")]
+        public string? ImageUrl { get; set; }
+        [JsonPropertyName("thumbnailUrl")]
+        public string? ThumbnailUrl { get; set; }
+        [JsonPropertyName("likeCount")]
+        public int LikeCount { get; set; }
+        [JsonPropertyName("downloadCount")]
+        public int DownloadCount { get; set; }
+        [JsonPropertyName("rate")]
+        public double Rate { get; set; }
+        [JsonPropertyName("author")]
+        public ThreeDropAuthor? Author { get; set; }
+        [JsonPropertyName("tags")]
+        public List<string>? Tags { get; set; }
+    }
+
+    private sealed class ThreeDropAuthor
+    {
+        [JsonPropertyName("id")]
+        public string? Id { get; set; }
+        [JsonPropertyName("name")]
+        public string? Name { get; set; }
+        [JsonPropertyName("url")]
+        public string? Url { get; set; }
+        [JsonPropertyName("imageUrl")]
+        public string? ImageUrl { get; set; }
+        [JsonPropertyName("websiteType")]
+        public string? WebsiteType { get; set; }
     }
 }
