@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// KI-Chat-Engine-Abstraktion mit Modell-Download + Auto-Auswahl.
+// KI-Chat-Engine mit echtem Gemma 4 ONNX-Modell-Download von HuggingFace.
 using FlipsiForge.Core.Models;
 
 namespace FlipsiForge.Desktop.Services;
@@ -21,31 +21,19 @@ public enum ModelDownloadState
     Failed
 }
 
-/// <summary>Abstraktion für die KI-Chat-Engine mit Modell-Management.</summary>
+/// <summary>Abstraktion fuer die KI-Chat-Engine mit Modell-Management.</summary>
 public interface IAIChatEngine
 {
-    /// <summary>Liefert true, wenn ein Modell geladen und einsatzbereit ist.</summary>
     bool IsModelLoaded { get; }
-
-    /// <summary>Aktuell geladenes Modell (null = keines).</summary>
     AiModelChoice? LoadedModel { get; }
-
-    /// <summary>Download-Status des aktuellen Modells.</summary>
     ModelDownloadState DownloadState { get; }
-
-    /// <summary>Download-Fortschritt in Prozent (0-100), -1 = unbekannt.</summary>
     double DownloadProgress { get; }
-
-    /// <summary>Lädt ein KI-Modell: downloadet falls nötig, löscht altes Modell.</summary>
     Task LoadModelAsync(AiModelChoice modelChoice, CancellationToken ct = default);
-
-    /// <summary>Streamt eine Antwort als IAsyncEnumerable.</summary>
     IAsyncEnumerable<AiChatChunk> StreamAsync(string userPrompt, CancellationToken ct = default);
 }
 
 /// <summary>
-/// Fallback-Engine die verwendet wird, wenn kein ONNX-Modell verfügbar ist.
-/// Antwortet immer mit dem Standard-Hinweistext.
+/// Fallback-Engine wenn kein Modell verfuegbar ist.
 /// </summary>
 public sealed class StubAIChatEngine : IAIChatEngine
 {
@@ -55,7 +43,7 @@ public sealed class StubAIChatEngine : IAIChatEngine
     public double DownloadProgress => -1;
 
     public Task LoadModelAsync(AiModelChoice modelChoice, CancellationToken ct = default)
-        => Task.CompletedTask;  // Stub: kein Modell ladbar
+        => Task.CompletedTask;
 
     public async IAsyncEnumerable<AiChatChunk> StreamAsync(string userPrompt,
         [System.Runtime.CompilerServices.EnumeratorCancellation] System.Threading.CancellationToken ct = default)
@@ -73,62 +61,88 @@ public sealed class StubAIChatEngine : IAIChatEngine
 }
 
 /// <summary>
-/// Echte KI-Engine die Gemma 4 ONNX-Modelle von HuggingFace downloadet und
-/// über OnnxRuntimeGenAI ausführt. Auto-Auswahl basierend auf RAM.
+/// Echte KI-Engine die Gemma 4 ONNX-Modelle von HuggingFace downloaedet.
+/// Verwendet die q4f16 (4-bit quantized) Variante fuer minimalen RAM-Bedarf.
+/// 
+/// Modell-Dateien pro Variante (alle aus onnx/ Unterordner):
+///   E2B: onnx-community/gemma-4-E2B-it-ONNX
+///   E4B: onnx-community/gemma-4-E4B-it-ONNX
+///   E2BQAT: onnx-community/gemma-4-E4B-it-ONNX (q4f16 ist die kleinste Variante)
+/// 
+/// Download-URLs:
+///   https://huggingface.co/onnx-community/{repo}/resolve/main/onnx/{file}
 /// </summary>
 public sealed class OnnxAIChatEngine : IAIChatEngine
 {
-    private readonly HttpClient _http = new();
-
-    // Modell-URLs (HuggingFace GGUF → ONNX Konvertierung)
-    // E2B = ~2.6GB, E4B = ~3.7GB, E2BQAT = ~1.3GB
-    private static readonly Dictionary<AiModelChoice, (string Url, string Dir, long SizeBytes)> ModelInfo = new()
+    private readonly HttpClient _http = new(new HttpClientHandler
     {
-        { AiModelChoice.E2B,  ("https://huggingface.co/google/gemma-3n-onnx/resolve/main/E2B/model.onnx",        "E2B",  2_600_000_000) },
-        { AiModelChoice.E4B,  ("https://huggingface.co/google/gemma-3n-onnx/resolve/main/E4B/model.onnx",        "E4B",  3_700_000_000) },
-        { AiModelChoice.E2BQat, ("https://huggingface.co/google/gemma-3n-onnx/resolve/main/E2B_QAT/model.onnx", "E2B_QAT", 1_300_000_000) },
+        // HuggingFace braucht ggf. keinen Auth-Token fuer oeffentliche Modelle
+        // Aber grosse Downloads brauchen timeout = infinite
+    }) { Timeout = TimeSpan.FromHours(2) };
+
+    /// <summary>Dateien die pro Modell heruntergeladen werden muessen.</summary>
+    private record ModelFile(string FileName, long ApproxSizeBytes);
+
+    /// <summary>Modell-Definitionen mit echten HuggingFace URLs.</summary>
+    private static readonly Dictionary<AiModelChoice, (string Repo, string Dir, ModelFile[] Files)> ModelInfo = new()
+    {
+        {
+            AiModelChoice.E2B, ("onnx-community/gemma-4-E2B-it-ONNX", "E2B", new[]
+            {
+                // q4f16 = 4-bit quantized + fp16 = kompakteste Variante
+                new ModelFile("decoder_model_merged_q4f16.onnx", 673_000),
+                new ModelFile("decoder_model_merged_q4f16.onnx_data", 1_520_000_000),
+                new ModelFile("embed_tokens_q4f16.onnx", 5_600),
+                new ModelFile("embed_tokens_q4f16.onnx_data", 1_590_000_000),
+            })
+        },
+        {
+            AiModelChoice.E4B, ("onnx-community/gemma-4-E4B-it-ONNX", "E4B", new[]
+            {
+                // E4B ist groesser — q4f16 fuer RAM-Effizienz
+                new ModelFile("decoder_model_merged_q4f16.onnx", 800_000),
+                new ModelFile("decoder_model_merged_q4f16.onnx_data", 2_500_000_000),
+                new ModelFile("embed_tokens_q4f16.onnx", 6_000),
+                new ModelFile("embed_tokens_q4f16.onnx_data", 2_600_000_000),
+            })
+        },
+        {
+            AiModelChoice.E2BQat, ("onnx-community/gemma-4-E2B-it-ONNX", "E2B_QAT", new[]
+            {
+                // QAT Variante = gleiche Dateien aber wir markieren sie als QAT
+                // Eigentlich gibt es kein separates QAT Repo — wir nutzen E2B q4f16 als kleine Variante
+                new ModelFile("decoder_model_merged_q4f16.onnx", 673_000),
+                new ModelFile("decoder_model_merged_q4f16.onnx_data", 1_520_000_000),
+                new ModelFile("embed_tokens_q4f16.onnx", 5_600),
+                new ModelFile("embed_tokens_q4f16.onnx_data", 1_590_000_000),
+            })
+        },
     };
 
     private AiModelChoice? _loadedModel;
     private ModelDownloadState _downloadState = ModelDownloadState.Idle;
     private double _downloadProgress = -1;
+    private string _downloadError = "";
 
     public bool IsModelLoaded => _loadedModel is not null;
     public AiModelChoice? LoadedModel => _loadedModel;
     public ModelDownloadState DownloadState => _downloadState;
     public double DownloadProgress => _downloadProgress;
+    public string DownloadError => _downloadError;
 
-    /// <summary>Modell-Verzeichnis im LocalApplicationData/FlipsiForge/ai-models/.</summary>
+    /// <summary>Modell-Verzeichnis.</summary>
     private static string ModelBaseDir => System.IO.Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
         "FlipsiForge", "ai-models");
 
-    /// <summary>Wählt automatisch das passende Modell basierend auf verfügbarem RAM.</summary>
+    /// <summary>Wahlt automatisch das passende Modell basierend auf verfuegbarem RAM.</summary>
     public static AiModelChoice AutoSelectByRam()
     {
         try
         {
-            // Verfügbaren RAM ermitteln (plattformunabhängig)
-            long totalRamBytes;
-            if (System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(
-                System.Runtime.InteropServices.OSPlatform.Windows))
-            {
-                // Windows: GlobalMemoryStatusEx
-                var memStatus = new MEMORYSTATUSEX();
-                memStatus.dwLength = (uint)System.Runtime.InteropServices.Marshal.SizeOf<MEMORYSTATUSEX>();
-                GlobalMemoryStatusEx(ref memStatus);
-                totalRamBytes = (long)memStatus.ullTotalPhys;
-            }
-            else
-            {
-                // Linux: /proc/meminfo
-                var memInfo = System.IO.File.ReadAllLines("/proc/meminfo")
-                    .FirstOrDefault(l => l.StartsWith("MemTotal:"));
-                var kb = long.Parse(memInfo?.Split(':')[1].Trim().Split(' ')[0] ?? "0");
-                totalRamBytes = kb * 1024;
-            }
-
-            // Entscheidung: ≥8GB → E4B, 4-8GB → E2B, <4GB → E2BQAT
+            long totalRamBytes = GetTotalRamBytes();
+            // E2B q4f16 ≈ 3.1GB, E4B q4f16 ≈ 5.1GB
+            // ≥8GB → E4B, 4-8GB → E2B, <4GB → E2BQat (gleiche Dateien, andere Label)
             if (totalRamBytes >= 8L * 1024 * 1024 * 1024)
                 return AiModelChoice.E4B;
             if (totalRamBytes >= 4L * 1024 * 1024 * 1024)
@@ -137,23 +151,46 @@ public sealed class OnnxAIChatEngine : IAIChatEngine
         }
         catch
         {
-            return AiModelChoice.E2B; // Safe default
+            return AiModelChoice.E2B;
+        }
+    }
+
+    /// <summary>Ermittelt den gesamten RAM (Windows + Linux).</summary>
+    private static long GetTotalRamBytes()
+    {
+        if (System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(
+            System.Runtime.InteropServices.OSPlatform.Windows))
+        {
+            var memStatus = new MEMORYSTATUSEX();
+            memStatus.dwLength = (uint)System.Runtime.InteropServices.Marshal.SizeOf<MEMORYSTATUSEX>();
+            GlobalMemoryStatusEx(ref memStatus);
+            return (long)memStatus.ullTotalPhys;
+        }
+        else
+        {
+            var memInfo = System.IO.File.ReadAllLines("/proc/meminfo")
+                .FirstOrDefault(l => l.StartsWith("MemTotal:"));
+            var kb = long.Parse(memInfo?.Split(':')[1].Trim().Split(' ')[0] ?? "0");
+            return kb * 1024;
         }
     }
 
     public async Task LoadModelAsync(AiModelChoice modelChoice, CancellationToken ct = default)
     {
-        // "Auto" → RAM-basiert auswählen
+        // "Auto" → RAM-basiert auswaehlen
         if (modelChoice == AiModelChoice.Auto)
             modelChoice = AutoSelectByRam();
 
         if (!ModelInfo.TryGetValue(modelChoice, out var info))
+        {
+            _downloadError = "Unbekanntes Modell";
+            _downloadState = ModelDownloadState.Failed;
             return;
+        }
 
         var modelDir = System.IO.Path.Combine(ModelBaseDir, info.Dir);
-        var modelFile = System.IO.Path.Combine(modelDir, "model.onnx");
 
-        // Alte Modelle löschen (ausser das aktuell gewählte)
+        // Alte Modelle loeschen (ausser das aktuell gewaehlte)
         try
         {
             if (System.IO.Directory.Exists(ModelBaseDir))
@@ -167,8 +204,19 @@ public sealed class OnnxAIChatEngine : IAIChatEngine
         }
         catch { }
 
-        // Modell bereits vorhanden?
-        if (System.IO.File.Exists(modelFile) && new System.IO.FileInfo(modelFile).Length > 100_000_000)
+        // Pruefen ob alle Dateien vorhanden sind
+        bool allFilesExist = true;
+        foreach (var file in info.Files)
+        {
+            var path = System.IO.Path.Combine(modelDir, file.FileName);
+            if (!System.IO.File.Exists(path) || new System.IO.FileInfo(path).Length < 1000)
+            {
+                allFilesExist = false;
+                break;
+            }
+        }
+
+        if (allFilesExist)
         {
             _loadedModel = modelChoice;
             _downloadState = ModelDownloadState.Ready;
@@ -178,38 +226,106 @@ public sealed class OnnxAIChatEngine : IAIChatEngine
         // Download starten
         _downloadState = ModelDownloadState.Downloading;
         _downloadProgress = 0;
+        _downloadError = "";
 
         try
         {
             System.IO.Directory.CreateDirectory(modelDir);
-            using var response = await _http.GetAsync(info.Url, ct);
-            response.EnsureSuccessStatusCode();
 
-            var totalBytes = response.Content.Headers.ContentLength ?? info.SizeBytes;
-            long downloaded = 0;
+            long totalBytes = info.Files.Sum(f => f.ApproxSizeBytes);
+            long downloadedBytes = 0;
 
-            await using var contentStream = await response.Content.ReadAsStreamAsync(ct);
-            await using var fileStream = System.IO.File.Create(modelFile);
-
-            var buffer = new byte[81920];
-            int read;
-            while ((read = await contentStream.ReadAsync(buffer, ct)) > 0)
+            foreach (var file in info.Files)
             {
-                await fileStream.WriteAsync(buffer.AsMemory(0, read), ct);
-                downloaded += read;
-                _downloadProgress = totalBytes > 0 ? (double)downloaded / totalBytes * 100 : -1;
+                var url = $"https://huggingface.co/{info.Repo}/resolve/main/onnx/{file.FileName}";
+                var destPath = System.IO.Path.Combine(modelDir, file.FileName);
+
+                // Datei bereits vorhanden + gross genug → skip
+                if (System.IO.File.Exists(destPath) &&
+                    new System.IO.FileInfo(destPath).Length >= file.ApproxSizeBytes * 0.9)
+                {
+                    downloadedBytes += file.ApproxSizeBytes;
+                    _downloadProgress = (double)downloadedBytes / totalBytes * 100;
+                    continue;
+                }
+
+                using var response = await _http.GetAsync(url, ct);
+                response.EnsureSuccessStatusCode();
+
+                var fileTotalBytes = response.Content.Headers.ContentLength ?? file.ApproxSizeBytes;
+                long fileDownloaded = 0;
+
+                await using var contentStream = await response.Content.ReadAsStreamAsync(ct);
+                await using var fileStream = System.IO.File.Create(destPath);
+
+                var buffer = new byte[81920];
+                int read;
+                while ((read = await contentStream.ReadAsync(buffer, ct)) > 0)
+                {
+                    await fileStream.WriteAsync(buffer.AsMemory(0, read), ct);
+                    fileDownloaded += read;
+                    downloadedBytes += read;
+                    _downloadProgress = totalBytes > 0
+                        ? (double)downloadedBytes / totalBytes * 100
+                        : -1;
+                }
             }
 
             _downloadState = ModelDownloadState.Installing;
             _downloadProgress = 100;
+
+            // Zusaetzliche Dateien die keine ONNX-Modelle sind (tokenizer etc.)
+            await DownloadSupportFiles(info.Repo, modelDir, ct);
+
             _loadedModel = modelChoice;
             _downloadState = ModelDownloadState.Ready;
         }
-        catch
+        catch (OperationCanceledException)
         {
             _downloadState = ModelDownloadState.Failed;
-            // Partial file cleanup
-            try { if (System.IO.File.Exists(modelFile)) System.IO.File.Delete(modelFile); } catch { }
+            _downloadError = "Download abgebrochen";
+        }
+        catch (Exception ex)
+        {
+            _downloadState = ModelDownloadState.Failed;
+            _downloadError = ex.Message;
+            // Partial files cleanup
+            try
+            {
+                if (System.IO.Directory.Exists(modelDir))
+                    System.IO.Directory.Delete(modelDir, recursive: true);
+            }
+            catch { }
+        }
+    }
+
+    /// <summary>Laedt zusaetzliche Dateien (tokenizer, config) herunter.</summary>
+    private async Task DownloadSupportFiles(string repo, string modelDir, CancellationToken ct)
+    {
+        var supportFiles = new[]
+        {
+            "config.json",
+            "generation_config.json",
+            "tokenizer.json",
+            "tokenizer_config.json",
+            "chat_template.jinja",
+        };
+
+        foreach (var file in supportFiles)
+        {
+            var url = $"https://huggingface.co/{repo}/resolve/main/{file}";
+            var destPath = System.IO.Path.Combine(modelDir, file);
+            if (System.IO.File.Exists(destPath)) continue;
+
+            try
+            {
+                using var response = await _http.GetAsync(url, ct);
+                if (!response.IsSuccessStatusCode) continue;
+                await using var stream = await response.Content.ReadAsStreamAsync(ct);
+                await using var fileStream = System.IO.File.Create(destPath);
+                await stream.CopyToAsync(fileStream, ct);
+            }
+            catch { /* Best-effort */ }
         }
     }
 
@@ -218,15 +334,19 @@ public sealed class OnnxAIChatEngine : IAIChatEngine
     {
         if (!IsModelLoaded)
         {
-            yield return new AiChatChunk { Text = "KI-Modell nicht geladen. Bitte in Einstellungen konfigurieren.", IsFinal = true };
+            yield return new AiChatChunk
+            {
+                Text = "KI-Modell nicht geladen. Bitte in den Einstellungen konfigurieren oder auf 'Modell herunterladen' klicken.",
+                IsFinal = true
+            };
             yield break;
         }
 
-        // Echte ONNX-Inferenz würde hier folgen (OnnxRuntimeGenAI)
-        // Für jetzt: Stub-Stream der andeutet dass das Modell läuft
-        var response = $"ForgeBot hier! Modell {LoadedModel} ist geladen. " +
+        // Echte ONNX-Inferenz wuerde hier folgen (OnnxRuntimeGenAI)
+        // Fuer jetzt: Stub-Stream der andeutet dass das Modell laeuft
+        var response = $"ForgeBot hier! Modell {LoadedModel} ist geladen und bereit. " +
                        $"Deine Frage: \"{userPrompt}\". " +
-                       "Echte KI-Antwort folgt mit der nächsten Version.";
+                       $"Echte KI-Inferenz folgt mit OnnxRuntimeGenAI Integration.";
         var words = response.Split(' ');
         foreach (var w in words)
         {
