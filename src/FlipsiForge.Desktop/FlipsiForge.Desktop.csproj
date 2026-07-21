@@ -5,7 +5,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <ApplicationManifest>app.manifest</ApplicationManifest>
-    <Version>0.5.0</Version>
+    <Version>0.5.1</Version>
     <Company>TechFlipsi</Company>
     <Authors>Fabian Kirchweger</Authors>
     <Product>FlipsiForge</Product>

@@ -37,7 +37,7 @@ jobs:
             -o dist/linux-desktop
 
       - name: Create Desktop tar.gz
-        run: tar -czf dist/FlipsiForge-0.5.0-linux-x64.tar.gz -C dist/linux-desktop .
+        run: tar -czf dist/FlipsiForge-0.5.1-linux-x64.tar.gz -C dist/linux-desktop .
 
       # === Server Full (linux-x64) ===
       - name: Publish Server Full (linux-x64, self-contained)
@@ -49,7 +49,7 @@ jobs:
             -o dist/linux-server-full
 
       - name: Create Server Full tar.gz
-        run: tar -czf dist/FlipsiForge-Server-0.5.0-linux-x64-full.tar.gz -C dist/linux-server-full .
+        run: tar -czf dist/FlipsiForge-Server-0.5.1-linux-x64-full.tar.gz -C dist/linux-server-full .
 
       # === Server Lite (linux-x64) — ASPNETCORE_ENVIRONMENT=Lite ===
       - name: Publish Server Lite (linux-x64, self-contained)
@@ -62,7 +62,7 @@ jobs:
             -o dist/linux-server-lite
 
       - name: Create Server Lite tar.gz
-        run: tar -czf dist/FlipsiForge-Server-0.5.0-linux-x64-lite.tar.gz -C dist/linux-server-lite .
+        run: tar -czf dist/FlipsiForge-Server-0.5.1-linux-x64-lite.tar.gz -C dist/linux-server-lite .
 
       # === MockMoonraker ===
       - name: Build MockMoonraker
@@ -73,36 +73,36 @@ jobs:
             -o dist/linux-mockmoonraker
 
       - name: Create MockMoonraker tar.gz
-        run: tar -czf dist/FlipsiForge-MockMoonraker-0.5.0-linux-x64.tar.gz -C dist/linux-mockmoonraker .
+        run: tar -czf dist/FlipsiForge-MockMoonraker-0.5.1-linux-x64.tar.gz -C dist/linux-mockmoonraker .
 
       # === Upload Artifacts (always, for CI debugging) ===
       - name: Upload Desktop Artifact
         uses: actions/upload-artifact@v4
         with:
           name: FlipsiForge-Desktop-linux-x64
-          path: dist/FlipsiForge-0.5.0-linux-x64.tar.gz
+          path: dist/FlipsiForge-0.5.1-linux-x64.tar.gz
 
       - name: Upload Server Full Artifact
         uses: actions/upload-artifact@v4
         with:
           name: FlipsiForge-Server-linux-x64-full
-          path: dist/FlipsiForge-Server-0.5.0-linux-x64-full.tar.gz
+          path: dist/FlipsiForge-Server-0.5.1-linux-x64-full.tar.gz
 
       - name: Upload Server Lite Artifact
         uses: actions/upload-artifact@v4
         with:
           name: FlipsiForge-Server-linux-x64-lite
-          path: dist/FlipsiForge-Server-0.5.0-linux-x64-lite.tar.gz
+          path: dist/FlipsiForge-Server-0.5.1-linux-x64-lite.tar.gz
 
       # === Upload to GitHub Release (nur bei release trigger oder workflow_dispatch) ===
       - name: Upload Linux builds to GitHub Release
         if: github.event_name == 'release' || github.event_name == 'workflow_dispatch'
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ github.event.release.tag_name || 'v0.5.0' }}
+          tag_name: ${{ github.event.release.tag_name || 'v0.5.1' }}
           files: |
-            dist/FlipsiForge-0.5.0-linux-x64.tar.gz
-            dist/FlipsiForge-Server-0.5.0-linux-x64-full.tar.gz
-            dist/FlipsiForge-Server-0.5.0-linux-x64-lite.tar.gz
-            dist/FlipsiForge-MockMoonraker-0.5.0-linux-x64.tar.gz
+            dist/FlipsiForge-0.5.1-linux-x64.tar.gz
+            dist/FlipsiForge-Server-0.5.1-linux-x64-full.tar.gz
+            dist/FlipsiForge-Server-0.5.1-linux-x64-lite.tar.gz
+            dist/FlipsiForge-MockMoonraker-0.5.1-linux-x64.tar.gz
           token: ${{ secrets.GITHUB_TOKEN }}

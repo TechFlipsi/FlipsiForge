@@ -21,7 +21,7 @@
                 <TextBlock Grid.Column="0" Text="📁 Datei-Manager" FontFamily="Space Grotesk, sans-serif"
                            Foreground="#ff6600" FontWeight="Bold"
                            FontSize="18" VerticalAlignment="Center" />
-                <TextBlock Grid.Column="1" Text="{Binding Files.Count, StringFormat='{}{0} Dateien'}"
+                <TextBlock Grid.Column="1" Text="{Binding FilteredFiles.Count, StringFormat='{}{0} Dateien'}"
                            FontFamily="Space Grotesk, sans-serif"
                            Foreground="#7a7a8a" FontSize="12" VerticalAlignment="Center" Margin="16,0,0,0" />
             </Grid>
@@ -62,7 +62,7 @@
         <!-- Datei-Liste: LIST-Modus (bento-sm Container) -->
         <Border Grid.Row="2" Classes="bento-sm" Padding="0" IsVisible="{Binding !IsGrid}">
             <ScrollViewer>
-                <ItemsControl ItemsSource="{Binding Files}" Background="Transparent">
+                <ItemsControl ItemsSource="{Binding FilteredFiles}" Background="Transparent">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate DataType="{x:Type vm:FileRowVm}">
                             <Border Background="Transparent" BorderBrush="#15ff6600" BorderThickness="0,0,0,1"
@@ -103,7 +103,7 @@
         <!-- Datei-Liste: GRID-Modus (bento-sm Container) -->
         <Border Grid.Row="2" Classes="bento-sm" Padding="0" IsVisible="{Binding IsGrid}">
             <ScrollViewer>
-                <ItemsControl ItemsSource="{Binding Files}">
+                <ItemsControl ItemsSource="{Binding FilteredFiles}">
                     <ItemsControl.ItemsPanel>
                         <ItemsPanelTemplate>
                             <WrapPanel />

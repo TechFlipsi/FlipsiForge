@@ -29,10 +29,15 @@ public static class ServiceLocator
     /// <summary>Initialisiert alle Default-Stubs. Kann von App.OnFrameworkInitializationCompleted überschrieben werden.</summary>
     public static void InitializeDefaults()
     {
-        if (Get<ISearchService>() is null)
-            Register<ISearchService>(new DesktopStubSearchService(() => new FlipsiForgeDbContext()));
+        // KI-Engine zuerst initialisieren (wird von AiEnhancedSearchService genutzt)
         if (Get<IAIChatEngine>() is null)
             Register<IAIChatEngine>(new OnnxAIChatEngine());
+
+        // Suche: AiEnhancedSearchService nutzt KI fuer Bedeutungssuche
+        if (Get<ISearchService>() is null)
+            Register<ISearchService>(new AiEnhancedSearchService(
+                () => new FlipsiForgeDbContext(), Get<IAIChatEngine>()));
+
         if (Get<IPrinterService>() is null)
             Register<IPrinterService>(new StubPrinterService());
     }

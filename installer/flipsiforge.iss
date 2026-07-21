@@ -3,7 +3,7 @@
 ; Kompilieren: iscc installer/flipsiforge.iss (vom Repo-Root)
 
 #define MyAppName "FlipsiForge"
-#define MyAppVersion "0.5.0"
+#define MyAppVersion "0.5.1"
 #define MyAppPublisher "TechFlipsi (Fabian Kirchweger)"
 #define MyAppURL "https://techflipsi.at"
 #define MyAppExeName "FlipsiForge.Desktop.exe"
@@ -20,7 +20,7 @@ DefaultDirName={autopf}\FlipsiForge
 DefaultGroupName=FlipsiForge
 DisableProgramGroupPage=yes
 OutputDir=..\dist
-OutputBaseFilename=FlipsiForge-0.5.0-win-x64-setup
+OutputBaseFilename=FlipsiForge-0.5.1-win-x64-setup
 Compression=lzma2
 SolidCompression=yes
 WizardStyle=modern

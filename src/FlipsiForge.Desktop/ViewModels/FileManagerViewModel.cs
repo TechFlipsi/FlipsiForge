@@ -83,8 +83,11 @@ public partial class FileManagerViewModel : ViewModelBase
     private readonly FlipsiForgeDbContext _db;
     private readonly ISearchService _search;
 
-    /// <summary>Alle geladenen Dateien (Display-Rows).</summary>
+    /// <summary>Alle geladenen Dateien (Display-Rows, ungefiltert).</summary>
     public ObservableCollection<FileRowVm> Files { get; } = new();
+
+    /// <summary> Gefilterte Dateien (Liste + Format-Filter + Suche). Die UI bindet daran.</summary>
+    public ObservableCollection<FileRowVm> FilteredFiles { get; } = new();
 
     /// <summary>Filter-Badges als (Name, Count)-Tupel.</summary>
     public ObservableCollection<FilterBadgeVm> FilterBadges { get; } = new();
@@ -103,11 +106,15 @@ public partial class FileManagerViewModel : ViewModelBase
     public string SearchText
     {
         get => _searchText;
-        set => SetProperty(ref _searchText, value);
+        set { SetProperty(ref _searchText, value); ApplyFilterAndSearch(); }
     }
 
     private string _selectedFilter = "Alle";
-    public string SelectedFilter { get => _selectedFilter; set => SetProperty(ref _selectedFilter, value); }
+    public string SelectedFilter
+    {
+        get => _selectedFilter;
+        set { SetProperty(ref _selectedFilter, value); ApplyFilterAndSearch(); }
+    }
 
     private bool _autoScan = true; // Auto-Scan ist immer AN — kein Toggle
     public bool AutoScan { get => _autoScan; set => SetProperty(ref _autoScan, value); }
@@ -152,6 +159,7 @@ public partial class FileManagerViewModel : ViewModelBase
         }
         FileUsageStore.SaveAll(usage);
         RebuildFilterBadges();
+        ApplyFilterAndSearch(); // FilteredFiles initial befuellen
     }
 
     /// <summary>Generiert Thumbnail fuer eine Datei asynchron.</summary>
@@ -195,21 +203,64 @@ public partial class FileManagerViewModel : ViewModelBase
     public void ApplyFilter(string filter)
     {
         SelectedFilter = filter;
+        // ApplyFilterAndSearch() wird durch SelectedFilter Setter aufgerufen
     }
 
-    /// <summary>Führt die Suche aus (Filename-Stub + optional KI-Suche via ISearchService).</summary>
+    /// <summary>Wendet Format-Filter UND Textsuche kombiniert an.</summary>
+    private void ApplyFilterAndSearch()
+    {
+        FilteredFiles.Clear();
+        var searchLower = (SearchText ?? "").Trim().ToLowerInvariant();
+        var hasSearch = !string.IsNullOrWhiteSpace(searchLower);
+
+        foreach (var f in Files)
+        {
+            // 1. Format-Filter pruefen
+            if (_selectedFilter != "Alle")
+            {
+                var filterExt = _selectedFilter.ToLowerInvariant() switch
+                {
+                    "stl" => ".stl",
+                    "3mf" => ".3mf",
+                    "gcode" => ".gcode",
+                    "obj" => ".obj",
+                    _ => null
+                };
+                if (filterExt != null && !f.File.Extension?.Equals(filterExt, StringComparison.OrdinalIgnoreCase) == true)
+                    continue;
+            }
+
+            // 2. Textsuche pruefen (Fuzzy auf Dateiname)
+            if (hasSearch)
+            {
+                var nameLower = (f.Name ?? "").ToLowerInvariant();
+                var pathLower = (f.Path ?? "").ToLowerInvariant();
+                // Simple Contains-Matching — schnell und zuverlaessig
+                if (!nameLower.Contains(searchLower) && !pathLower.Contains(searchLower))
+                {
+                    // KI-Treffer pruefen (falls KI-Suche Ergebnisse geliefert hat)
+                    if (!f.IsAiHit) continue;
+                }
+            }
+
+            FilteredFiles.Add(f);
+        }
+    }
+
+    /// <summary>Fuehrt die KI-Suche aus (Bedeutungssuche via ISearchService) + aktualisiert Filter.</summary>
     [RelayCommand]
     public async Task SearchAsync()
     {
         if (string.IsNullOrWhiteSpace(SearchText))
         {
-            // Reset: alle Dateien anzeigen, kein AI-Hit
             foreach (var f in Files) f.IsAiHit = false;
+            ApplyFilterAndSearch();
             return;
         }
 
         try
         {
+            // KI-Suche im Hintergrund (Stub liefert leer — echte KI kommt mit Gemma 4)
             var results = await _search.SearchAsync(SearchText);
             var hits = results.ToDictionary(r => r.FileId);
             foreach (var f in Files)
@@ -217,8 +268,11 @@ public partial class FileManagerViewModel : ViewModelBase
         }
         catch
         {
-            // Fallback: kein Filter — Benutzer kann weiterarbeiten
+            // Fallback: nur Dateinamen-Suche
         }
+
+        // Filter aktualisieren (inkl. KI-Treffer)
+        ApplyFilterAndSearch();
     }
 
     /// <summary>Öffnet den Datei-Öffnen-Dialog und incrementiert Usage.</summary>

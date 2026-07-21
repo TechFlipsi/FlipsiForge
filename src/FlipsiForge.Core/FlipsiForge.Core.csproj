@@ -35,4 +35,8 @@
     <PackageReference Include="MQTTnet" Version="5.2.0.1603" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- Filament-Datenbank als Embedded Resource -->
+    <EmbeddedResource Include="Data\filaments.json" />
+  </ItemGroup>
 </Project>

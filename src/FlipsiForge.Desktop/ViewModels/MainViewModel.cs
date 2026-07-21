@@ -14,7 +14,7 @@ namespace FlipsiForge.Desktop.ViewModels;
 public partial class MainViewModel : ViewModelBase
 {
     /// <summary>Version (für Sidebar-Anzeige).</summary>
-    public string AppVersion => "v0.5.0";
+    public string AppVersion => "v0.5.1";
 
     /// <summary>Name der gerade aktiven View (für SelectedItem-Highlight).</summary>
     [ObservableProperty]
