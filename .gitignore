@@ -31,4 +31,4 @@ src/FlipsiForge.Desktop/Assets/ai/*.onnx
 src/FlipsiForge.Server/Assets/ai/*.onnx
 
 # Runtime
-flipsiforge.db
+flipsiforge.dbdist/

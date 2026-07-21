@@ -36,7 +36,6 @@
                 <ListBox Grid.Row="1"
                          x:Name="NavList"
                          ItemsSource="{Binding NavItems}"
-                         SelectedIndex="0"
                          Background="Transparent"
                          BorderThickness="0"
                          Padding="0"
