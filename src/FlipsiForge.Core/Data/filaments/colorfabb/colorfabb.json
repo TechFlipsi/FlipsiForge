@@ -1,6 +1,6 @@
 {
   "brand": "ColorFabb",
-  "source": "https://colorfabb.com",
+  "source": "",
   "lastUpdated": "2026-07-21",
   "materials": [
     {
@@ -11,38 +11,61 @@
       "printTempMax": 220,
       "bedTempMin": 50,
       "bedTempMax": 70,
-      "coolingFanMin": 100,
-      "notes": "PLA/PHA Blend, tougher als reines PLA"
+      "retraction": 1.0,
+      "retractionSpeed": 30,
+      "coolingFanMin": null,
+      "coolingFanMax": null,
+      "maxPrintSpeed": null,
+      "nozzle": null,
+      "notes": "PLA/PHA Blend, zäher als Standard PLA"
     },
     {
       "type": "PLA",
       "variant": "WoodFill",
       "density": 1.28,
-      "printTempMin": 190,
+      "printTempMin": 195,
       "printTempMax": 220,
       "bedTempMin": 50,
       "bedTempMax": 70,
-      "notes": "20% Holzfasern"
+      "retraction": 1.5,
+      "retractionSpeed": 25,
+      "coolingFanMin": null,
+      "coolingFanMax": null,
+      "maxPrintSpeed": null,
+      "nozzle": null,
+      "notes": "PLA/PHA + Kiefernholzfasern, ±0.05mm Toleranz, 0.6mm Düse"
     },
     {
       "type": "PLA",
       "variant": "BronzeFill",
-      "density": 3.5,
+      "density": 3.9,
       "printTempMin": 195,
       "printTempMax": 220,
       "bedTempMin": 50,
       "bedTempMax": 70,
-      "notes": "80% Bronze"
+      "retraction": 1.5,
+      "retractionSpeed": 25,
+      "coolingFanMin": null,
+      "coolingFanMax": null,
+      "maxPrintSpeed": null,
+      "nozzle": null,
+      "notes": "PLA/PHA + Bronze-Pulver, Dichte 3.9 g/cm³, gehärtete Düse"
     },
     {
       "type": "PLA",
       "variant": "SteelFill",
-      "density": 4.2,
+      "density": 2.8,
       "printTempMin": 195,
       "printTempMax": 220,
       "bedTempMin": 50,
       "bedTempMax": 70,
-      "notes": "80% Stahl"
+      "retraction": 1.5,
+      "retractionSpeed": 25,
+      "coolingFanMin": null,
+      "coolingFanMax": null,
+      "maxPrintSpeed": null,
+      "nozzle": null,
+      "notes": "Stahl-gefülltes PLA, gehärtete Düse"
     },
     {
       "type": "PETG",
@@ -50,19 +73,31 @@
       "density": 1.3,
       "printTempMin": 240,
       "printTempMax": 260,
-      "bedTempMin": 60,
-      "bedTempMax": 80,
-      "notes": "Carbon Fiber PETG"
+      "bedTempMin": 70,
+      "bedTempMax": 90,
+      "retraction": 1.0,
+      "retractionSpeed": 30,
+      "coolingFanMin": null,
+      "coolingFanMax": null,
+      "maxPrintSpeed": null,
+      "nozzle": null,
+      "notes": "20% Carbonfaser, sehr steif, gehärtete Düse erforderlich"
     },
     {
       "type": "Nylon",
-      "variant": "XT-CF20",
-      "density": 1.14,
-      "printTempMin": 260,
-      "printTempMax": 280,
-      "bedTempMin": 80,
+      "variant": "Nylon",
+      "density": 1.12,
+      "printTempMin": 240,
+      "printTempMax": 260,
+      "bedTempMin": 70,
       "bedTempMax": 100,
-      "notes": "Nylon Carbon"
+      "retraction": 1.2,
+      "retractionSpeed": 30,
+      "coolingFanMin": null,
+      "coolingFanMax": null,
+      "maxPrintSpeed": null,
+      "nozzle": null,
+      "notes": "Trocknen erforderlich"
     }
   ]
 }

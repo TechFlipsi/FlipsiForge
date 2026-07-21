@@ -1,43 +1,87 @@
 {
   "brand": "Anycubic",
-  "source": "https://anycubic.com + community data",
+  "source": "",
   "lastUpdated": "2026-07-21",
   "materials": [
     {
       "type": "PLA",
+      "variant": "PLA Basic",
       "density": 1.24,
-      "printTempMin": 200,
+      "printTempMin": 190,
       "printTempMax": 230,
-      "bedTempMin": 50,
-      "bedTempMax": 70,
-      "coolingFanMin": 100
+      "bedTempMin": 55,
+      "bedTempMax": 56,
+      "retraction": 1.0,
+      "retractionSpeed": 30,
+      "coolingFanMin": null,
+      "coolingFanMax": null,
+      "maxPrintSpeed": null,
+      "nozzle": null,
+      "notes": "TDS: Dichte 1.24, MFI 4-10, HDT 54°C, Schmelzpunkt 166°C, Zugfestigkeit 48MPa"
     },
     {
       "type": "PLA",
-      "variant": "Silk",
+      "variant": "PLA+",
       "density": 1.24,
-      "printTempMin": 200,
+      "printTempMin": 190,
       "printTempMax": 230,
-      "bedTempMin": 50,
-      "bedTempMax": 70
+      "bedTempMin": 55,
+      "bedTempMax": 60,
+      "retraction": 1.0,
+      "retractionSpeed": 30,
+      "coolingFanMin": null,
+      "coolingFanMax": null,
+      "maxPrintSpeed": null,
+      "nozzle": null,
+      "notes": "Verbessertes PLA, intelligente Identifikation"
     },
     {
       "type": "PETG",
+      "variant": "PETG",
       "density": 1.27,
-      "printTempMin": 225,
-      "printTempMax": 250,
-      "bedTempMin": 70,
-      "bedTempMax": 90,
-      "coolingFanMin": 50
+      "printTempMin": 230,
+      "printTempMax": 240,
+      "bedTempMin": 60,
+      "bedTempMax": 70,
+      "retraction": 1.2,
+      "retractionSpeed": 30,
+      "coolingFanMin": null,
+      "coolingFanMax": null,
+      "maxPrintSpeed": null,
+      "nozzle": null,
+      "notes": "Gute Schichthaftung, wasserfest"
     },
     {
       "type": "ABS",
+      "variant": "ABS",
       "density": 1.04,
       "printTempMin": 230,
       "printTempMax": 260,
-      "bedTempMin": 80,
+      "bedTempMin": 90,
       "bedTempMax": 110,
-      "coolingFanMin": 0
+      "retraction": 1.0,
+      "retractionSpeed": 30,
+      "coolingFanMin": null,
+      "coolingFanMax": null,
+      "maxPrintSpeed": null,
+      "nozzle": null,
+      "notes": "Hohe Festigkeit, Belüftung empfohlen"
+    },
+    {
+      "type": "TPU",
+      "variant": "TPU 95A",
+      "density": 1.21,
+      "printTempMin": 210,
+      "printTempMax": 240,
+      "bedTempMin": 30,
+      "bedTempMax": 60,
+      "retraction": 0.5,
+      "retractionSpeed": 20,
+      "coolingFanMin": null,
+      "coolingFanMax": null,
+      "maxPrintSpeed": null,
+      "nozzle": null,
+      "notes": "Flexibel, Direct-Drive empfohlen"
     }
   ]
 }

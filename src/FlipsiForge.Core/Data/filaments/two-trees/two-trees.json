@@ -1,44 +1,71 @@
 {
   "brand": "Two Trees",
-  "source": "https://two-trees.com",
+  "source": "",
   "lastUpdated": "2026-07-21",
   "materials": [
     {
       "type": "PLA",
+      "variant": "PLA",
       "density": 1.24,
       "printTempMin": 200,
       "printTempMax": 230,
-      "bedTempMin": 50,
-      "bedTempMax": 70,
-      "coolingFanMin": 100
+      "bedTempMin": 40,
+      "bedTempMax": 60,
+      "retraction": 1.0,
+      "retractionSpeed": 30,
+      "coolingFanMin": null,
+      "coolingFanMax": null,
+      "maxPrintSpeed": null,
+      "nozzle": null,
+      "notes": "TDS: HDT 53°C, empfohlene Düsentemp 220°C, max 600mm/s"
     },
     {
       "type": "PETG",
+      "variant": "PETG",
       "density": 1.27,
-      "printTempMin": 225,
+      "printTempMin": 230,
       "printTempMax": 250,
-      "bedTempMin": 70,
+      "bedTempMin": 80,
       "bedTempMax": 90,
-      "coolingFanMin": 50
+      "retraction": 1.2,
+      "retractionSpeed": 30,
+      "coolingFanMin": null,
+      "coolingFanMax": null,
+      "maxPrintSpeed": null,
+      "nozzle": null,
+      "notes": "Durable"
     },
     {
       "type": "ABS",
+      "variant": "ABS",
       "density": 1.04,
       "printTempMin": 230,
       "printTempMax": 260,
-      "bedTempMin": 80,
+      "bedTempMin": 90,
       "bedTempMax": 110,
-      "coolingFanMin": 0
+      "retraction": 1.0,
+      "retractionSpeed": 30,
+      "coolingFanMin": null,
+      "coolingFanMax": null,
+      "maxPrintSpeed": null,
+      "nozzle": null,
+      "notes": "High strength"
     },
     {
       "type": "TPU",
+      "variant": "TPU 95A",
       "density": 1.21,
-      "printTempMin": 220,
+      "printTempMin": 210,
       "printTempMax": 240,
-      "bedTempMin": 35,
+      "bedTempMin": 30,
       "bedTempMax": 60,
-      "coolingFanMin": 0,
-      "maxPrintSpeed": 45
+      "retraction": 0.5,
+      "retractionSpeed": 20,
+      "coolingFanMin": null,
+      "coolingFanMax": null,
+      "maxPrintSpeed": null,
+      "nozzle": null,
+      "notes": "Flexibel"
     }
   ]
 }

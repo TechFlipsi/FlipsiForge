@@ -2,38 +2,253 @@
   "description": "Farb-Definitionen fuer FlipsiForge. Koennen vom Nutzer erweitert werden.",
   "lastUpdated": "2026-07-21",
   "colors": [
-    { "name": "Weiss", "hex": "#FFFFFF" },
-    { "name": "Schwarz", "hex": "#000000" },
-    { "name": "Grau", "hex": "#808080" },
-    { "name": "Dunkelgrau", "hex": "#404040" },
-    { "name": "Hellgrau", "hex": "#C0C0C0" },
-    { "name": "Anthrazit", "hex": "#29313D" },
-    { "name": "Rot", "hex": "#E83000" },
-    { "name": "Dunkelrot", "hex": "#8B0000" },
-    { "name": "Orange", "hex": "#FF6600" },
-    { "name": "Gelb", "hex": "#FFD000" },
-    { "name": "Gruen", "hex": "#00B500" },
-    { "name": "Dunkelgruen", "hex": "#006400" },
-    { "name": "Olivgruen", "hex": "#6B7B3A" },
-    { "name": "Tuerkis", "hex": "#00C8C8" },
-    { "name": "Blau", "hex": "#0066CC" },
-    { "name": "Dunkelblau", "hex": "#1A1A4D" },
-    { "name": "Himmelblau", "hex": "#87CEEB" },
-    { "name": "Lila", "hex": "#800080" },
-    { "name": "Pink", "hex": "#FF0080" },
-    { "name": "Magenta", "hex": "#CC00CC" },
-    { "name": "Braun", "hex": "#5C3317" },
-    { "name": "Beige", "hex": "#E8DCC8" },
-    { "name": "Gold", "hex": "#FFD700" },
-    { "name": "Silber", "hex": "#C0C0C0" },
-    { "name": "Kupfer", "hex": "#B87333" },
-    { "name": "Bronze", "hex": "#CD7F32" },
-    { "name": "Transparent", "hex": "#F0F0F0" },
-    { "name": "Leuchtend Gruen", "hex": "#39FF14" },
-    { "name": "Leuchtend Orange", "hex": "#FF5F00" },
-    { "name": "Leuchtend Blau", "hex": "#00BFFF" },
-    { "name": "Leuchtend Rot", "hex": "#FF0040" },
-    { "name": "Leuchtend Pink", "hex": "#FF1493" },
-    { "name": "Leuchtend Gelb", "hex": "#FFFF00" }
+    {
+      "name": "Weiss",
+      "hex": "#FFFFFF"
+    },
+    {
+      "name": "Schwarz",
+      "hex": "#000000"
+    },
+    {
+      "name": "Grau",
+      "hex": "#808080"
+    },
+    {
+      "name": "Dunkelgrau",
+      "hex": "#404040"
+    },
+    {
+      "name": "Hellgrau",
+      "hex": "#C0C0C0"
+    },
+    {
+      "name": "Anthrazit",
+      "hex": "#29313D"
+    },
+    {
+      "name": "Rot",
+      "hex": "#E83000"
+    },
+    {
+      "name": "Dunkelrot",
+      "hex": "#8B0000"
+    },
+    {
+      "name": "Orange",
+      "hex": "#FF6600"
+    },
+    {
+      "name": "Gelb",
+      "hex": "#FFD000"
+    },
+    {
+      "name": "Gruen",
+      "hex": "#00B500"
+    },
+    {
+      "name": "Dunkelgruen",
+      "hex": "#006400"
+    },
+    {
+      "name": "Olivgruen",
+      "hex": "#6B7B3A"
+    },
+    {
+      "name": "Tuerkis",
+      "hex": "#00C8C8"
+    },
+    {
+      "name": "Blau",
+      "hex": "#0066CC"
+    },
+    {
+      "name": "Dunkelblau",
+      "hex": "#1A1A4D"
+    },
+    {
+      "name": "Himmelblau",
+      "hex": "#87CEEB"
+    },
+    {
+      "name": "Lila",
+      "hex": "#800080"
+    },
+    {
+      "name": "Pink",
+      "hex": "#FF0080"
+    },
+    {
+      "name": "Magenta",
+      "hex": "#CC00CC"
+    },
+    {
+      "name": "Braun",
+      "hex": "#5C3317"
+    },
+    {
+      "name": "Beige",
+      "hex": "#E8DCC8"
+    },
+    {
+      "name": "Gold",
+      "hex": "#FFD700"
+    },
+    {
+      "name": "Silber",
+      "hex": "#C0C0C0"
+    },
+    {
+      "name": "Kupfer",
+      "hex": "#B87333"
+    },
+    {
+      "name": "Bronze",
+      "hex": "#CD7F32"
+    },
+    {
+      "name": "Transparent",
+      "hex": "#F0F0F0"
+    },
+    {
+      "name": "Leuchtend Gruen",
+      "hex": "#39FF14"
+    },
+    {
+      "name": "Leuchtend Orange",
+      "hex": "#FF5F00"
+    },
+    {
+      "name": "Leuchtend Blau",
+      "hex": "#00BFFF"
+    },
+    {
+      "name": "Leuchtend Rot",
+      "hex": "#FF0040"
+    },
+    {
+      "name": "Leuchtend Pink",
+      "hex": "#FF1493"
+    },
+    {
+      "name": "Leuchtend Gelb",
+      "hex": "#FFFF00"
+    },
+    {
+      "name": "Weiß",
+      "hex": "#FFFFFF"
+    },
+    {
+      "name": "Grün",
+      "hex": "#00FF00"
+    },
+    {
+      "name": "Dunkelgrün",
+      "hex": "#006400"
+    },
+    {
+      "name": "Hellgrün",
+      "hex": "#90EE90"
+    },
+    {
+      "name": "Olivgrün",
+      "hex": "#808000"
+    },
+    {
+      "name": "Cyan",
+      "hex": "#00FFFF"
+    },
+    {
+      "name": "Türkis",
+      "hex": "#40E0D0"
+    },
+    {
+      "name": "Hellblau",
+      "hex": "#ADD8E6"
+    },
+    {
+      "name": "Marineblau",
+      "hex": "#000080"
+    },
+    {
+      "name": "Violett",
+      "hex": "#8A2BE2"
+    },
+    {
+      "name": "Rosa",
+      "hex": "#FFB6C1"
+    },
+    {
+      "name": "Hellbraun",
+      "hex": "#D2B48C"
+    },
+    {
+      "name": "Hautfarben",
+      "hex": "#FFE0BD"
+    },
+    {
+      "name": "Pfirsich",
+      "hex": "#FFDAB9"
+    },
+    {
+      "name": "Mintgrün",
+      "hex": "#98FB98"
+    },
+    {
+      "name": "Lavendel",
+      "hex": "#E6E6FA"
+    },
+    {
+      "name": "Koralle",
+      "hex": "#FF7F50"
+    },
+    {
+      "name": "Burgunder",
+      "hex": "#800020"
+    },
+    {
+      "name": "Kastanie",
+      "hex": "#800000"
+    },
+    {
+      "name": "Königsblau",
+      "hex": "#4169E1"
+    },
+    {
+      "name": "Indigo",
+      "hex": "#4B0082"
+    },
+    {
+      "name": "Pflaume",
+      "hex": "#8E4585"
+    },
+    {
+      "name": "Salbeigrün",
+      "hex": "#9DC183"
+    },
+    {
+      "name": "Sand",
+      "hex": "#C2B280"
+    },
+    {
+      "name": "Champagner",
+      "hex": "#F7E7CE"
+    },
+    {
+      "name": "Elfenbein",
+      "hex": "#FFFFF0"
+    },
+    {
+      "name": "Galaxy Black",
+      "hex": "#1A1A2E"
+    },
+    {
+      "name": "Gunmetal",
+      "hex": "#2A3439"
+    },
+    {
+      "name": "Stahlblau",
+      "hex": "#4682B4"
+    }
   ]
 }
