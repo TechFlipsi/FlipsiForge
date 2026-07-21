@@ -45,7 +45,7 @@ public sealed class DesktopSettings
     public bool Scan3mf { get; set; } = true;
     public bool ScanGcode { get; set; } = true;
     public bool ScanObj { get; set; } = true;
-    public bool AutoScan { get; set; } = false;
+    public bool AutoScan { get; set; } = true;
     public int ScanIntervalMinutes { get; set; } = 30;
     public FileViewMode DefaultView { get; set; } = FileViewMode.List;
     public FileSortMode DefaultSort { get; set; } = FileSortMode.NameAsc;

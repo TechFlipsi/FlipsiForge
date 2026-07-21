@@ -199,20 +199,41 @@ public partial class DruckWaechterViewModel : ViewModelBase
     [ObservableProperty]
     private int _popupSelectedExtruder;
 
+    /// <summary>True wenn keine Drucker vorhanden (für Empty-State UI).</summary>
+    public bool HasNoPrinters => Cards.Count == 0;
+
     public DruckWaechterViewModel() : this(ServiceLocator.CreateDb()) { }
 
     public DruckWaechterViewModel(FlipsiForgeDbContext db)
     {
         _db = db;
         Load();
-        _ = RefreshAllAsync();
+        // Refresh asynchron — fehler tolerant, crashed nicht wenn kein Service
+        // oder keine Drucker vorhanden.
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await RefreshAllAsync();
+            }
+            catch
+            {
+                // Best-effort — UI bleibt sichtbar mit "Offline" Status
+            }
+        });
     }
 
     /// <summary>Lädt alle aktiven Drucker aus der DB als Karten.</summary>
     public void Load()
     {
         Cards.Clear();
-        foreach (var p in _db.Printers.Where(x => x.IsActive).ToList())
+        var printers = _db.Printers.Where(x => x.IsActive).ToList();
+        if (printers.Count == 0)
+        {
+            // Keine Drucker — leerer Zustand, keine Cards. UI zeigt Header.
+            return;
+        }
+        foreach (var p in printers)
         {
             var card = new DruckWaechterCardVm(p)
             {
@@ -304,7 +325,22 @@ public partial class DruckWaechterViewModel : ViewModelBase
     /// <summary>Aktualisiert alle Drucker-Karten asynchron.</summary>
     private async Task RefreshAllAsync()
     {
-        var svc = GetOrCreateService();
+        if (Cards.Count == 0) return;
+        DruckWaechterService svc;
+        try
+        {
+            svc = GetOrCreateService();
+        }
+        catch
+        {
+            // Service konnte nicht erstellt werden — alle Cards auf Offline
+            foreach (var card in Cards)
+            {
+                card.StatusText = "Offline";
+                card.StatusClass = "offline";
+            }
+            return;
+        }
         foreach (var card in Cards)
         {
             try

@@ -17,18 +17,21 @@
 
     <Grid ColumnDefinitions="220,*">
         <!-- ===== LINKE SIDEBAR ===== -->
-        <Border Grid.Column="0" Background="#0a0a0f" Padding="0">
+        <Border Grid.Column="0" Background="#0a0a0f" BorderBrush="#15ff6600" BorderThickness="0,0,1,0">
             <Grid RowDefinitions="Auto,*,Auto">
-                <!-- Header -->
-                <Border Grid.Row="0" Padding="16,14" Background="#050507">
+                <!-- Header: Logo-Emblem + FlipsiForge -->
+                <Border Grid.Row="0" Padding="16,14" Background="#050507" BorderBrush="#15ff6600" BorderThickness="0,0,0,1">
                     <StackPanel Orientation="Vertical" Spacing="2">
-                        <StackPanel Orientation="Horizontal" Spacing="8">
-                            <TextBlock Text="🔥" FontSize="22" VerticalAlignment="Center" />
-                            <TextBlock Text="FlipsiForge" FontSize="18" FontWeight="Bold"
+                        <StackPanel Orientation="Horizontal" Spacing="10">
+                            <Image Source="avares://FlipsiForge.Desktop/Assets/logo-emblem.png"
+                                   Width="28" Height="28" VerticalAlignment="Center" />
+                            <TextBlock Text="FlipsiForge" FontFamily="Space Grotesk, sans-serif"
+                                       FontSize="18" FontWeight="Bold"
                                        Foreground="#ff6600" VerticalAlignment="Center" />
                         </StackPanel>
-                        <TextBlock Text="{Binding AppVersion}" FontSize="11" Foreground="#666"
-                                   Margin="30,0,0,0" />
+                        <TextBlock Text="{Binding AppVersion}" FontFamily="Space Grotesk, sans-serif"
+                                   FontSize="11" Foreground="#55555f"
+                                   Margin="38,0,0,0" />
                     </StackPanel>
                 </Border>
 
@@ -38,26 +41,27 @@
                          ItemsSource="{Binding NavItems}"
                          Background="Transparent"
                          BorderThickness="0"
-                         Padding="0"
+                         Padding="8,8,8,0"
                          SelectionChanged="NavList_SelectionChanged">
                     <ListBox.ItemContainerTheme>
                         <ControlTheme TargetType="{x:Type ListBoxItem}" BasedOn="{StaticResource {x:Type ListBoxItem}}">
-                            <Setter Property="Padding" Value="16,10" />
-                            <Setter Property="Margin" Value="4,2" />
-                            <Setter Property="Background" Value="#1a1a2e" />
-                            <Setter Property="Foreground" Value="#aaa" />
+                            <Setter Property="Padding" Value="16,12" />
+                            <Setter Property="Margin" Value="0,2" />
+                            <Setter Property="Background" Value="Transparent" />
+                            <Setter Property="Foreground" Value="#7a7a8a" />
+                            <Setter Property="FontFamily" Value="Space Grotesk, sans-serif" />
                             <Setter Property="FontSize" Value="14" />
+                            <Setter Property="FontWeight" Value="SemiBold" />
                             <Setter Property="BorderThickness" Value="0" />
-                            <Setter Property="CornerRadius" Value="6" />
+                            <Setter Property="CornerRadius" Value="8" />
                             <Setter Property="(ToolTip.Tip)" Value="{Binding Name}" />
                             <Style Selector="^:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-                                <Setter Property="Background" Value="#252540" />
-                                <Setter Property="Foreground" Value="#fff" />
+                                <Setter Property="Background" Value="#18181f" />
+                                <Setter Property="Foreground" Value="#e8e8ed" />
                             </Style>
                             <Style Selector="^:selected /template/ ContentPresenter#PART_ContentPresenter">
-                                <Setter Property="Background" Value="#ff6600" />
-                                <Setter Property="Foreground" Value="#050507" />
-                                <Setter Property="FontWeight" Value="Bold" />
+                                <Setter Property="Background" Value="#22ff6600" />
+                                <Setter Property="Foreground" Value="#ff6600" />
                             </Style>
                         </ControlTheme>
                     </ListBox.ItemContainerTheme>
@@ -69,14 +73,17 @@
                 </ListBox>
 
                 <!-- Settings-Button unten -->
-                <Border Grid.Row="2" Padding="8" Background="#050507">
-                    <Button Background="#1a1a2e"
-                            Foreground="#aaa"
+                <Border Grid.Row="2" Padding="8,8" Background="#050507" BorderBrush="#15ff6600" BorderThickness="0,1,0,0">
+                    <Button Background="Transparent"
+                            Foreground="#7a7a8a"
                             BorderThickness="0"
-                            CornerRadius="6"
-                            Padding="12,10"
+                            CornerRadius="8"
+                            Padding="16,12"
                             HorizontalAlignment="Stretch"
                             HorizontalContentAlignment="Left"
+                            FontFamily="Space Grotesk, sans-serif"
+                            FontSize="14"
+                            FontWeight="SemiBold"
                             Command="{Binding OpenSettingsCommand}">
                         <StackPanel Orientation="Horizontal" Spacing="10">
                             <TextBlock Text="⚙️" FontSize="16" VerticalAlignment="Center" />
@@ -106,25 +113,27 @@
                     ZIndex="100">
                 <Grid Margin="40">
                     <Border Background="#0a0a0f"
-                            CornerRadius="8"
-                            BorderBrush="#ff6600"
-                            BorderThickness="1">
+                            CornerRadius="20"
+                            BorderBrush="#40ff6600"
+                            BorderThickness="1"
+                            BoxShadow="0 24px 60px #00000066">
                         <Grid RowDefinitions="Auto,*">
                             <!-- Settings-Header -->
-                            <Border Grid.Row="0" Background="#050507" Padding="20,14">
+                            <Border Grid.Row="0" Background="#050507" Padding="24,16"
+                                    BorderBrush="#15ff6600" BorderThickness="0,0,0,1">
                                 <Grid ColumnDefinitions="*,Auto">
-                                    <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="10">
-                                        <TextBlock Text="⚙️" FontSize="22" VerticalAlignment="Center" />
-                                        <TextBlock Text="Einstellungen" FontSize="20" FontWeight="Bold"
+                                    <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="12">
+                                        <TextBlock Text="⚙️" FontSize="24" VerticalAlignment="Center" />
+                                        <TextBlock Text="Einstellungen" FontFamily="Space Grotesk, sans-serif"
+                                                   FontSize="20" FontWeight="Bold"
                                                    Foreground="#ff6600" VerticalAlignment="Center" />
                                     </StackPanel>
-                                    <Button Grid.Column="1" Background="#1a1a2e" Foreground="#aaa"
-                                            BorderThickness="0" CornerRadius="6" Padding="14,8"
-                                            Command="{Binding CloseSettingsCommand}">✕ Schließen</Button>
+                                    <Button Grid.Column="1" Content="✕ Schließen"
+                                            Command="{Binding CloseSettingsCommand}" />
                                 </Grid>
                             </Border>
                             <!-- Settings-Inhalt -->
-                            <ScrollViewer Grid.Row="1" Padding="20">
+                            <ScrollViewer Grid.Row="1" Padding="24">
                                 <views:SettingsView DataContext="{Binding Settings}" />
                             </ScrollViewer>
                         </Grid>

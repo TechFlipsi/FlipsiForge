@@ -21,8 +21,14 @@ public sealed class SpoolRowVm : ObservableObject
     public string ColorHex => Spool.ColorHex;
     public string? ColorName => Spool.ColorName;
     public string Weight => $"{Spool.RemainingWeightG:F0}/{Spool.TotalWeightG:F0} g";
+    public string Diameter => $"{Spool.DiameterMm:F2} mm";
     public string Density => $"{Spool.DensityGcm3:F2} g/cm³";
     public string Cost => $"{Spool.CostEur:F2} €";
+
+    /// <summary>Restgewicht als Prozent (0-100) für Fortschrittsbalken.</summary>
+    public double RemainingPercent => Spool.TotalWeightG > 0
+        ? Math.Clamp((double)(Spool.RemainingWeightG / Spool.TotalWeightG) * 100.0, 0, 100)
+        : 0;
 
     private SpoolStatus _status;
     public SpoolStatus Status
@@ -54,8 +60,10 @@ public sealed class SpoolRowVm : ObservableObject
         OnPropertyChanged(nameof(ColorHex));
         OnPropertyChanged(nameof(ColorName));
         OnPropertyChanged(nameof(Weight));
+        OnPropertyChanged(nameof(Diameter));
         OnPropertyChanged(nameof(Density));
         OnPropertyChanged(nameof(Cost));
+        OnPropertyChanged(nameof(RemainingPercent));
         Status = Spool.Status;
     }
 }

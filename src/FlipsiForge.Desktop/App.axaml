@@ -6,10 +6,220 @@
 
     <Application.Styles>
         <FluentTheme />
+
+        <!-- ===== GLOBAL TECHFLIPSI DESIGN SYSTEM ===== -->
+        <!-- Dark Void + Ember Orange, matching techflipsi.kirchweger.de -->
+
+        <!-- TextBlock default: Inter body font, ember foreground -->
+        <Style Selector="TextBlock">
+            <Setter Property="FontFamily" Value="Inter, sans-serif" />
+            <Setter Property="Foreground" Value="#e8e8ed" />
+        </Style>
+
+        <!-- Headings/Labels: Space Grotesk display font (applied via .heading class) -->
+        <Style Selector="TextBlock.heading">
+            <Setter Property="FontFamily" Value="Space Grotesk, sans-serif" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Foreground" Value="#e8e8ed" />
+        </Style>
+
+        <!-- Buttons: pill-shaped (CornerRadius 999), centered, subtle ember bg -->
+        <Style Selector="Button">
+            <Setter Property="FontFamily" Value="Space Grotesk, sans-serif" />
+            <Setter Property="Foreground" Value="#e8e8ed" />
+            <Setter Property="Background" Value="#22ff6600" />
+            <Setter Property="BorderBrush" Value="#25ff6600" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="999" />
+            <Setter Property="Padding" Value="16,8" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="FontSize" Value="13" />
+        </Style>
+        <Style Selector="Button:pointerover">
+            <Setter Property="Background" Value="#40ff6600" />
+            <Setter Property="BorderBrush" Value="#40ff6600" />
+            <Setter Property="Foreground" Value="#ff8533" />
+        </Style>
+        <Style Selector="Button:pressed">
+            <Setter Property="Background" Value="#55ff6600" />
+        </Style>
+        <Style Selector="Button:disabled">
+            <Setter Property="Opacity" Value="0.4" />
+        </Style>
+
+        <!-- Primary button: solid ember -->
+        <Style Selector="Button.primary">
+            <Setter Property="Background" Value="#ff6600" />
+            <Setter Property="BorderBrush" Value="#ff6600" />
+            <Setter Property="Foreground" Value="#050507" />
+            <Setter Property="FontWeight" Value="Bold" />
+        </Style>
+        <Style Selector="Button.primary:pointerover">
+            <Setter Property="Background" Value="#ff8533" />
+            <Setter Property="Foreground" Value="#050507" />
+        </Style>
+
+        <!-- Danger button: red -->
+        <Style Selector="Button.danger">
+            <Setter Property="Background" Value="#22ef4444" />
+            <Setter Property="BorderBrush" Value="#25ef4444" />
+            <Setter Property="Foreground" Value="#ef4444" />
+        </Style>
+        <Style Selector="Button.danger:pointerover">
+            <Setter Property="Background" Value="#40ef4444" />
+            <Setter Property="Foreground" Value="#ff8888" />
+        </Style>
+
+        <!-- Border default card: surface bg, subtle ember border, radius 20 -->
+        <Style Selector="Border.bento-card">
+            <Setter Property="Background" Value="#0c0c10" />
+            <Setter Property="BorderBrush" Value="#15ff6600" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="20" />
+            <Setter Property="Padding" Value="24" />
+            <Setter Property="BoxShadow" Value="0 4px 16px #00000022" />
+        </Style>
+        <Style Selector="Border.bento-card:pointerover">
+            <Setter Property="BorderBrush" Value="#40ff6600" />
+            <Setter Property="BoxShadow" Value="0 12px 40px #00000055" />
+        </Style>
+
+        <!-- Small card variant: radius 12 -->
+        <Style Selector="Border.bento-sm">
+            <Setter Property="Background" Value="#0c0c10" />
+            <Setter Property="BorderBrush" Value="#15ff6600" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="12" />
+            <Setter Property="Padding" Value="16" />
+        </Style>
+
+        <!-- Badge: small rounded tag, radius 8 -->
+        <Style Selector="Border.badge">
+            <Setter Property="Background" Value="#18181f" />
+            <Setter Property="BorderBrush" Value="#25ff6600" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="Padding" Value="8,3" />
+        </Style>
+
+        <!-- TextBox: surface-2 bg, subtle ember border -->
+        <Style Selector="TextBox">
+            <Setter Property="FontFamily" Value="Inter, sans-serif" />
+            <Setter Property="Background" Value="#111116" />
+            <Setter Property="BorderBrush" Value="#15ff6600" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Foreground" Value="#e8e8ed" />
+            <Setter Property="CornerRadius" Value="12" />
+            <Setter Property="Padding" Value="12,8" />
+        </Style>
+        <Style Selector="TextBox:focus">
+            <Setter Property="BorderBrush" Value="#40ff6600" />
+        </Style>
+
+        <!-- ComboBox: surface-2 bg -->
+        <Style Selector="ComboBox">
+            <Setter Property="FontFamily" Value="Space Grotesk, sans-serif" />
+            <Setter Property="Background" Value="#111116" />
+            <Setter Property="BorderBrush" Value="#15ff6600" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Foreground" Value="#e8e8ed" />
+            <Setter Property="CornerRadius" Value="12" />
+            <Setter Property="Padding" Value="12,8" />
+        </Style>
+
+        <!-- ScrollViewer: ember thumb, surface-2 track -->
+        <Style Selector="ScrollBar:vertical">
+            <Setter Property="Width" Value="8" />
+        </Style>
+        <Style Selector="ScrollBar:horizontal">
+            <Setter Property="Height" Value="8" />
+        </Style>
+        <Style Selector="ScrollBar /template/ Thumb#PART_Thumb">
+            <Setter Property="Background" Value="#ff6600" />
+            <Setter Property="CornerRadius" Value="999" />
+            <Setter Property="MinWidth" Value="6" />
+            <Setter Property="MinHeight" Value="6" />
+        </Style>
+        <Style Selector="ScrollBar /template/ Thumb#PART_Thumb:pointerover">
+            <Setter Property="Background" Value="#ff8533" />
+        </Style>
+
+        <!-- ToggleSwitch: ON green, OFF gray -->
+        <Style Selector="ToggleSwitch">
+            <Setter Property="FontFamily" Value="Space Grotesk, sans-serif" />
+        </Style>
+        <Style Selector="ToggleSwitch /template/ Border#PART_Border">
+            <Setter Property="CornerRadius" Value="999" />
+        </Style>
+        <Style Selector="ToggleSwitch:checked /template/ Border#PART_Border">
+            <Setter Property="Background" Value="#22c55e" />
+            <Setter Property="BorderBrush" Value="#22c55e" />
+        </Style>
+        <Style Selector="ToggleSwitch /template/ Border#PART_Border">
+            <Setter Property="Background" Value="#55555f" />
+            <Setter Property="BorderBrush" Value="#55555f" />
+        </Style>
+        <Style Selector="ToggleSwitch /template/ Thumb#PART_Thumb">
+            <Setter Property="Background" Value="#e8e8ed" />
+        </Style>
+
+        <!-- CheckBox: ember accent -->
+        <Style Selector="CheckBox">
+            <Setter Property="FontFamily" Value="Inter, sans-serif" />
+            <Setter Property="Foreground" Value="#e8e8ed" />
+        </Style>
+
+        <!-- Expander: surface bg, ember header -->
+        <Style Selector="Expander">
+            <Setter Property="Background" Value="#0c0c10" />
+            <Setter Property="BorderBrush" Value="#15ff6600" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="12" />
+            <Setter Property="Foreground" Value="#e8e8ed" />
+        </Style>
+
+        <!-- ListBox: transparent bg, no border -->
+        <Style Selector="ListBox">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Foreground" Value="#e8e8ed" />
+        </Style>
+
+        <!-- DataGrid (kept for compatibility): surface bg -->
+        <Style Selector="DataGrid">
+            <Setter Property="Background" Value="#0c0c10" />
+            <Setter Property="BorderBrush" Value="#15ff6600" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="RowBackground" Value="#0c0c10" />
+            <Setter Property="Foreground" Value="#e8e8ed" />
+            <Setter Property="FontFamily" Value="Inter, sans-serif" />
+            <Setter Property="FontSize" Value="13" />
+        </Style>
+        <Style Selector="DataGridColumnHeader">
+            <Setter Property="Background" Value="#111116" />
+            <Setter Property="Foreground" Value="#ff6600" />
+            <Setter Property="FontFamily" Value="Space Grotesk, sans-serif" />
+            <Setter Property="FontWeight" Value="Bold" />
+        </Style>
+        <Style Selector="DataGridRow">
+            <Setter Property="Background" Value="#0c0c10" />
+        </Style>
+        <Style Selector="DataGridRow:selected">
+            <Setter Property="Background" Value="#22ff6600" />
+        </Style>
     </Application.Styles>
 
     <Application.Resources>
         <Color x:Key="DarkVoid">#050507</Color>
         <Color x:Key="Ember">#ff6600</Color>
+        <Color x:Key="EmberSoft">#ff8533</Color>
+        <Color x:Key="Surface">#0c0c10</Color>
+        <Color x:Key="Surface2">#111116</Color>
+        <Color x:Key="Surface3">#18181f</Color>
+        <Color x:Key="FgMuted">#7a7a8a</Color>
+        <Color x:Key="FgDim">#55555f</Color>
+        <Color x:Key="Success">#22c55e</Color>
+        <Color x:Key="Error">#ef4444</Color>
     </Application.Resources>
 </Application>
