@@ -1,0 +1,85 @@
+{
+  "brand": "Filamentum",
+  "source": "https://filamentum.com",
+  "lastUpdated": "2026-07-21",
+  "materials": [
+    {
+      "type": "PLA",
+      "variant": "Extrafill",
+      "density": 1.24,
+      "printTempMin": 200,
+      "printTempMax": 230,
+      "bedTempMin": 60,
+      "bedTempMax": 70,
+      "coolingFanMin": 100
+    },
+    {
+      "type": "PLA",
+      "variant": "TimberFill",
+      "density": 1.28,
+      "printTempMin": 200,
+      "printTempMax": 230,
+      "bedTempMin": 60,
+      "bedTempMax": 70,
+      "notes": "Holz-Filament, 20% Holzfasern"
+    },
+    {
+      "type": "PLA",
+      "variant": "BronzeFill",
+      "density": 3.5,
+      "printTempMin": 200,
+      "printTempMax": 230,
+      "bedTempMin": 60,
+      "bedTempMax": 70,
+      "notes": "80% Bronze"
+    },
+    {
+      "type": "PLA",
+      "variant": "BrassFill",
+      "density": 3.2,
+      "printTempMin": 200,
+      "printTempMax": 230,
+      "bedTempMin": 60,
+      "bedTempMax": 70,
+      "notes": "80% Messing"
+    },
+    {
+      "type": "ASA",
+      "density": 1.07,
+      "printTempMin": 245,
+      "printTempMax": 265,
+      "bedTempMin": 80,
+      "bedTempMax": 110,
+      "coolingFanMin": 0
+    },
+    {
+      "type": "ABS",
+      "density": 1.04,
+      "printTempMin": 240,
+      "printTempMax": 270,
+      "bedTempMin": 80,
+      "bedTempMax": 110,
+      "coolingFanMin": 0
+    },
+    {
+      "type": "Nylon",
+      "density": 1.14,
+      "printTempMin": 255,
+      "printTempMax": 285,
+      "bedTempMin": 80,
+      "bedTempMax": 100,
+      "coolingFanMin": 0,
+      "notes": "Trocknen noetig"
+    },
+    {
+      "type": "PC",
+      "density": 1.19,
+      "printTempMin": 265,
+      "printTempMax": 295,
+      "bedTempMin": 80,
+      "bedTempMax": 110,
+      "coolingFanMin": 0,
+      "notes": "Enclosure noetig"
+    }
+  ]
+}

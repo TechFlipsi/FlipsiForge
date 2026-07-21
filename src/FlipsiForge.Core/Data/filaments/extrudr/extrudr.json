@@ -1,0 +1,65 @@
+{
+  "brand": "Extrudr",
+  "source": "https://extrudr.com",
+  "lastUpdated": "2026-07-21",
+  "materials": [
+    {
+      "type": "PLA",
+      "variant": "NX-2",
+      "density": 1.24,
+      "printTempMin": 210,
+      "printTempMax": 230,
+      "bedTempMin": 55,
+      "bedTempMax": 70,
+      "coolingFanMin": 100
+    },
+    {
+      "type": "PLA",
+      "variant": "GreenTEC",
+      "density": 1.24,
+      "printTempMin": 210,
+      "printTempMax": 230,
+      "bedTempMin": 55,
+      "bedTempMax": 70,
+      "notes": "Bio-Compound, lebensmittelecht"
+    },
+    {
+      "type": "PETG",
+      "density": 1.27,
+      "printTempMin": 230,
+      "printTempMax": 250,
+      "bedTempMin": 70,
+      "bedTempMax": 90,
+      "coolingFanMin": 50
+    },
+    {
+      "type": "ABS",
+      "density": 1.04,
+      "printTempMin": 240,
+      "printTempMax": 270,
+      "bedTempMin": 80,
+      "bedTempMax": 110,
+      "coolingFanMin": 0
+    },
+    {
+      "type": "ASA",
+      "density": 1.07,
+      "printTempMin": 250,
+      "printTempMax": 270,
+      "bedTempMin": 80,
+      "bedTempMax": 110,
+      "coolingFanMin": 0
+    },
+    {
+      "type": "TPU",
+      "variant": "Flexhard 60A",
+      "density": 1.21,
+      "printTempMin": 220,
+      "printTempMax": 240,
+      "bedTempMin": 35,
+      "bedTempMax": 60,
+      "coolingFanMin": 0,
+      "notes": "Shore 60A, sehr flexibel"
+    }
+  ]
+}

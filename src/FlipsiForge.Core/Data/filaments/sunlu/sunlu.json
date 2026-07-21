@@ -1,0 +1,101 @@
+{
+  "brand": "Sunlu",
+  "source": "https://sunlu.com + community data",
+  "lastUpdated": "2026-07-21",
+  "materials": [
+    {
+      "type": "PLA",
+      "density": 1.24,
+      "printTempMin": 200,
+      "printTempMax": 230,
+      "bedTempMin": 50,
+      "bedTempMax": 70,
+      "coolingFanMin": 100,
+      "retraction": 2.0,
+      "retractionSpeed": 30
+    },
+    {
+      "type": "PLA",
+      "variant": "Matte",
+      "density": 1.24,
+      "printTempMin": 200,
+      "printTempMax": 230,
+      "bedTempMin": 50,
+      "bedTempMax": 70
+    },
+    {
+      "type": "PLA",
+      "variant": "Silk",
+      "density": 1.24,
+      "printTempMin": 200,
+      "printTempMax": 230,
+      "bedTempMin": 50,
+      "bedTempMax": 70
+    },
+    {
+      "type": "PLA",
+      "variant": "Metal",
+      "density": 2.3,
+      "printTempMin": 210,
+      "printTempMax": 230,
+      "bedTempMin": 50,
+      "bedTempMax": 70,
+      "notes": "Metallpulver"
+    },
+    {
+      "type": "PLA+",
+      "density": 1.24,
+      "printTempMin": 205,
+      "printTempMax": 225,
+      "bedTempMin": 50,
+      "bedTempMax": 70,
+      "notes": "Verbesserte Haftung"
+    },
+    {
+      "type": "PETG",
+      "density": 1.27,
+      "printTempMin": 230,
+      "printTempMax": 250,
+      "bedTempMin": 60,
+      "bedTempMax": 90,
+      "coolingFanMin": 50
+    },
+    {
+      "type": "ABS",
+      "density": 1.04,
+      "printTempMin": 230,
+      "printTempMax": 260,
+      "bedTempMin": 80,
+      "bedTempMax": 110,
+      "coolingFanMin": 0
+    },
+    {
+      "type": "ASA",
+      "density": 1.07,
+      "printTempMin": 240,
+      "printTempMax": 260,
+      "bedTempMin": 80,
+      "bedTempMax": 110,
+      "coolingFanMin": 0
+    },
+    {
+      "type": "TPU",
+      "density": 1.21,
+      "printTempMin": 220,
+      "printTempMax": 240,
+      "bedTempMin": 50,
+      "bedTempMax": 70,
+      "coolingFanMin": 0,
+      "maxPrintSpeed": 45
+    },
+    {
+      "type": "PVA",
+      "density": 1.23,
+      "printTempMin": 190,
+      "printTempMax": 210,
+      "bedTempMin": 35,
+      "bedTempMax": 50,
+      "notes": "Loesliches Stuetzmaterial"
+    }
+  ]
+}

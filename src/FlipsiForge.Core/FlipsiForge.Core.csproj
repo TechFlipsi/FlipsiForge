@@ -36,7 +36,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- Filament-Datenbank als Embedded Resource -->
-    <EmbeddedResource Include="Data\filaments.json" />
+    <!-- Filament-Profil-Datenbank: Ordnerstruktur wird ins Output kopiert -->
+    <Content Include="Data\filaments\**\*.json" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>

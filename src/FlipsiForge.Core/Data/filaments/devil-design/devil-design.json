@@ -1,0 +1,96 @@
+{
+  "brand": "Devil Design",
+  "source": "https://devildesign.com + filamentcheatsheet.com",
+  "lastUpdated": "2026-07-21",
+  "materials": [
+    {
+      "type": "PLA",
+      "density": 1.24,
+      "printTempMin": 190,
+      "printTempMax": 230,
+      "bedTempMin": 50,
+      "bedTempMax": 70,
+      "coolingFanMin": 100,
+      "notes": "Inkl. Sparkle, Stone, Marble Varianten"
+    },
+    {
+      "type": "PLA",
+      "variant": "Silk",
+      "density": 1.24,
+      "printTempMin": 190,
+      "printTempMax": 230,
+      "bedTempMin": 50,
+      "bedTempMax": 70
+    },
+    {
+      "type": "PLA",
+      "variant": "Glow",
+      "density": 1.24,
+      "printTempMin": 190,
+      "printTempMax": 230,
+      "bedTempMin": 50,
+      "bedTempMax": 70,
+      "notes": "Leuchtend"
+    },
+    {
+      "type": "PETG",
+      "density": 1.27,
+      "printTempMin": 220,
+      "printTempMax": 250,
+      "bedTempMin": 70,
+      "bedTempMax": 90,
+      "coolingFanMin": 50
+    },
+    {
+      "type": "ABS",
+      "variant": "ABS+",
+      "density": 1.04,
+      "printTempMin": 230,
+      "printTempMax": 260,
+      "bedTempMin": 90,
+      "bedTempMax": 110,
+      "coolingFanMin": 0,
+      "notes": "Weniger Verzug als Standard ABS"
+    },
+    {
+      "type": "ASA",
+      "density": 1.07,
+      "printTempMin": 235,
+      "printTempMax": 260,
+      "bedTempMin": 90,
+      "bedTempMax": 110,
+      "coolingFanMin": 0
+    },
+    {
+      "type": "HIPS",
+      "density": 1.04,
+      "printTempMin": 220,
+      "printTempMax": 250,
+      "bedTempMin": 90,
+      "bedTempMax": 110,
+      "coolingFanMin": 0,
+      "notes": "Loesliches Stuetzmaterial (Limonen)"
+    },
+    {
+      "type": "PA12",
+      "density": 1.01,
+      "printTempMin": 240,
+      "printTempMax": 270,
+      "bedTempMin": 80,
+      "bedTempMax": 100,
+      "coolingFanMin": 0,
+      "notes": "Nylon, transparent, Trocknen noetig"
+    },
+    {
+      "type": "TPU",
+      "density": 1.21,
+      "printTempMin": 210,
+      "printTempMax": 240,
+      "bedTempMin": 30,
+      "bedTempMax": 60,
+      "coolingFanMin": 0,
+      "maxPrintSpeed": 45,
+      "notes": "Transparent, flexibel"
+    }
+  ]
+}

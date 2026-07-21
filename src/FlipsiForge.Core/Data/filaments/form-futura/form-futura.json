@@ -1,0 +1,39 @@
+{
+  "brand": "Form Futura",
+  "source": "https://formfutura.com + Technical Data Sheets",
+  "lastUpdated": "2026-07-21",
+  "materials": [
+    {
+      "type": "PLA",
+      "variant": "Galaxy",
+      "density": 1.24,
+      "printTempMin": 200,
+      "printTempMax": 230,
+      "bedTempMin": 50,
+      "bedTempMax": 70,
+      "coolingFanMin": 100,
+      "notes": "Glitzernde Oberflaeche"
+    },
+    {
+      "type": "ABS",
+      "variant": "TitanX",
+      "density": 1.1,
+      "printTempMin": 240,
+      "printTempMax": 260,
+      "bedTempMin": 90,
+      "bedTempMax": 110,
+      "coolingFanMin": 0,
+      "notes": "Warp-free ABS, Industrie-Qualitaet, Dichte 1.10 g/cc ISO 1183"
+    },
+    {
+      "type": "PLA",
+      "variant": "Helix",
+      "density": 1.24,
+      "printTempMin": 210,
+      "printTempMax": 230,
+      "bedTempMin": 50,
+      "bedTempMax": 70,
+      "notes": "HDT verbessert"
+    }
+  ]
+}

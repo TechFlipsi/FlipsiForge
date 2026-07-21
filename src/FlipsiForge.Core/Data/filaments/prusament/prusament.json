@@ -1,0 +1,14 @@
+{
+  "brand": "Prusament",
+  "source": "https://prusament.com (Technical Data Sheets)",
+  "lastUpdated": "2026-07-21",
+  "materials": [
+    { "type": "PLA", "density": 1.24, "printTempMin": 200, "printTempMax": 220, "bedTempMin": 40, "bedTempMax": 60, "coolingFanMin": 100, "retraction": 2.0, "retractionSpeed": 35, "notes": "Dichte ISO 1183, MFR 9-11 g/10min" },
+    { "type": "PLA", "variant": "Blend", "density": 1.24, "printTempMin": 200, "printTempMax": 220, "bedTempMin": 40, "bedTempMax": 60, "coolingFanMin": 100, "notes": "PLA Blend, Durchmesser Toleranz ±0.03mm" },
+    { "type": "PETG", "density": 1.27, "printTempMin": 220, "printTempMax": 250, "bedTempMin": 70, "bedTempMax": 90, "coolingFanMin": 50, "coolingFanMax": 80, "retraction": 2.0, "retractionSpeed": 30, "notes": "Bett 80C empfohlen" },
+    { "type": "ABS", "density": 1.04, "printTempMin": 245, "printTempMax": 265, "bedTempMin": 80, "bedTempMax": 100, "coolingFanMin": 0, "coolingFanMax": 50, "notes": "Enclosure empfohlen" },
+    { "type": "ASA", "density": 1.07, "printTempMin": 250, "printTempMax": 270, "bedTempMin": 80, "bedTempMax": 100, "coolingFanMin": 0, "coolingFanMax": 50, "notes": "UV-beständig" },
+    { "type": "PC-ABS", "density": 1.10, "printTempMin": 255, "printTempMax": 275, "bedTempMin": 90, "bedTempMax": 110, "coolingFanMin": 0, "coolingFanMax": 40, "notes": "Polycarbonat-ABS Blend, Enclosure noetig" },
+    { "type": "Nylon", "variant": "PA11 Carbon", "density": 1.14, "printTempMin": 255, "printTempMax": 275, "bedTempMin": 80, "bedTempMax": 100, "coolingFanMin": 0, "coolingFanMax": 40, "notes": "Trocknen erforderlich" }
+  ]
+}

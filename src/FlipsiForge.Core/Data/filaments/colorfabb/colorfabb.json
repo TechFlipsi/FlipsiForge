@@ -1,0 +1,68 @@
+{
+  "brand": "ColorFabb",
+  "source": "https://colorfabb.com",
+  "lastUpdated": "2026-07-21",
+  "materials": [
+    {
+      "type": "PLA",
+      "variant": "PLA/PHA",
+      "density": 1.24,
+      "printTempMin": 195,
+      "printTempMax": 220,
+      "bedTempMin": 50,
+      "bedTempMax": 70,
+      "coolingFanMin": 100,
+      "notes": "PLA/PHA Blend, tougher als reines PLA"
+    },
+    {
+      "type": "PLA",
+      "variant": "WoodFill",
+      "density": 1.28,
+      "printTempMin": 190,
+      "printTempMax": 220,
+      "bedTempMin": 50,
+      "bedTempMax": 70,
+      "notes": "20% Holzfasern"
+    },
+    {
+      "type": "PLA",
+      "variant": "BronzeFill",
+      "density": 3.5,
+      "printTempMin": 195,
+      "printTempMax": 220,
+      "bedTempMin": 50,
+      "bedTempMax": 70,
+      "notes": "80% Bronze"
+    },
+    {
+      "type": "PLA",
+      "variant": "SteelFill",
+      "density": 4.2,
+      "printTempMin": 195,
+      "printTempMax": 220,
+      "bedTempMin": 50,
+      "bedTempMax": 70,
+      "notes": "80% Stahl"
+    },
+    {
+      "type": "PETG",
+      "variant": "XT-CF20",
+      "density": 1.3,
+      "printTempMin": 240,
+      "printTempMax": 260,
+      "bedTempMin": 60,
+      "bedTempMax": 80,
+      "notes": "Carbon Fiber PETG"
+    },
+    {
+      "type": "Nylon",
+      "variant": "XT-CF20",
+      "density": 1.14,
+      "printTempMin": 260,
+      "printTempMax": 280,
+      "bedTempMin": 80,
+      "bedTempMax": 100,
+      "notes": "Nylon Carbon"
+    }
+  ]
+}
