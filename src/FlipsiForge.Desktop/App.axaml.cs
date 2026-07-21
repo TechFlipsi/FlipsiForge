@@ -60,11 +60,6 @@ public partial class App : Application
         {
             var mainWindow = new MainWindow();
             MainVm = mainWindow.DataContext as ViewModels.MainViewModel;
-
-            // Forge-Bot Timer starten, wenn in Settings enabled
-            if (settings.BotEnabled && MainVm?.ForgeBot is { } bot)
-                bot.Start();
-
             desktop.MainWindow = mainWindow;
         }
 

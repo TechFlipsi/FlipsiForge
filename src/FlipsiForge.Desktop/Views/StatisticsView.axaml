@@ -1,14 +1,125 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:FlipsiForge.Desktop.ViewModels"
              x:Class="FlipsiForge.Desktop.Views.StatisticsView"
              x:CompileBindings="False"
-             Background="#050507">
-    <Grid Margin="8">
-        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="8">
-            <TextBlock Text="📊" FontSize="48" HorizontalAlignment="Center" Opacity="0.3" />
-            <TextBlock Text="Statistik" Foreground="#666" HorizontalAlignment="Center" />
-            <TextBlock Text="Verbrauch, Erfolgsrate, Kosten, Drucker-Auslastung"
-                       Foreground="#444" FontSize="12" HorizontalAlignment="Center" />
-        </StackPanel>
+             Background="Transparent">
+
+    <UserControl.DataContext>
+        <vm:StatisticsViewModel />
+    </UserControl.DataContext>
+
+    <!-- Keine lokalen Styles — globale App.axaml Styles (.bento-card, .badge, Buttons) greifen. -->
+
+    <Grid RowDefinitions="Auto,*" Margin="16">
+
+        <!-- Header (TechFlipsi: ember header, Space Grotesk) -->
+        <Border Grid.Row="0" Background="#0a0a0f" CornerRadius="12" Padding="16,12"
+                BorderBrush="#15ff6600" BorderThickness="1" Margin="0,0,0,12">
+            <TextBlock Text="📊 Statistik" FontFamily="Space Grotesk, sans-serif"
+                       Foreground="#ff6600" FontWeight="Bold"
+                       FontSize="20" VerticalAlignment="Center" />
+        </Border>
+
+        <!-- Bento-Card Dashboard -->
+        <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Disabled">
+            <StackPanel Orientation="Vertical" Spacing="16">
+
+                <!-- KPI-Cards Reihe 1: 4 Statistik-Cards -->
+                <ItemsControl>
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <WrapPanel Orientation="Horizontal" ItemWidth="280" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+
+                    <!-- Gesamt-Drucke -->
+                    <Border Classes="bento-card" Margin="0,0,16,16" Width="260">
+                        <StackPanel Orientation="Vertical" Spacing="8">
+                            <TextBlock Text="🖨️" FontSize="28" HorizontalAlignment="Left" />
+                            <TextBlock Text="{Binding TotalPrintsDisplay}" FontFamily="Space Grotesk, sans-serif"
+                                       FontSize="28" FontWeight="Bold" Foreground="#ff6600" />
+                            <TextBlock Text="Gesamt-Drucke" FontFamily="Inter, sans-serif"
+                                       FontSize="11" Foreground="#7a7a8a" />
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Erfolgsrate -->
+                    <Border Classes="bento-card" Margin="0,0,16,16" Width="260">
+                        <StackPanel Orientation="Vertical" Spacing="8">
+                            <TextBlock Text="✅" FontSize="28" HorizontalAlignment="Left" />
+                            <TextBlock Text="{Binding SuccessRateDisplay}" FontFamily="Space Grotesk, sans-serif"
+                                       FontSize="28" FontWeight="Bold" Foreground="#22c55e" />
+                            <TextBlock Text="Erfolgsrate" FontFamily="Inter, sans-serif"
+                                       FontSize="11" Foreground="#7a7a8a" />
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Filament-Verbrauch -->
+                    <Border Classes="bento-card" Margin="0,0,16,16" Width="260">
+                        <StackPanel Orientation="Vertical" Spacing="8">
+                            <TextBlock Text="🧶" FontSize="28" HorizontalAlignment="Left" />
+                            <TextBlock Text="{Binding FilamentDisplay}" FontFamily="Space Grotesk, sans-serif"
+                                       FontSize="28" FontWeight="Bold" Foreground="#ff8533" />
+                            <TextBlock Text="Filament-Verbrauch" FontFamily="Inter, sans-serif"
+                                       FontSize="11" Foreground="#7a7a8a" />
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Gesamtkosten -->
+                    <Border Classes="bento-card" Margin="0,0,16,16" Width="260">
+                        <StackPanel Orientation="Vertical" Spacing="8">
+                            <TextBlock Text="💰" FontSize="28" HorizontalAlignment="Left" />
+                            <TextBlock Text="{Binding CostDisplay}" FontFamily="Space Grotesk, sans-serif"
+                                       FontSize="28" FontWeight="Bold" Foreground="#ff6600" />
+                            <TextBlock Text="Gesamtkosten" FontFamily="Inter, sans-serif"
+                                       FontSize="11" Foreground="#7a7a8a" />
+                        </StackPanel>
+                    </Border>
+                </ItemsControl>
+
+                <!-- Detail-Aufschlüsselung: Erfolg vs. Fehlschlag -->
+                <Border Classes="bento-card" Margin="0,0,0,16">
+                    <StackPanel Orientation="Vertical" Spacing="12">
+                        <TextBlock Text="Druck-Ergebnisse" FontFamily="Space Grotesk, sans-serif"
+                                   FontSize="14" FontWeight="SemiBold" Foreground="#e8e8ed" />
+
+                        <StackPanel Orientation="Horizontal" Spacing="24" HorizontalAlignment="Center">
+                            <StackPanel Orientation="Vertical" Spacing="4" HorizontalAlignment="Center">
+                                <TextBlock Text="{Binding SuccessfulPrints}" FontFamily="Space Grotesk, sans-serif"
+                                           FontSize="22" FontWeight="Bold" Foreground="#22c55e"
+                                           HorizontalAlignment="Center" />
+                                <TextBlock Text="Erfolgreich" FontFamily="Inter, sans-serif"
+                                           FontSize="11" Foreground="#7a7a8a"
+                                           HorizontalAlignment="Center" />
+                            </StackPanel>
+
+                            <Border Width="1" Background="#18181f" />
+
+                            <StackPanel Orientation="Vertical" Spacing="4" HorizontalAlignment="Center">
+                                <TextBlock Text="{Binding FailedPrints}" FontFamily="Space Grotesk, sans-serif"
+                                           FontSize="22" FontWeight="Bold" Foreground="#ef4444"
+                                           HorizontalAlignment="Center" />
+                                <TextBlock Text="Fehlgeschlagen" FontFamily="Inter, sans-serif"
+                                           FontSize="11" Foreground="#7a7a8a"
+                                           HorizontalAlignment="Center" />
+                            </StackPanel>
+
+                            <Border Width="1" Background="#18181f" />
+
+                            <StackPanel Orientation="Vertical" Spacing="4" HorizontalAlignment="Center">
+                                <TextBlock Text="{Binding TotalPrints}" FontFamily="Space Grotesk, sans-serif"
+                                           FontSize="22" FontWeight="Bold" Foreground="#e8e8ed"
+                                           HorizontalAlignment="Center" />
+                                <TextBlock Text="Gesamt" FontFamily="Inter, sans-serif"
+                                           FontSize="11" Foreground="#7a7a8a"
+                                           HorizontalAlignment="Center" />
+                            </StackPanel>
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+
+            </StackPanel>
+        </ScrollViewer>
     </Grid>
 </UserControl>

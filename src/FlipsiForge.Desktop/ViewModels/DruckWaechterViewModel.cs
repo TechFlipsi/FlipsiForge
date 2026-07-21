@@ -290,10 +290,8 @@ public partial class DruckWaechterViewModel : ViewModelBase
             Printers = printers.Select(p => new DruckWaechterPrinterConfig
             {
                 PrinterId = p.Id,
-                // Shelly-IP und Macros werden aus der DB/Settings geladen
-                // Für jetzt Defaults — später über PrinterDialog konfigurierbar
-                ShellyIp = null, // TODO: Printer Model um ShellyIp erweitern
-                ShellySwitchId = 0,
+                ShellyIp = p.ShellyIp, // Aus dem Printer-Model (neu hinzugefügt)
+                ShellySwitchId = p.ShellySwitchId,
                 ShutdownVerfuegbar = p.Protocol == PrinterProtocol.KlipperMoonraker,
                 ShutdownDelaySek = 60,
                 LichtMacroAn = "FLASHLIGHT_ON",

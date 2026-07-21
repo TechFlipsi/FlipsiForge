@@ -17,11 +17,11 @@
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="CornerRadius" Value="20" />
             <Setter Property="Padding" Value="24" />
-            <Setter Property="BoxShadow" Value="0 4px 16px #00000022" />
+            <Setter Property="BoxShadow" Value="0 4 16 #00000022" />
         </Style>
         <Style Selector="Border.bento-card:pointerover">
             <Setter Property="BorderBrush" Value="#40ff6600" />
-            <Setter Property="BoxShadow" Value="0 12px 40px #00000055" />
+            <Setter Property="BoxShadow" Value="0 12 40 #00000055" />
         </Style>
 
         <!-- ===== STATUS DOT ===== -->

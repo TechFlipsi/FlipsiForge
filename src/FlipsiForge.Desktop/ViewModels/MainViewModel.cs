@@ -1,15 +1,16 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// MainViewModel: Verwaltet die Sidebar-Navigation (CurrentView) und das
-// Öffnen des Settings-Overlays. Singleton für die App-Lebensdauer.
+// MainViewModel: Verwaltet die Sidebar-Navigation (CurrentView).
+// Settings ist jetzt ein eigener Tab (kein Overlay mehr).
+// ForgeBot-Overlay wurde entfernt — ForgeBot ist jetzt ein eigener Tab
+// (ehemals KI-Assistent, jetzt mit kompletter ForgeBot-Persönlichkeit).
 using Avalonia.Controls;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using FlipsiForge.Desktop.Services;
 using FlipsiForge.Desktop.Views;
 
 namespace FlipsiForge.Desktop.ViewModels;
 
-/// <summary>Haupt-ViewModel der App — Sidebar-Navigation + Settings.</summary>
+/// <summary>Haupt-ViewModel der App — Sidebar-Navigation.</summary>
 public partial class MainViewModel : ViewModelBase
 {
     /// <summary>Version (für Sidebar-Anzeige).</summary>
@@ -23,30 +24,18 @@ public partial class MainViewModel : ViewModelBase
     [ObservableProperty]
     private UserControl? _currentView;
 
-    /// <summary>True, wenn das Settings-Overlay sichtbar ist.</summary>
-    [ObservableProperty]
-    private bool _isSettingsOpen;
-
-    /// <summary>Settings-ViewModel (Singleton-Instanz).</summary>
-    public SettingsViewModel Settings { get; } = new();
-
-    /// <summary>Forge-Bot-ViewModel (für Overlay).</summary>
-    public ForgeBotViewModel ForgeBot { get; } = new();
-
-    /// <summary>Nav-Items der Sidebar.</summary>
+    /// <summary>Nav-Items der Sidebar (Drucker + DruckWächter zusammengefasst zu einem Tab).</summary>
     public IReadOnlyList<NavItem> NavItems { get; } = new List<NavItem>
     {
         new("Datei-Manager", "📁"),
-        new("Drucker", "🖨️"),
+        new("Drucker & Wächter", "🖨️"),
         new("Filament", "🧶"),
         new("Model-Repo", "🌐"),
         new("Statistik", "📊"),
         new("Kosten-Rechner", "🔥"),
-        new("DruckWächter", "🛡️"),
         new("KI-Assistent", "🤖"),
         new("Forge-Bot", "🔥")
     };
-
     public MainViewModel()
     {
         // Erste View initial setzen
@@ -63,31 +52,15 @@ public partial class MainViewModel : ViewModelBase
         CurrentViewName = viewName;
     }
 
-    /// <summary>Öffnet das Settings-Overlay.</summary>
-    [RelayCommand]
-    public void OpenSettings()
-    {
-        Settings.Reload();
-        IsSettingsOpen = true;
-    }
-
-    /// <summary>Schließt das Settings-Overlay (ohne Speichern).</summary>
-    [RelayCommand]
-    public void CloseSettings()
-    {
-        IsSettingsOpen = false;
-    }
-
     /// <summary>Erzeugt eine View-Instanz anhand ihres Namens.</summary>
     private static UserControl? BuildView(string name) => name switch
     {
         "Datei-Manager" => new FileManagerView(),
-        "Drucker" => new PrinterView(),
+        "Drucker & Wächter" => new CombinedPrinterView(),
         "Filament" => new FilamentView(),
         "Model-Repo" => new ModelRepoView(),
         "Statistik" => new StatisticsView(),
         "Kosten-Rechner" => new CostCalculatorView(),
-        "DruckWächter" => new DruckWaechterView(),
         "KI-Assistent" => new AiAssistantView(),
         "Forge-Bot" => new ForgeBotView(),
         _ => null

@@ -22,6 +22,12 @@ public class Printer
     public DateTime? LastMaintenanceDate { get; set; }
     public decimal TotalPrintHours { get; set; }
     public string? Notes { get; set; }
+
+    // === DruckWächter / Shelly Integration ===
+    /// <summary>IP-Adresse des Shelly-Geräts das diesen Drucker schaltet (z.B. "192.168.178.60"). Null = kein Shelly zugewiesen.</summary>
+    public string? ShellyIp { get; set; }
+    /// <summary>Shelly Switch-Kanal-ID (Shelly Plus 1PM = 0, default 0).</summary>
+    public int ShellySwitchId { get; set; } = 0;
 }
 
 /// <summary>Eine Filament-Spule im Inventar.</summary>

@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Desktop-interne KI-Chat-Engine-Abstraktion (Stub-Fallback).
+using FlipsiForge.Core.Models;
+
 namespace FlipsiForge.Desktop.Services;
 
 /// <summary>Ein einzelner Streaming-Chunk der KI-Antwort.</summary>
@@ -19,6 +21,9 @@ public interface IAIChatEngine
     /// <summary>Liefert true, wenn ein Modell geladen und einsatzbereit ist.</summary>
     bool IsModelLoaded { get; }
 
+    /// <summary>Lädt ein KI-Modell asynchron (Stub tut nichts). Best-Effort: wirft nicht.</summary>
+    Task LoadModelAsync(AiModelChoice modelChoice, CancellationToken ct = default);
+
     /// <summary>Streamt eine Antwort als <see cref="IAsyncEnumerable{T}"/> (C# 8).</summary>
     IAsyncEnumerable<AiChatChunk> StreamAsync(string userPrompt, CancellationToken ct = default);
 }
@@ -32,6 +37,10 @@ public sealed class StubAIChatEngine : IAIChatEngine
 {
     /// <inheritdoc />
     public bool IsModelLoaded => false;
+
+    /// <inheritdoc />
+    public Task LoadModelAsync(AiModelChoice modelChoice, CancellationToken ct = default)
+        => Task.CompletedTask;  // Stub: kein Modell ladbar — Best-Effort, wirft nicht
 
     /// <inheritdoc />
     public async IAsyncEnumerable<AiChatChunk> StreamAsync(string userPrompt, [System.Runtime.CompilerServices.EnumeratorCancellation] System.Threading.CancellationToken ct = default)

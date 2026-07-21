@@ -17,11 +17,11 @@
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="CornerRadius" Value="20" />
             <Setter Property="Padding" Value="24" />
-            <Setter Property="BoxShadow" Value="0 4px 16px #00000022" />
+            <Setter Property="BoxShadow" Value="0 4 16 #00000022" />
         </Style>
         <Style Selector="Border.bento-card:pointerover">
             <Setter Property="BorderBrush" Value="#40ff6600" />
-            <Setter Property="BoxShadow" Value="0 12px 40px #00000055" />
+            <Setter Property="BoxShadow" Value="0 12 40 #00000055" />
         </Style>
 
         <!-- ===== STATUS DOT ===== -->
@@ -74,7 +74,7 @@
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="CornerRadius" Value="20" />
             <Setter Property="Padding" Value="24" />
-            <Setter Property="BoxShadow" Value="0 24px 60px #00000066" />
+            <Setter Property="BoxShadow" Value="0 24 60 #00000066" />
         </Style>
         <Style Selector="Border.modal-item">
             <Setter Property="Background" Value="#111116" />

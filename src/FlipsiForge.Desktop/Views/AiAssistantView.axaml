@@ -9,114 +9,74 @@
         <vm:AiAssistantViewModel />
     </UserControl.DataContext>
 
-    <UserControl.Styles>
-        <Style Selector="Button">
-            <Setter Property="Background" Value="#1a1a2e" />
-            <Setter Property="Foreground" Value="#fff" />
-            <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="CornerRadius" Value="4" />
-            <Setter Property="Padding" Value="12,8" />
-        </Style>
-        <Style Selector="Button.primary">
-            <Setter Property="Background" Value="#ff6600" />
-            <Setter Property="Foreground" Value="#050507" />
-            <Setter Property="FontWeight" Value="Bold" />
-        </Style>
-        <Style Selector="TextBox">
-            <Setter Property="Background" Value="#0a0a0f" />
-            <Setter Property="BorderBrush" Value="#1a1a2e" />
-            <Setter Property="Foreground" Value="#fff" />
-            <Setter Property="CornerRadius" Value="4" />
-            <Setter Property="Padding" Value="10,8" />
-        </Style>
-        <Style Selector="Border.usermsg">
-            <Setter Property="Background" Value="#1a1a2e" />
-            <Setter Property="BorderBrush" Value="#1a1a2e" />
-            <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="CornerRadius" Value="8" />
-            <Setter Property="Padding" Value="12,8" />
-            <Setter Property="HorizontalAlignment" Value="Right" />
-            <Setter Property="MaxWidth" Value="500" />
-            <Setter Property="Margin" Value="0,4,40,4" />
-        </Style>
-        <Style Selector="Border.aimsg">
-            <Setter Property="Background" Value="#0a0a0f" />
-            <Setter Property="BorderBrush" Value="#ff6600" />
-            <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="CornerRadius" Value="8" />
-            <Setter Property="Padding" Value="12,8" />
-            <Setter Property="HorizontalAlignment" Value="Left" />
-            <Setter Property="MaxWidth" Value="500" />
-            <Setter Property="Margin" Value="40,4,0,4" />
-        </Style>
-        <Style Selector="Border.banner">
-            <Setter Property="Background" Value="#3a1a1a" />
-            <Setter Property="BorderBrush" Value="#ff6600" />
-            <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="CornerRadius" Value="6" />
-            <Setter Property="Padding" Value="12,8" />
-            <Setter Property="Margin" Value="0,0,0,10" />
-        </Style>
-    </UserControl.Styles>
+    <!-- Keine lokalen Styles mehr — globale Styles aus App.axaml greifen automatisch.
+         .usermsg / .botmsg Bento-Style Farben hier inline. -->
 
     <Grid RowDefinitions="Auto,Auto,*,Auto" Margin="16">
 
-        <!-- Header -->
-        <Border Grid.Row="0" Background="#0a0a0f" CornerRadius="6" Padding="14,10" Margin="0,0,0,10">
+        <!-- Header (TechFlipsi: ember header, Space Grotesk) -->
+        <Border Grid.Row="0" Background="#0a0a0f" CornerRadius="12" Padding="16,12"
+                BorderBrush="#15ff6600" BorderThickness="1" Margin="0,0,0,10">
             <Grid ColumnDefinitions="*,Auto">
                 <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
-                    <TextBlock Text="🤖 Drucker-Assistent" Foreground="#ff6600" FontWeight="Bold"
+                    <TextBlock Text="🤖 Drucker-Assistent" FontFamily="Space Grotesk, sans-serif"
+                               Foreground="#ff6600" FontWeight="Bold"
                                FontSize="18" VerticalAlignment="Center" />
-                    <Border Background="#1a1a2e" CornerRadius="10" Padding="10,3">
-                        <TextBlock Text="{Binding ModelBadge}" Foreground="#aaa" FontSize="11"
+                    <Border Classes="badge" VerticalAlignment="Center">
+                        <TextBlock Text="{Binding ModelBadge}" Foreground="#7a7a8a" FontSize="11"
                                    VerticalAlignment="Center" />
                     </Border>
                 </StackPanel>
             </Grid>
         </Border>
 
-        <!-- Banner: KI deaktiviert -->
-        <Border Grid.Row="1" Classes="banner" IsVisible="{Binding AiDisabled}">
+        <!-- Banner: KI deaktiviert (Bento-Style) -->
+        <Border Grid.Row="1" Classes="bento-sm" IsVisible="{Binding AiDisabled}" Margin="0,0,0,10">
             <StackPanel Orientation="Horizontal" Spacing="10">
                 <TextBlock Text="⚠️" FontSize="18" VerticalAlignment="Center" />
                 <TextBlock Text="KI ist in Einstellungen deaktiviert — aktivieren zum Nutzen"
-                           Foreground="#fff" VerticalAlignment="Center" />
+                           Foreground="#e8e8ed" VerticalAlignment="Center" />
             </StackPanel>
         </Border>
 
-        <!-- Banner: Modell nicht geladen -->
-        <Border Grid.Row="1" Classes="banner"
-                IsVisible="{Binding ModelNotLoaded}"
-                Background="#0a0a0f">
+        <!-- Banner: Modell nicht geladen (Bento-Style) -->
+        <Border Grid.Row="1" Classes="bento-sm"
+                IsVisible="{Binding ModelNotLoaded}" Margin="0,0,0,10">
             <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
                 <TextBlock Text="💡" FontSize="18" VerticalAlignment="Center" />
-                <TextBlock Text="KI-Modell nicht geladen." Foreground="#fff" VerticalAlignment="Center" />
-                <Button Content="Modell konfigurieren" Classes="primary"
-                        Command="{Binding ConfigureModelCommand}"
-                        Padding="10,4" FontSize="12" />
+                <TextBlock Text="KI-Modell nicht geladen." Foreground="#e8e8ed" VerticalAlignment="Center" />
+                <Button Classes="primary" Content="Modell konfigurieren"
+                        Command="{Binding ConfigureModelCommand}" />
             </StackPanel>
         </Border>
 
-        <!-- Chat-Verlauf -->
-        <Border Grid.Row="2" Background="#050507" BorderBrush="#1a1a2e" BorderThickness="1"
-                CornerRadius="6" Margin="0,0,0,10">
-            <ScrollViewer x:Name="ChatScroll" Padding="8">
+        <!-- Chat-Verlauf (Bento-Card Container) -->
+        <Border Grid.Row="2" Classes="bento-sm" Margin="0,0,0,10">
+            <ScrollViewer x:Name="ChatScroll">
                 <ItemsControl ItemsSource="{Binding Messages}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate DataType="{x:Type vm:ChatRowVm}">
                             <Panel>
-                                <!-- User (rechts) -->
-                                <Border Classes="usermsg" IsVisible="{Binding IsUser}">
+                                <!-- User (rechts) — Bento-Style Farbe: surface-2 bg, ember border -->
+                                <Border IsVisible="{Binding IsUser}"
+                                        Background="#111116" BorderBrush="#15ff6600" BorderThickness="1"
+                                        CornerRadius="12" Padding="12,8"
+                                        HorizontalAlignment="Right" MaxWidth="500"
+                                        Margin="0,4,40,4">
                                     <StackPanel Spacing="2">
-                                        <TextBlock Text="{Binding Content}" Foreground="#fff" TextWrapping="Wrap" />
-                                        <TextBlock Text="{Binding TimeDisplay}" Foreground="#666" FontSize="10"
+                                        <TextBlock Text="{Binding Content}" Foreground="#e8e8ed" TextWrapping="Wrap" />
+                                        <TextBlock Text="{Binding TimeDisplay}" Foreground="#7a7a8a" FontSize="10"
                                                    HorizontalAlignment="Right" />
                                     </StackPanel>
                                 </Border>
-                                <!-- AI (links) -->
-                                <Border Classes="aimsg" IsVisible="{Binding IsAssistant}">
+                                <!-- AI (links) — Bento-Style Farbe: surface bg, ember accent border -->
+                                <Border IsVisible="{Binding IsAssistant}"
+                                        Background="#0c0c10" BorderBrush="#ff6600" BorderThickness="1"
+                                        CornerRadius="12" Padding="12,8"
+                                        HorizontalAlignment="Left" MaxWidth="500"
+                                        Margin="40,4,0,4">
                                     <StackPanel Spacing="2">
-                                        <TextBlock Text="{Binding Content}" Foreground="#fff" TextWrapping="Wrap" />
+                                        <TextBlock Text="{Binding Content}" Foreground="#e8e8ed" TextWrapping="Wrap" />
                                         <TextBlock Text="{Binding TimeDisplay}" Foreground="#ff6600" FontSize="10"
                                                    HorizontalAlignment="Left" />
                                     </StackPanel>
@@ -128,7 +88,7 @@
             </ScrollViewer>
         </Border>
 
-        <!-- Eingabe -->
+        <!-- Eingabe (pill-shaped Send-Button via globale Button-Styles) -->
         <Grid Grid.Row="3" ColumnDefinitions="*,Auto,Auto">
             <TextBox Grid.Column="0" Text="{Binding Input}" PlaceholderText="Frage an den Drucker-Assistenten..."
                      KeyUp="Input_KeyUp" />

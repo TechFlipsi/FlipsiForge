@@ -51,6 +51,9 @@ public partial class PrinterDialog : Window
         var mh = this.FindControl<NumericUpDown>("MaxHotendBox"); if (mh != null) mh.Value = _printer.MaxHotendTemp;
         var mb = this.FindControl<NumericUpDown>("MaxBedBox"); if (mb != null) mb.Value = _printer.MaxBedTemp;
         var notes = this.FindControl<TextBox>("NotesBox"); if (notes != null) notes.Text = _printer.Notes ?? "";
+        // Shelly
+        var shellyIp = this.FindControl<TextBox>("ShellyIpBox"); if (shellyIp != null) shellyIp.Text = _printer.ShellyIp ?? "";
+        var shellySwitch = this.FindControl<NumericUpDown>("ShellySwitchIdBox"); if (shellySwitch != null) shellySwitch.Value = _printer.ShellySwitchId;
     }
 
     private void SaveToPrinter()
@@ -71,6 +74,9 @@ public partial class PrinterDialog : Window
         var mh = this.FindControl<NumericUpDown>("MaxHotendBox"); if (mh != null) _printer.MaxHotendTemp = (int)(mh.Value ?? 300);
         var mb = this.FindControl<NumericUpDown>("MaxBedBox"); if (mb != null) _printer.MaxBedTemp = (int)(mb.Value ?? 120);
         var notes = this.FindControl<TextBox>("NotesBox"); if (notes != null) _printer.Notes = string.IsNullOrWhiteSpace(notes.Text) ? null : notes.Text;
+        // Shelly
+        var shellyIp = this.FindControl<TextBox>("ShellyIpBox"); if (shellyIp != null) _printer.ShellyIp = string.IsNullOrWhiteSpace(shellyIp.Text) ? null : shellyIp.Text;
+        var shellySwitch = this.FindControl<NumericUpDown>("ShellySwitchIdBox"); if (shellySwitch != null) _printer.ShellySwitchId = (int)(shellySwitch.Value ?? 0);
     }
 
     private void Save_Click(object? sender, RoutedEventArgs e)

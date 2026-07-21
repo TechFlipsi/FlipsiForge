@@ -62,6 +62,7 @@
                             <Style Selector="^:selected /template/ ContentPresenter#PART_ContentPresenter">
                                 <Setter Property="Background" Value="#22ff6600" />
                                 <Setter Property="Foreground" Value="#ff6600" />
+                                <Setter Property="FontWeight" Value="Bold" />
                             </Style>
                         </ControlTheme>
                     </ListBox.ItemContainerTheme>
@@ -72,24 +73,10 @@
                     </ListBox.ItemTemplate>
                 </ListBox>
 
-                <!-- Settings-Button unten -->
-                <Border Grid.Row="2" Padding="8,8" Background="#050507" BorderBrush="#15ff6600" BorderThickness="0,1,0,0">
-                    <Button Background="Transparent"
-                            Foreground="#7a7a8a"
-                            BorderThickness="0"
-                            CornerRadius="8"
-                            Padding="16,12"
-                            HorizontalAlignment="Stretch"
-                            HorizontalContentAlignment="Left"
-                            FontFamily="Space Grotesk, sans-serif"
-                            FontSize="14"
-                            FontWeight="SemiBold"
-                            Command="{Binding OpenSettingsCommand}">
-                        <StackPanel Orientation="Horizontal" Spacing="10">
-                            <TextBlock Text="⚙️" FontSize="16" VerticalAlignment="Center" />
-                            <TextBlock Text="Einstellungen" FontSize="14" VerticalAlignment="Center" />
-                        </StackPanel>
-                    </Button>
+                <!-- Footer: nur Versionsinfo, kein Settings-Button mehr -->
+                <Border Grid.Row="2" Padding="16,10" Background="#050507" BorderBrush="#15ff6600" BorderThickness="0,1,0,0">
+                    <TextBlock Text="TechFlipsi · GPL-3.0" FontFamily="Space Grotesk, sans-serif"
+                               FontSize="10" Foreground="#55555f" HorizontalAlignment="Center" />
                 </Border>
             </Grid>
         </Border>
@@ -98,48 +85,6 @@
         <Grid Grid.Column="1" Background="#050507">
             <!-- Content-Bereich (vom MainViewModel gesetzt) -->
             <ContentControl Content="{Binding CurrentView}" />
-
-            <!-- Forge-Bot Overlay (immer da, über Content) -->
-            <views:ForgeBotView Width="140" Height="180"
-                                VerticalAlignment="Bottom"
-                                HorizontalAlignment="Right"
-                                Margin="0,0,10,10"
-                                IsHitTestVisible="True"
-                                DataContext="{Binding ForgeBot}" />
-
-            <!-- ===== SETTINGS OVERLAY ===== -->
-            <Border Background="#80000000"
-                    IsVisible="{Binding IsSettingsOpen}"
-                    ZIndex="100">
-                <Grid Margin="40">
-                    <Border Background="#0a0a0f"
-                            CornerRadius="20"
-                            BorderBrush="#40ff6600"
-                            BorderThickness="1"
-                            BoxShadow="0 24px 60px #00000066">
-                        <Grid RowDefinitions="Auto,*">
-                            <!-- Settings-Header -->
-                            <Border Grid.Row="0" Background="#050507" Padding="24,16"
-                                    BorderBrush="#15ff6600" BorderThickness="0,0,0,1">
-                                <Grid ColumnDefinitions="*,Auto">
-                                    <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="12">
-                                        <TextBlock Text="⚙️" FontSize="24" VerticalAlignment="Center" />
-                                        <TextBlock Text="Einstellungen" FontFamily="Space Grotesk, sans-serif"
-                                                   FontSize="20" FontWeight="Bold"
-                                                   Foreground="#ff6600" VerticalAlignment="Center" />
-                                    </StackPanel>
-                                    <Button Grid.Column="1" Content="✕ Schließen"
-                                            Command="{Binding CloseSettingsCommand}" />
-                                </Grid>
-                            </Border>
-                            <!-- Settings-Inhalt -->
-                            <ScrollViewer Grid.Row="1" Padding="24">
-                                <views:SettingsView DataContext="{Binding Settings}" />
-                            </ScrollViewer>
-                        </Grid>
-                    </Border>
-                </Grid>
-            </Border>
         </Grid>
     </Grid>
 </Window>

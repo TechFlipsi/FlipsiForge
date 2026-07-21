@@ -99,6 +99,20 @@
                 </Grid>
                 <TextBlock Text="Notizen" Foreground="#ff6600" FontWeight="Bold" Margin="0,8,0,2" />
                 <TextBox x:Name="NotesBox" AcceptsReturn="True" Height="80" TextWrapping="Wrap" />
+
+                <!-- === DruckWächter / Shelly === -->
+                <TextBlock Text="DruckWächter (Shelly)" Foreground="#ff6600" FontWeight="Bold" Margin="0,12,0,2" />
+                <TextBlock Text="Shelly-IP eintragen um den Drucker automatisch auszuschalten."
+                           Foreground="#7a7a8a" FontSize="11" Margin="0,0,0,4" />
+                <Grid ColumnDefinitions="180,*">
+                    <TextBlock Grid.Column="0" Classes="label" Text="Shelly IP-Adresse" />
+                    <TextBox Grid.Column="1" x:Name="ShellyIpBox" PlaceholderText="z.B. 192.168.178.60" />
+                </Grid>
+                <Grid ColumnDefinitions="180,*">
+                    <TextBlock Grid.Column="0" Classes="label" Text="Shelly Switch-Kanal" />
+                    <NumericUpDown Grid.Column="1" x:Name="ShellySwitchIdBox"
+                                   Minimum="0" Maximum="10" Value="0" />
+                </Grid>
             </StackPanel>
         </ScrollViewer>
 

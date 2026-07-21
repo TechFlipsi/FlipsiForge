@@ -64,6 +64,23 @@ public partial class AiAssistantViewModel : ViewModelBase
         _settings = settings;
         LoadHistory();
         UpdateModelBadge();
+
+        // KI-Modell automatisch laden beim Tab-Betritt (wenn KI aktiviert)
+        if (_settings.AiEnabled && !_engine.IsModelLoaded)
+        {
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    await _engine.LoadModelAsync(_settings.AiModel);
+                    await Dispatcher.UIThread.InvokeAsync(() => UpdateModelBadge());
+                }
+                catch
+                {
+                    // Best-effort — Stub-Engine hat kein Modell
+                }
+            });
+        }
     }
 
     private void UpdateModelBadge()

@@ -1,14 +1,133 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:FlipsiForge.Desktop.ViewModels"
              x:Class="FlipsiForge.Desktop.Views.CostCalculatorView"
              x:CompileBindings="False"
-             Background="#050507">
-    <Grid Margin="8">
-        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="8">
-            <TextBlock Text="🔥" FontSize="48" HorizontalAlignment="Center" Opacity="0.3" />
-            <TextBlock Text="Druck-Kosten-Rechner" Foreground="#666" HorizontalAlignment="Center" />
-            <TextBlock Text="Filament + Strom + Verschleiß = Gesamtkosten"
-                       Foreground="#444" FontSize="12" HorizontalAlignment="Center" />
-        </StackPanel>
+             Background="Transparent">
+
+    <UserControl.DataContext>
+        <vm:CostCalculatorViewModel />
+    </UserControl.DataContext>
+
+    <!-- Keine lokalen Styles — globale App.axaml Styles (.bento-card, .badge, TextBox, Button) greifen. -->
+
+    <Grid RowDefinitions="Auto,*" Margin="16">
+
+        <!-- Header (TechFlipsi: ember header, Space Grotesk) -->
+        <Border Grid.Row="0" Background="#0a0a0f" CornerRadius="12" Padding="16,12"
+                BorderBrush="#15ff6600" BorderThickness="1" Margin="0,0,0,12">
+            <TextBlock Text="🔥 Druck-Kosten-Rechner" FontFamily="Space Grotesk, sans-serif"
+                       Foreground="#ff6600" FontWeight="Bold"
+                       FontSize="20" VerticalAlignment="Center" />
+        </Border>
+
+        <!-- Content: Eingabefelder + Ergebnis -->
+        <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Disabled">
+            <StackPanel Orientation="Vertical" Spacing="16">
+
+                <!-- Eingabefelder Bento-Card -->
+                <Border Classes="bento-card">
+                    <StackPanel Orientation="Vertical" Spacing="16">
+
+                        <TextBlock Text="Eingabewerte" FontFamily="Space Grotesk, sans-serif"
+                                   FontSize="14" FontWeight="SemiBold" Foreground="#e8e8ed" />
+
+                        <!-- Filament-Spulenauswahl -->
+                        <StackPanel Orientation="Vertical" Spacing="6">
+                            <TextBlock Text="Filament-Spule" FontFamily="Space Grotesk, sans-serif"
+                                       FontSize="12" FontWeight="SemiBold" Foreground="#7a7a8a" />
+                            <ComboBox ItemsSource="{Binding SpoolOptions}"
+                                      SelectedItem="{Binding SelectedSpool}"
+                                      HorizontalAlignment="Stretch"
+                                      PlaceholderText="Spule wählen..." />
+                        </StackPanel>
+
+                        <!-- Filament-Verbrauch -->
+                        <StackPanel Orientation="Vertical" Spacing="6">
+                            <TextBlock Text="Filament-Verbrauch (g)" FontFamily="Space Grotesk, sans-serif"
+                                       FontSize="12" FontWeight="SemiBold" Foreground="#7a7a8a" />
+                            <TextBox Text="{Binding FilamentUsedG}" HorizontalAlignment="Stretch" />
+                        </StackPanel>
+
+                        <!-- Druckdauer -->
+                        <StackPanel Orientation="Vertical" Spacing="6">
+                            <TextBlock Text="Druckdauer (Stunden)" FontFamily="Space Grotesk, sans-serif"
+                                       FontSize="12" FontWeight="SemiBold" Foreground="#7a7a8a" />
+                            <TextBox Text="{Binding PrintHours}" HorizontalAlignment="Stretch" />
+                        </StackPanel>
+
+                        <!-- 2-Spalten Grid: Strompreis + Stromverbrauch -->
+                        <Grid ColumnDefinitions="*,16,*">
+                            <StackPanel Grid.Column="0" Orientation="Vertical" Spacing="6">
+                                <TextBlock Text="Strompreis (€/kWh)" FontFamily="Space Grotesk, sans-serif"
+                                           FontSize="12" FontWeight="SemiBold" Foreground="#7a7a8a" />
+                                <TextBox Text="{Binding PowerPrice}" HorizontalAlignment="Stretch" />
+                            </StackPanel>
+                            <StackPanel Grid.Column="2" Orientation="Vertical" Spacing="6">
+                                <TextBlock Text="Stromverbrauch (W)" FontFamily="Space Grotesk, sans-serif"
+                                           FontSize="12" FontWeight="SemiBold" Foreground="#7a7a8a" />
+                                <TextBox Text="{Binding PowerConsumptionW}" HorizontalAlignment="Stretch" />
+                            </StackPanel>
+                        </Grid>
+
+                        <!-- Verschleiß -->
+                        <StackPanel Orientation="Vertical" Spacing="6">
+                            <TextBlock Text="Verschleiß (€/h)" FontFamily="Space Grotesk, sans-serif"
+                                       FontSize="12" FontWeight="SemiBold" Foreground="#7a7a8a" />
+                            <TextBox Text="{Binding WearCostPerHour}" HorizontalAlignment="Stretch" />
+                        </StackPanel>
+
+                    </StackPanel>
+                </Border>
+
+                <!-- Ergebnis-Card -->
+                <Border Classes="bento-card" BorderBrush="#40ff6600">
+                    <StackPanel Orientation="Vertical" Spacing="14">
+
+                        <TextBlock Text="Ergebnis" FontFamily="Space Grotesk, sans-serif"
+                                   FontSize="14" FontWeight="SemiBold" Foreground="#ff6600" />
+
+                        <!-- Gesamtkosten (große Zahl) -->
+                        <StackPanel Orientation="Vertical" Spacing="2" HorizontalAlignment="Center">
+                            <TextBlock Text="{Binding TotalCostDisplay}" FontFamily="Space Grotesk, sans-serif"
+                                       FontSize="36" FontWeight="Bold" Foreground="#ff6600"
+                                       HorizontalAlignment="Center" />
+                            <TextBlock Text="Gesamtkosten" FontFamily="Inter, sans-serif"
+                                       FontSize="11" Foreground="#7a7a8a"
+                                       HorizontalAlignment="Center" />
+                        </StackPanel>
+
+                        <!-- Aufschlüsselung -->
+                        <Border BorderBrush="#15ff6600" BorderThickness="0,1,0,0" Padding="0,12,0,0">
+                            <StackPanel Orientation="Vertical" Spacing="8">
+                                <Grid ColumnDefinitions="*,Auto">
+                                    <TextBlock Grid.Column="0" Text="🧶 Filament" FontFamily="Inter, sans-serif"
+                                               FontSize="13" Foreground="#e8e8ed" VerticalAlignment="Center" />
+                                    <TextBlock Grid.Column="1" Text="{Binding FilamentCostDisplay}"
+                                               FontFamily="Space Grotesk, sans-serif" FontSize="14"
+                                               FontWeight="SemiBold" Foreground="#ff8533" />
+                                </Grid>
+                                <Grid ColumnDefinitions="*,Auto">
+                                    <TextBlock Grid.Column="0" Text="⚡ Strom" FontFamily="Inter, sans-serif"
+                                               FontSize="13" Foreground="#e8e8ed" VerticalAlignment="Center" />
+                                    <TextBlock Grid.Column="1" Text="{Binding PowerCostDisplay}"
+                                               FontFamily="Space Grotesk, sans-serif" FontSize="14"
+                                               FontWeight="SemiBold" Foreground="#ff8533" />
+                                </Grid>
+                                <Grid ColumnDefinitions="*,Auto">
+                                    <TextBlock Grid.Column="0" Text="🔧 Verschleiß" FontFamily="Inter, sans-serif"
+                                               FontSize="13" Foreground="#e8e8ed" VerticalAlignment="Center" />
+                                    <TextBlock Grid.Column="1" Text="{Binding WearCostDisplay}"
+                                               FontFamily="Space Grotesk, sans-serif" FontSize="14"
+                                               FontWeight="SemiBold" Foreground="#ff8533" />
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+
+                    </StackPanel>
+                </Border>
+
+            </StackPanel>
+        </ScrollViewer>
     </Grid>
 </UserControl>

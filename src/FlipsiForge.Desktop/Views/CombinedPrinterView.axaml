@@ -1,0 +1,19 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:views="using:FlipsiForge.Desktop.Views"
+             x:Class="FlipsiForge.Desktop.Views.CombinedPrinterView"
+             x:CompileBindings="False"
+             Background="Transparent">
+
+    <!-- Kombinierte View: Drucker-Karten + DruckWächter-Controls.
+         Zeigt beide Views zusammen in einem ScrollViewer (Drucker oben, Wächter unten). -->
+
+    <ScrollViewer HorizontalScrollBarVisibility="Disabled">
+        <StackPanel Orientation="Vertical" Spacing="0">
+            <!-- Drucker-Karten -->
+            <views:PrinterView />
+            <!-- DruckWächter-Controls -->
+            <views:DruckWaechterView />
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>
