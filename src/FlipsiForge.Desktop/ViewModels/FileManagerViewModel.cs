@@ -84,8 +84,12 @@ public partial class FileManagerViewModel : ViewModelBase
     private string _selectedFilter = "Alle";
     public string SelectedFilter { get => _selectedFilter; set => SetProperty(ref _selectedFilter, value); }
 
-    private bool _autoScan;
+    private bool _autoScan = true; // Auto-Scan ist immer AN — kein Toggle
     public bool AutoScan { get => _autoScan; set => SetProperty(ref _autoScan, value); }
+
+    /// <summary>True während ein Scan läuft (für UI Spinner).</summary>
+    [ObservableProperty]
+    private bool _isScanning;
 
     public FileManagerViewModel() : this(ServiceLocator.CreateDb(), ServiceLocator.Require<ISearchService>()) { }
 
@@ -94,6 +98,18 @@ public partial class FileManagerViewModel : ViewModelBase
         _db = db;
         _search = search;
         Load();
+        // Auto-Scan beim Start — kompletten PC nach 3D-Druck-Dateien durchsuchen
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await ScanAllDrivesAsync();
+            }
+            catch
+            {
+                // Best-effort — UI bleibt sichtbar
+            }
+        });
     }
 
     /// <summary>Lädt alle Dateien aus der DB und initialisiert Filter-Badges.</summary>
@@ -174,12 +190,107 @@ public partial class FileManagerViewModel : ViewModelBase
         row.Refresh();
     }
 
-    /// <summary>Öffnet einen Ordner-Dialog und fügt ihn zu WatchFolders hinzu.</summary>
-    [RelayCommand]
-    public async Task BrowseFolderAsync()
+    /// <summary>Durchsucht alle Laufwerke nach 3D-Druck-Dateien (STL, 3MF, GCODE, OBJ).</summary>
+    public async Task ScanAllDrivesAsync()
     {
-        // Stub: nur Signal an UI; Core.Services kümmert sich später um echten Scan.
-        await Task.CompletedTask;
+        IsScanning = true;
+        try
+        {
+            await Task.Run(() =>
+            {
+                // Alle Laufwerke ermitteln
+                var drives = System.IO.DriveInfo.GetDrives()
+                    .Where(d => d.IsReady && (d.DriveType == System.IO.DriveType.Fixed))
+                    .Select(d => d.RootDirectory.FullName)
+                    .ToList();
+
+                // Bekannte Dateierweiterungen
+                var extensions = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+                { ".stl", ".3mf", ".gcode", ".obj" };
+
+                var found = new System.Collections.Concurrent.ConcurrentBag<ScannedFile>();
+
+                // Parallele Suche auf allen Laufwerken
+                System.Threading.Tasks.Parallel.ForEach(drives, drive =>
+                {
+                    try
+                    {
+                        ScanDirectory(drive, extensions, found);
+                    }
+                    catch
+                    {
+                        // Best-effort — manche Ordner sind nicht zugänglich
+                    }
+                });
+
+                // Gefundene Dateien in DB speichern (nur neue)
+                var existingPaths = _db.ScannedFiles.Select(f => f.Path).ToHashSet();
+                foreach (var file in found)
+                {
+                    if (!existingPaths.Contains(file.Path))
+                    {
+                        _db.ScannedFiles.Add(file);
+                    }
+                }
+                _db.SaveChanges();
+            });
+        }
+        finally
+        {
+            IsScanning = false;
+        }
+    }
+
+    /// <summary>Rekursive Verzeichnis-Suche nach 3D-Druck-Dateien.</summary>
+    private static void ScanDirectory(string dir, HashSet<string> extensions,
+        System.Collections.Concurrent.ConcurrentBag<ScannedFile> found)
+    {
+        // System- und versteckte Ordner überspringen
+        var skipDirs = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        { "windows", "program files", "program files (x86)", "$recycle.bin",
+          "system volume information", "programdata", "appdata", ".git", "node_modules" };
+
+        try
+        {
+            // Dateien im aktuellen Verzeichnis prüfen
+            foreach (var f in System.IO.Directory.EnumerateFiles(dir, "*", System.IO.SearchOption.TopDirectoryOnly))
+            {
+                var ext = System.IO.Path.GetExtension(f);
+                if (extensions.Contains(ext))
+                {
+                    var info = new System.IO.FileInfo(f);
+                    found.Add(new ScannedFile
+                    {
+                        FileName = System.IO.Path.GetFileName(f),
+                        Path = f,
+                        Extension = ext,
+                        FileSizeBytes = info.Length,
+                        LastModified = info.LastWriteTimeUtc
+                    });
+                }
+            }
+        }
+        catch { }
+
+        // Unterverzeichnisse durchsuchen
+        try
+        {
+            foreach (var sub in System.IO.Directory.EnumerateDirectories(dir, "*", System.IO.SearchOption.TopDirectoryOnly))
+            {
+                var name = System.IO.Path.GetFileName(sub);
+                if (skipDirs.Contains(name)) continue;
+                ScanDirectory(sub, extensions, found);
+            }
+        }
+        catch { }
+    }
+
+    /// <summary>Manuellen Scan auslösen (gleiche wie Auto-Scan).</summary>
+    [RelayCommand]
+    public async Task RescanAsync()
+    {
+        await ScanAllDrivesAsync();
+        Load();
     }
 
     /// <summary>Sortiert die Datei-Liste nach der gewählten Sortier-Option.</summary>

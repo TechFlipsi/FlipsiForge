@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // MainViewModel: Verwaltet die Sidebar-Navigation (CurrentView).
-// Settings ist jetzt ein eigener Tab (kein Overlay mehr).
-// ForgeBot-Overlay wurde entfernt — ForgeBot ist jetzt ein eigener Tab
-// (ehemals KI-Assistent, jetzt mit kompletter ForgeBot-Persönlichkeit).
+// Settings ist ein eigener Tab. ForgeBot-Overlay entfernt.
+// KI-Assistent heisst jetzt ForgeBot (mit kompletter ForgeBot-Persönlichkeit).
+// Drucker + DruckWächter zusammengefasst zu "Drucker" (PrinterView hat beides).
 using Avalonia.Controls;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -24,21 +24,21 @@ public partial class MainViewModel : ViewModelBase
     [ObservableProperty]
     private UserControl? _currentView;
 
-    /// <summary>Nav-Items der Sidebar (Drucker + DruckWächter zusammengefasst zu einem Tab).</summary>
+    /// <summary>Nav-Items der Sidebar.</summary>
     public IReadOnlyList<NavItem> NavItems { get; } = new List<NavItem>
     {
         new("Datei-Manager", "📁"),
-        new("Drucker & Wächter", "🖨️"),
+        new("Drucker", "🖨️"),
         new("Filament", "🧶"),
         new("Model-Repo", "🌐"),
         new("Statistik", "📊"),
         new("Kosten-Rechner", "🔥"),
-        new("KI-Assistent", "🤖"),
-        new("Forge-Bot", "🔥")
+        new("ForgeBot", "🤖"),
+        new("Einstellungen", "⚙️")
     };
+
     public MainViewModel()
     {
-        // Erste View initial setzen
         _currentView = BuildView("Datei-Manager");
     }
 
@@ -56,13 +56,13 @@ public partial class MainViewModel : ViewModelBase
     private static UserControl? BuildView(string name) => name switch
     {
         "Datei-Manager" => new FileManagerView(),
-        "Drucker & Wächter" => new CombinedPrinterView(),
+        "Drucker" => new PrinterView(),
         "Filament" => new FilamentView(),
         "Model-Repo" => new ModelRepoView(),
         "Statistik" => new StatisticsView(),
         "Kosten-Rechner" => new CostCalculatorView(),
-        "KI-Assistent" => new AiAssistantView(),
-        "Forge-Bot" => new ForgeBotView(),
+        "ForgeBot" => new AiAssistantView(),
+        "Einstellungen" => new SettingsView(),
         _ => null
     };
 }

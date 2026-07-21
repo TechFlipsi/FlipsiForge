@@ -85,7 +85,15 @@ public partial class AiAssistantViewModel : ViewModelBase
 
     private void UpdateModelBadge()
     {
-        ModelBadge = _engine.IsModelLoaded ? "✓ Modell geladen" : "⚠ Modell nicht geladen";
+        ModelBadge = _engine switch
+        {
+            { IsModelLoaded: true } => $"✓ Modell geladen ({_engine.LoadedModel})",
+            { DownloadState: Services.ModelDownloadState.Downloading } =>
+                $"⏳ Download... {_engine.DownloadProgress:F0}%",
+            { DownloadState: Services.ModelDownloadState.Installing } => "⏳ Installiere...",
+            { DownloadState: Services.ModelDownloadState.Failed } => "✗ Download fehlgeschlagen",
+            _ => "⚠ Modell nicht geladen"
+        };
     }
 
     private void LoadHistory()

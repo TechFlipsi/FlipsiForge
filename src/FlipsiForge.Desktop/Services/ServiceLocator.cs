@@ -32,7 +32,7 @@ public static class ServiceLocator
         if (Get<ISearchService>() is null)
             Register<ISearchService>(new DesktopStubSearchService(() => new FlipsiForgeDbContext()));
         if (Get<IAIChatEngine>() is null)
-            Register<IAIChatEngine>(new StubAIChatEngine());
+            Register<IAIChatEngine>(new OnnxAIChatEngine());
         if (Get<IPrinterService>() is null)
             Register<IPrinterService>(new StubPrinterService());
     }
