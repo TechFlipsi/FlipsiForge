@@ -129,35 +129,14 @@
                 <!-- 2. Datei-Manager -->
                 <Expander Header="📁 Datei-Manager">
                     <StackPanel>
-                        <TextBlock Text="Scan-Ordner" Foreground="#ff6600" FontWeight="Bold" />
-                        <Grid ColumnDefinitions="*,Auto,Auto" Margin="0,4">
-                            <TextBox Text="{Binding NewScanFolder}" PlaceholderText="Pfad eingeben..." />
-                            <Button Grid.Column="1" Content="+" Command="{Binding AddScanFolderCommand}" Margin="6,0,0,0" />
-                        </Grid>
-                        <ItemsControl ItemsSource="{Binding ScanFolders}" Margin="0,6,0,8">
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate>
-                                    <Grid ColumnDefinitions="*,Auto" Margin="0,2">
-                                        <TextBlock Text="{Binding}" Foreground="#fff" VerticalAlignment="Center" />
-                                        <Button Grid.Column="1" Content="✕" Padding="6,2" FontSize="11"
-                                                Command="{Binding $parent[UserControl].DataContext.RemoveScanFolderCommand}"
-                                                CommandParameter="{Binding}" />
-                                    </Grid>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
+                        <TextBlock Text="FlipsiForge scannt automatisch den gesamten PC nach 3D-Druck-Dateien."
+                                   Foreground="#7a7a8a" FontSize="12" TextWrapping="Wrap" Margin="0,4,0,8" />
                         <WrapPanel>
                             <CheckBox Content="STL" IsChecked="{Binding ScanStl}" Margin="0,0,16,0" />
                             <CheckBox Content="3MF" IsChecked="{Binding Scan3mf}" Margin="0,0,16,0" />
                             <CheckBox Content="GCODE" IsChecked="{Binding ScanGcode}" Margin="0,0,16,0" />
                             <CheckBox Content="OBJ" IsChecked="{Binding ScanObj}" />
                         </WrapPanel>
-                        <CheckBox Content="Auto-Scan aktiv" IsChecked="{Binding AutoScan}" Margin="0,8,0,4" />
-                        <Grid ColumnDefinitions="220,*" Margin="0,4">
-                            <TextBlock Text="Scan-Intervall (Min.)" VerticalAlignment="Center" Foreground="#aaa" />
-                            <NumericUpDown Grid.Column="1" Value="{Binding ScanIntervalMinutes}"
-                                           Minimum="1" Maximum="1440" />
-                        </Grid>
                         <Grid ColumnDefinitions="220,*" Margin="0,4">
                             <TextBlock Text="Standard-Ansicht" VerticalAlignment="Center" Foreground="#aaa" />
                             <ComboBox Grid.Column="1">
@@ -210,10 +189,12 @@
                     </StackPanel>
                 </Expander>
 
-                <!-- 5. KI-Assistent -->
-                <Expander Header="🤖 KI-Assistent">
+                <!-- 5. KI-Assistent (ForgeBot) -->
+                <Expander Header="🤖 ForgeBot KI">
                     <StackPanel>
                         <CheckBox Content="KI Hauptschalter AN" IsChecked="{Binding AiEnabled}" Margin="0,0,0,8" />
+                        <TextBlock Text="Das Modell wird automatisch beim Start heruntergeladen. Die Software waehlt basierend auf dem verfuegbaren RAM automatisch (E4B ab 8GB, E2B 4-8GB, E2BQAT unter 4GB). Beim Wechsel wird das alte Modell geloescht und das neue heruntergeladen."
+                                   Foreground="#7a7a8a" FontSize="11" TextWrapping="Wrap" Margin="0,4,0,8" />
                         <Grid ColumnDefinitions="220,*" Margin="0,4">
                             <TextBlock Text="Modell" VerticalAlignment="Center" Foreground="#aaa" />
                             <ComboBox Grid.Column="1" ItemsSource="{Binding AiModelOptions}"
@@ -234,38 +215,6 @@
                         <Grid ColumnDefinitions="160,*" Margin="0,4">
                             <TextBlock Text="Ollama URL" VerticalAlignment="Center" Foreground="#aaa" />
                             <TextBox Grid.Column="1" Text="{Binding OllamaUrl}" PlaceholderText="http://localhost:11434" />
-                        </Grid>
-                        <Grid ColumnDefinitions="160,*" Margin="0,4">
-                            <TextBlock Text="Modell-Download-Pfad" VerticalAlignment="Center" Foreground="#aaa" />
-                            <TextBox Grid.Column="1" Text="{Binding ModelDownloadPath}"
-                                     PlaceholderText="~/.flipsiforge/models" />
-                        </Grid>
-                    </StackPanel>
-                </Expander>
-
-                <!-- 6. Forge-Bot -->
-                <Expander Header="🤖 Forge-Bot">
-                    <StackPanel>
-                        <CheckBox Content="Bot AN" IsChecked="{Binding BotEnabled}" Margin="0,0,0,8" />
-                        <Grid ColumnDefinitions="220,*" Margin="0,4">
-                            <TextBlock Text="Frequenz" VerticalAlignment="Center" Foreground="#aaa" />
-                            <ComboBox Grid.Column="1" ItemsSource="{Binding BotFrequencyOptions}"
-                                      SelectedItem="{Binding BotFrequency}" />
-                        </Grid>
-                        <Grid ColumnDefinitions="220,120,120" Margin="0,4">
-                            <TextBlock Text="Nicht stören" VerticalAlignment="Center" Foreground="#aaa" />
-                            <TextBox Grid.Column="1" Text="{Binding BotDndStart}" PlaceholderText="22:00" />
-                            <TextBox Grid.Column="2" Text="{Binding BotDndEnd}" PlaceholderText="07:00" Margin="6,0,0,0" />
-                        </Grid>
-                        <Grid ColumnDefinitions="220,*" Margin="0,4">
-                            <TextBlock Text="Position" VerticalAlignment="Center" Foreground="#aaa" />
-                            <ComboBox Grid.Column="1" ItemsSource="{Binding BotPositionOptions}"
-                                      SelectedItem="{Binding BotPosition}" />
-                        </Grid>
-                        <Grid ColumnDefinitions="220,*" Margin="0,4">
-                            <TextBlock Text="Sprache" VerticalAlignment="Center" Foreground="#aaa" />
-                            <ComboBox Grid.Column="1" ItemsSource="{Binding BotLanguageOptions}"
-                                      SelectedItem="{Binding BotLanguage}" />
                         </Grid>
                     </StackPanel>
                 </Expander>

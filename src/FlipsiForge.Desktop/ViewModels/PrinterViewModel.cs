@@ -75,7 +75,8 @@ public partial class PrinterViewModel : ViewModelBase
     {
         _db = db;
         _printerService = printerService;
-        Load();
+        try { Load(); }
+        catch { /* DB-Fehler nicht fatal — UI zeigt leer */ }
     }
 
     /// <summary>Lädt alle Drucker aus der DB.</summary>
