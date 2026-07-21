@@ -4,11 +4,12 @@
         xmlns:views="using:FlipsiForge.Desktop.Views"
         x:Class="FlipsiForge.Desktop.MainWindow"
         x:CompileBindings="False"
-        Title="FlipsiForge v0.4.0"
+        Title="FlipsiForge v0.4.1"
         Width="1280" Height="800"
         MinWidth="1024" MinHeight="600"
         Background="#050507"
-        WindowStartupLocation="CenterScreen">
+        WindowStartupLocation="CenterScreen"
+        Icon="avares://FlipsiForge.Desktop/Assets/flipsiforge.ico">
 
     <Window.DataContext>
         <vm:MainViewModel />

@@ -5,7 +5,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <ApplicationManifest>app.manifest</ApplicationManifest>
-    <Version>0.2.0</Version>
+    <Version>0.4.1</Version>
     <Company>TechFlipsi</Company>
     <Authors>Fabian Kirchweger</Authors>
     <Product>FlipsiForge</Product>
@@ -31,6 +31,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <AvaloniaResource Include="Assets\**\*" />
+  <AvaloniaResource Include="Assets\**\*" />
+  </ItemGroup>
+
+  <ItemGroup>
+  <None Update="Assets\flipsiforge.ico" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>

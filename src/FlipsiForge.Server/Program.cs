@@ -1,4 +1,4 @@
-// FlipsiForge.Server — v0.2.0
+// FlipsiForge.Server — v0.4.1
 // ASP.NET Core 10 Minimal API — Full + Lite Mode
 //
 // v0.2.0 Endpoints:

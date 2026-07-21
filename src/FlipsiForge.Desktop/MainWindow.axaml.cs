@@ -16,9 +16,12 @@ public partial class MainWindow : Window
     /// <summary>Behandelt die Auswahl eines Sidebar-Eintrags und wechselt die View.</summary>
     private void NavList_SelectionChanged(object? sender, SelectionChangedEventArgs e)
     {
+        // WICHTIG: Dieser Event feuert während InitializeComponent() (XamlIlPopulate),
+        // BEVOR DataContext gesetzt wird. Daher müssen wir auf null prüfen, um
+        // NullReferenceException beim App-Start zu vermeiden.
         if (DataContext is not MainViewModel vm) return;
         if (NavList.SelectedItem is not NavItem item) return;
-        // Verhindere Rekursion: nur SwitchView rufen, wenn Name differiert
+        // Verhindere Rekursion: nur switchen, wenn Name differiert
         if (vm.CurrentViewName != item.Name)
             vm.SwitchViewCommand.Execute(item.Name);
     }

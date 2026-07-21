@@ -3,7 +3,7 @@
 ; Kompilieren: iscc installer/flipsiforge.iss (vom Repo-Root)
 
 #define MyAppName "FlipsiForge"
-#define MyAppVersion "0.4.0"
+#define MyAppVersion "0.4.1"
 #define MyAppPublisher "TechFlipsi (Fabian Kirchweger)"
 #define MyAppURL "https://techflipsi.at"
 #define MyAppExeName "FlipsiForge.Desktop.exe"
@@ -20,13 +20,15 @@ DefaultDirName={autopf}\FlipsiForge
 DefaultGroupName=FlipsiForge
 DisableProgramGroupPage=yes
 OutputDir=..\dist
-OutputBaseFilename=FlipsiForge-0.4.0-win-x64-setup
+OutputBaseFilename=FlipsiForge-0.4.1-win-x64-setup
 Compression=lzma2
 SolidCompression=yes
 WizardStyle=modern
 ArchitecturesInstallIn64BitMode=x64
 ArchitecturesAllowed=x64
 LicenseFile=..\LICENSE
+SetupIconFile=..\src\FlipsiForge.Desktop\Assets\flipsiforge.ico
+UninstallDisplayIcon={app}\{#MyAppExeName}
 
 [Languages]
 Name: "german"; MessagesFile: "compiler:Languages\German.isl"
