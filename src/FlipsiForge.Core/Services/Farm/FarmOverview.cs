@@ -79,11 +79,11 @@ public readonly struct FarmOverview
                 .CountAsync(cancellationToken)
                 .ConfigureAwait(false);
 
-            // Error-Drucker = Drucker mit fehlgeschlagenen PrintJobs (Approximation)
+            // P8: 1.18 — Error-Drucker = Drucker deren LETZTER Job fehlgeschlagen ist (nicht "jemals")
             var errorPrinters = await db.PrintJobs
                 .Where(j => j.Status == PrintJobStatus.Failed)
-                .Select(j => j.PrinterId)
-                .Distinct()
+                .GroupBy(j => j.PrinterId)
+                .Where(g => g.OrderByDescending(j => j.QueuedAt).First().Status == PrintJobStatus.Failed)
                 .CountAsync(cancellationToken)
                 .ConfigureAwait(false);
 

@@ -77,7 +77,6 @@ public sealed class FileScanner
 
         var hashedSet = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         var results = new ConcurrentBag<ScannedFile>();
-        var counter = 1;
 
         await Parallel.ForEachAsync(allFiles, parallelOpts, async (file, ct) =>
         {
@@ -85,6 +84,7 @@ public sealed class FileScanner
             {
                 var sf = new ScannedFile
                 {
+                    // P8: 1.13 — Id nicht selbst vergeben (0 = DB überlässt es)
                     FileName = file.Name,
                     Path = file.Path,
                     Extension = file.Ext,
@@ -124,11 +124,6 @@ public sealed class FileScanner
                         // Embedding-Fehler ist nicht fatal
                     }
                 }
-
-                // Id konsistent zuweisen (Thread-safe)
-                int id;
-                lock (results) { id = counter++; }
-                sf.Id = id;
 
                 results.Add(sf);
             }

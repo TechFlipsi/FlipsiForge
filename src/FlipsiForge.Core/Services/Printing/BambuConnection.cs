@@ -176,7 +176,7 @@ public sealed class BambuConnection : IPrinterConnection, IAsyncDisposable
                 .WithPayload(payload)
                 .Build();
             await _client.PublishAsync(msg, CancellationToken.None).ConfigureAwait(false);
-            return !requireConfirmation;
+            return true; // P3: 1.3 — Transport-Erfolg melden, requireConfirmation nicht invertieren
         }
         catch
         {
@@ -227,8 +227,14 @@ public sealed class BambuConnection : IPrinterConnection, IAsyncDisposable
             var options = new MqttClientOptionsBuilder()
                 .WithTcpServer(_host, _port)
                 .WithClientId($"flipsiforge_{_serial}")
-                .WithCredentials($"bblp:{_serial}", _accessCode)
-                .WithTlsOptions(o => o.UseTls()) // Bambu braucht TLS
+                .WithCredentials("bblp", _accessCode) // P3: 1.6 — Username ist "bblp", NICHT "bblp:{serial}"
+                .WithTlsOptions(o =>
+                {
+                    o.UseTls();
+                    // P3: 1.6 — Bambu LAN nutzt selbstsignierte Zertifikate.
+                    // TLS-Validierung muss abgeschwächt werden für LAN-Modus.
+                    o.WithCertificateValidationHandler(_ => true);
+                })
                 .Build();
 
             _client.ApplicationMessageReceivedAsync += OnMessageReceived;

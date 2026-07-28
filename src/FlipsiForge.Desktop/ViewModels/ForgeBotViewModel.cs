@@ -134,12 +134,18 @@ public partial class ForgeBotViewModel : ViewModelBase
         }
     }
 
+    private CancellationTokenSource? _messageHideCts; // P8: 1.23 — pro Nachricht eigener CTS
+
     /// <summary>Zeigt eine Sprechblasen-Nachricht für 5-10 Sekunden.</summary>
     public void ShowMessage(string text)
     {
         CurrentMessage = text;
         IsMessageVisible = true;
         _lastMessageAt = DateTime.UtcNow;
+
+        // P8: 1.23 — vorherigen Auto-Hide-Timer abbrechen bevor neuer startet
+        _messageHideCts?.Cancel();
+        _messageHideCts = new CancellationTokenSource();
 
         // In DB/JSON loggen
         try
@@ -153,16 +159,18 @@ public partial class ForgeBotViewModel : ViewModelBase
         }
         catch { }
 
-        // Auto-hide nach 5-10 Sekunden
-        var dur = new Random().Next(5000, 10000);
-        _ = Task.Delay(dur).ContinueWith(t =>
+        // Auto-hide nach 5-10 Sekunden — mit CTS damit neue Nachricht alten Timer cancelt
+        var dur = Random.Shared.Next(5000, 10000); // P8: 4.3 — Random.Shared statt new Random()
+        var token = _messageHideCts.Token;
+        _ = Task.Delay(dur, token).ContinueWith(t =>
         {
+            if (t.IsCanceled) return; // neue Nachricht hat diesen Timer abgebrochen
             Dispatcher.UIThread.Post(() =>
             {
                 IsMessageVisible = false;
                 CurrentMessage = null;
             });
-        });
+        }, TaskScheduler.Default);
     }
 
     private static string Categorize(string text)

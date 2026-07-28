@@ -201,8 +201,8 @@ public partial class SpoolDialog : Window
         SetNud("CostBox", _spool.CostEur);
         var dp = this.FindControl<DatePicker>("PurchaseDatePicker");
         if (dp != null) dp.SelectedDate = _spool.PurchaseDate;
-        SetNud("HotendTempBox", _spool.RecommendedHotendTemp);
-        SetNud("BedTempBox", _spool.RecommendedBedTemp);
+        SetNudInt("HotendTempBox", _spool.RecommendedHotendTemp);
+        SetNudInt("BedTempBox", _spool.RecommendedBedTemp);
         Set("QrBox", _spool.QrCode ?? "");
         Set("NfcBox", _spool.NfcTag ?? "");
         Set("NotesBox", _spool.Notes ?? "");
@@ -455,6 +455,10 @@ public partial class SpoolDialog : Window
     private void SetNud(string name, decimal value)
     {
         if (this.FindControl<NumericUpDown>(name) is NumericUpDown n) n.Value = value;
+    }
+    private void SetNudInt(string name, int? value)
+    {
+        if (value.HasValue && this.FindControl<NumericUpDown>(name) is NumericUpDown n) n.Value = value.Value;
     }
     private decimal GetNud(string name, decimal fallback)
         => this.FindControl<NumericUpDown>(name) is NumericUpDown n && n.Value.HasValue ? n.Value.Value : fallback;

@@ -3,7 +3,6 @@
 // Format-Filter, Ansicht (List/Grid), Sortierung, Favorit & Häufigkeit.
 using System.Collections.ObjectModel;
 using Avalonia.Media;
-using Avalonia.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using FlipsiForge.Core.Data;
@@ -12,7 +11,7 @@ using FlipsiForge.Desktop.Services;
 
 namespace FlipsiForge.Desktop.ViewModels;
 
-/// <summary>Display-Row fuer eine gescannte Datei inkl. Usage-Infos + Thumbnail.</summary>
+/// <summary>Display-Row für eine gescannte Datei inkl. Usage-Infos.</summary>
 public sealed class FileRowVm : ObservableObject
 {
     public ScannedFile File { get; }
@@ -27,30 +26,6 @@ public sealed class FileRowVm : ObservableObject
     public string FavoriteGlyph => IsFavorite ? "★" : "☆";
     public string Extension => File.Extension;
     public bool IsAiHit { get; set; }
-
-    private Bitmap? _thumbnail;
-    /// <summary>Thumbnail-Bild (STL/3MF/OBJ gerendert, andere = null).</summary>
-    public Bitmap? Thumbnail
-    {
-        get => _thumbnail;
-        set { _thumbnail = value; OnPropertyChanged(); OnPropertyChanged(nameof(HasThumbnail)); }
-    }
-    public bool HasThumbnail => _thumbnail != null;
-
-    /// <summary>Emoji-Icon basierend auf Dateierweiterung (Fallback wenn kein Thumbnail).</summary>
-    public string FileIcon => File.Extension?.ToLowerInvariant() switch
-    {
-        ".stl" => "📐",
-        ".3mf" => "📦",
-        ".gcode" => "⚙️",
-        ".gco" => "⚙️",
-        ".obj" => "📐",
-        ".ply" => "📐",
-        ".step" => "📐",
-        ".stp" => "📐",
-        ".amf" => "📦",
-        _ => "📄"
-    };
 
     public FileRowVm(ScannedFile f, FileUsageEntry u)
     {
@@ -83,10 +58,10 @@ public partial class FileManagerViewModel : ViewModelBase
     private readonly FlipsiForgeDbContext _db;
     private readonly ISearchService _search;
 
-    /// <summary>Alle geladenen Dateien (Display-Rows, ungefiltert).</summary>
+    /// <summary>Alle geladenen Dateien (Display-Rows).</summary>
     public ObservableCollection<FileRowVm> Files { get; } = new();
 
-    /// <summary> Gefilterte Dateien (Liste + Format-Filter + Suche). Die UI bindet daran.</summary>
+    /// <summary>P8: 1.15 — Gefilterte+sortierte Dateien (UI bindet daran, nicht an Files).</summary>
     public ObservableCollection<FileRowVm> FilteredFiles { get; } = new();
 
     /// <summary>Filter-Badges als (Name, Count)-Tupel.</summary>
@@ -106,22 +81,14 @@ public partial class FileManagerViewModel : ViewModelBase
     public string SearchText
     {
         get => _searchText;
-        set { SetProperty(ref _searchText, value); ApplyFilterAndSearch(); }
+        set { SetProperty(ref _searchText, value); ApplyFilterAndSearch(); } // P8: 1.15 — auto-filter on change
     }
 
     private string _selectedFilter = "Alle";
-    public string SelectedFilter
-    {
-        get => _selectedFilter;
-        set { SetProperty(ref _selectedFilter, value); ApplyFilterAndSearch(); }
-    }
+    public string SelectedFilter { get => _selectedFilter; set => SetProperty(ref _selectedFilter, value); }
 
-    private bool _autoScan = true; // Auto-Scan ist immer AN — kein Toggle
+    private bool _autoScan;
     public bool AutoScan { get => _autoScan; set => SetProperty(ref _autoScan, value); }
-
-    /// <summary>True während ein Scan läuft (für UI Spinner).</summary>
-    [ObservableProperty]
-    private bool _isScanning;
 
     public FileManagerViewModel() : this(ServiceLocator.CreateDb(), ServiceLocator.Require<ISearchService>()) { }
 
@@ -130,21 +97,9 @@ public partial class FileManagerViewModel : ViewModelBase
         _db = db;
         _search = search;
         Load();
-        // Auto-Scan beim Start — kompletten PC nach 3D-Druck-Dateien durchsuchen
-        _ = Task.Run(async () =>
-        {
-            try
-            {
-                await ScanAllDrivesAsync();
-            }
-            catch
-            {
-                // Best-effort — UI bleibt sichtbar
-            }
-        });
     }
 
-    /// <summary>Lädt alle Dateien aus der DB und generiert Thumbnails.</summary>
+    /// <summary>Lädt alle Dateien aus der DB und initialisiert Filter-Badges.</summary>
     public void Load()
     {
         Files.Clear();
@@ -152,37 +107,11 @@ public partial class FileManagerViewModel : ViewModelBase
         foreach (var f in _db.ScannedFiles.ToList())
         {
             var u = FileUsageStore.GetOrNew(usage, f.Id);
-            var row = new FileRowVm(f, u);
-            // Thumbnail asynchron generieren
-            _ = LoadThumbnailAsync(row);
-            Files.Add(row);
+            Files.Add(new FileRowVm(f, u));
         }
         FileUsageStore.SaveAll(usage);
         RebuildFilterBadges();
-        ApplyFilterAndSearch(); // FilteredFiles initial befuellen
-    }
-
-    /// <summary>Generiert Thumbnail fuer eine Datei asynchron.</summary>
-    private async Task LoadThumbnailAsync(FileRowVm row)
-    {
-        // Nur STL/3MF/OBJ rendern
-        var ext = row.File.Extension?.ToLowerInvariant();
-        if (ext != ".stl" && ext != ".3mf" && ext != ".obj") return;
-
-        await Task.Run(() =>
-        {
-            try
-            {
-                var thumb = StlThumbnailService.GetOrGenerate(
-                    row.File.Path,
-                    row.File.LastModified.Ticks);
-                if (thumb != null)
-                {
-                    Avalonia.Threading.Dispatcher.UIThread.Post(() => row.Thumbnail = thumb);
-                }
-            }
-            catch { /* Best-effort */ }
-        });
+        ApplyFilterAndSearch(); // P8: 1.15 — FilteredFiles initial befüllen
     }
 
     private void RebuildFilterBadges()
@@ -196,71 +125,71 @@ public partial class FileManagerViewModel : ViewModelBase
     }
 
     private static bool MatchesExt(FileRowVm f, string ext)
-        => f.File.Extension?.Equals(ext, StringComparison.OrdinalIgnoreCase) == true;
+    {
+        // P8: 1.14 — Format normalisieren: beide Seiten ohne Punkt, Case-insensitive
+        var normalized = ext.TrimStart('.').ToUpperInvariant();
+        return f.File.Extension?.Equals(normalized, StringComparison.OrdinalIgnoreCase) == true;
+    }
 
     /// <summary>Setzt einen Filter aktiv (von Badge-Klick).</summary>
     [RelayCommand]
     public void ApplyFilter(string filter)
     {
         SelectedFilter = filter;
-        // ApplyFilterAndSearch() wird durch SelectedFilter Setter aufgerufen
+        ApplyFilterAndSearch(); // P8: 1.15 — Filter auf Liste anwenden
     }
 
-    /// <summary>Wendet Format-Filter UND Textsuche kombiniert an.</summary>
-    private void ApplyFilterAndSearch()
+    /// <summary>P8: 1.15 — Kombiniert Format-Filter + Textsuche und aktualisiert FilteredFiles.</summary>
+    public void ApplyFilterAndSearch()
     {
         FilteredFiles.Clear();
-        var searchLower = (SearchText ?? "").Trim().ToLowerInvariant();
-        var hasSearch = !string.IsNullOrWhiteSpace(searchLower);
+        var filtered = Files.AsEnumerable();
 
-        foreach (var f in Files)
+        // Format-Filter
+        if (!string.IsNullOrEmpty(SelectedFilter) && SelectedFilter != "Alle")
         {
-            // 1. Format-Filter pruefen
-            if (_selectedFilter != "Alle")
-            {
-                var filterExt = _selectedFilter.ToLowerInvariant() switch
-                {
-                    "stl" => ".stl",
-                    "3mf" => ".3mf",
-                    "gcode" => ".gcode",
-                    "obj" => ".obj",
-                    _ => null
-                };
-                if (filterExt != null && !f.File.Extension?.Equals(filterExt, StringComparison.OrdinalIgnoreCase) == true)
-                    continue;
-            }
-
-            // 2. Textsuche pruefen (Fuzzy auf Dateiname)
-            if (hasSearch)
-            {
-                var nameLower = (f.Name ?? "").ToLowerInvariant();
-                var pathLower = (f.Path ?? "").ToLowerInvariant();
-                // Simple Contains-Matching — schnell und zuverlaessig
-                if (!nameLower.Contains(searchLower) && !pathLower.Contains(searchLower))
-                {
-                    // KI-Treffer pruefen (falls KI-Suche Ergebnisse geliefert hat)
-                    if (!f.IsAiHit) continue;
-                }
-            }
-
-            FilteredFiles.Add(f);
+            var ext = SelectedFilter.TrimStart('.').ToUpperInvariant();
+            filtered = filtered.Where(f => f.File.Extension?.Equals(ext, StringComparison.OrdinalIgnoreCase) == true);
         }
+
+        // Textsuche (Filename)
+        if (!string.IsNullOrWhiteSpace(SearchText))
+        {
+            var lower = SearchText.ToLowerInvariant();
+            filtered = filtered.Where(f =>
+                f.File.FileName?.ToLowerInvariant().Contains(lower) == true ||
+                f.IsAiHit);
+        }
+
+        // Sortierung
+        filtered = SelectedSort switch
+        {
+            "Name ↑" => filtered.OrderBy(f => f.File.FileName),
+            "Name ↓" => filtered.OrderByDescending(f => f.File.FileName),
+            "Datum ↓" => filtered.OrderByDescending(f => f.File.LastModified),
+            "Datum ↑" => filtered.OrderBy(f => f.File.LastModified),
+            "Größe ↓" => filtered.OrderByDescending(f => f.File.FileSizeBytes),
+            "Größe ↑" => filtered.OrderBy(f => f.File.FileSizeBytes),
+            _ => filtered
+        };
+
+        foreach (var f in filtered)
+            FilteredFiles.Add(f);
     }
 
-    /// <summary>Fuehrt die KI-Suche aus (Bedeutungssuche via ISearchService) + aktualisiert Filter.</summary>
+    /// <summary>Führt die Suche aus (Filename-Stub + optional KI-Suche via ISearchService).</summary>
     [RelayCommand]
     public async Task SearchAsync()
     {
         if (string.IsNullOrWhiteSpace(SearchText))
         {
+            // Reset: alle Dateien anzeigen, kein AI-Hit
             foreach (var f in Files) f.IsAiHit = false;
-            ApplyFilterAndSearch();
             return;
         }
 
         try
         {
-            // KI-Suche im Hintergrund (Stub liefert leer — echte KI kommt mit Gemma 4)
             var results = await _search.SearchAsync(SearchText);
             var hits = results.ToDictionary(r => r.FileId);
             foreach (var f in Files)
@@ -268,11 +197,8 @@ public partial class FileManagerViewModel : ViewModelBase
         }
         catch
         {
-            // Fallback: nur Dateinamen-Suche
+            // Fallback: kein Filter — Benutzer kann weiterarbeiten
         }
-
-        // Filter aktualisieren (inkl. KI-Treffer)
-        ApplyFilterAndSearch();
     }
 
     /// <summary>Öffnet den Datei-Öffnen-Dialog und incrementiert Usage.</summary>
@@ -295,107 +221,12 @@ public partial class FileManagerViewModel : ViewModelBase
         row.Refresh();
     }
 
-    /// <summary>Durchsucht alle Laufwerke nach 3D-Druck-Dateien (STL, 3MF, GCODE, OBJ).</summary>
-    public async Task ScanAllDrivesAsync()
-    {
-        IsScanning = true;
-        try
-        {
-            await Task.Run(() =>
-            {
-                // Alle Laufwerke ermitteln
-                var drives = System.IO.DriveInfo.GetDrives()
-                    .Where(d => d.IsReady && (d.DriveType == System.IO.DriveType.Fixed))
-                    .Select(d => d.RootDirectory.FullName)
-                    .ToList();
-
-                // Bekannte Dateierweiterungen
-                var extensions = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
-                { ".stl", ".3mf", ".gcode", ".obj" };
-
-                var found = new System.Collections.Concurrent.ConcurrentBag<ScannedFile>();
-
-                // Parallele Suche auf allen Laufwerken
-                System.Threading.Tasks.Parallel.ForEach(drives, drive =>
-                {
-                    try
-                    {
-                        ScanDirectory(drive, extensions, found);
-                    }
-                    catch
-                    {
-                        // Best-effort — manche Ordner sind nicht zugänglich
-                    }
-                });
-
-                // Gefundene Dateien in DB speichern (nur neue)
-                var existingPaths = _db.ScannedFiles.Select(f => f.Path).ToHashSet();
-                foreach (var file in found)
-                {
-                    if (!existingPaths.Contains(file.Path))
-                    {
-                        _db.ScannedFiles.Add(file);
-                    }
-                }
-                _db.SaveChanges();
-            });
-        }
-        finally
-        {
-            IsScanning = false;
-        }
-    }
-
-    /// <summary>Rekursive Verzeichnis-Suche nach 3D-Druck-Dateien.</summary>
-    private static void ScanDirectory(string dir, HashSet<string> extensions,
-        System.Collections.Concurrent.ConcurrentBag<ScannedFile> found)
-    {
-        // System- und versteckte Ordner überspringen
-        var skipDirs = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
-        { "windows", "program files", "program files (x86)", "$recycle.bin",
-          "system volume information", "programdata", "appdata", ".git", "node_modules" };
-
-        try
-        {
-            // Dateien im aktuellen Verzeichnis prüfen
-            foreach (var f in System.IO.Directory.EnumerateFiles(dir, "*", System.IO.SearchOption.TopDirectoryOnly))
-            {
-                var ext = System.IO.Path.GetExtension(f);
-                if (extensions.Contains(ext))
-                {
-                    var info = new System.IO.FileInfo(f);
-                    found.Add(new ScannedFile
-                    {
-                        FileName = System.IO.Path.GetFileName(f),
-                        Path = f,
-                        Extension = ext,
-                        FileSizeBytes = info.Length,
-                        LastModified = info.LastWriteTimeUtc
-                    });
-                }
-            }
-        }
-        catch { }
-
-        // Unterverzeichnisse durchsuchen
-        try
-        {
-            foreach (var sub in System.IO.Directory.EnumerateDirectories(dir, "*", System.IO.SearchOption.TopDirectoryOnly))
-            {
-                var name = System.IO.Path.GetFileName(sub);
-                if (skipDirs.Contains(name)) continue;
-                ScanDirectory(sub, extensions, found);
-            }
-        }
-        catch { }
-    }
-
-    /// <summary>Manuellen Scan auslösen (gleiche wie Auto-Scan).</summary>
+    /// <summary>Öffnet einen Ordner-Dialog und fügt ihn zu WatchFolders hinzu.</summary>
     [RelayCommand]
-    public async Task RescanAsync()
+    public async Task BrowseFolderAsync()
     {
-        await ScanAllDrivesAsync();
-        Load();
+        // Stub: nur Signal an UI; Core.Services kümmert sich später um echten Scan.
+        await Task.CompletedTask;
     }
 
     /// <summary>Sortiert die Datei-Liste nach der gewählten Sortier-Option.</summary>

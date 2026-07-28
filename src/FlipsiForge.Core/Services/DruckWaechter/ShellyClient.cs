@@ -23,8 +23,8 @@ public readonly struct ShellySwitchStatus
     public decimal? PowerW { get; init; }
 
     /// <summary>
-    /// Kumulierter Energieverbrauch in kWh (nur bei Power-Meter Modellen).
-    /// Null wenn das Gerät kein PM hat.
+    /// Kumulierter Energieverbrauch in kWh.
+    /// P8: 1.16 — Shelly liefert aenergy.total in Wattstunden (Wh), nicht kWh!
     /// </summary>
     public decimal? EnergyKWh { get; init; }
 
@@ -126,7 +126,7 @@ public sealed class ShellyClient
             {
                 On = isOn,
                 PowerW = powerW,
-                EnergyKWh = energy
+                EnergyKWh = energy.HasValue ? energy.Value / 1000m : null // P8: 1.16 — Wh → kWh (Shelly liefert Wh, nicht kWh)
             };
         }
         catch

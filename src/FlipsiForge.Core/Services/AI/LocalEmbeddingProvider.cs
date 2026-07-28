@@ -106,7 +106,8 @@ public sealed class LocalEmbeddingProvider : IEmbeddingProvider
                     var output = results.FirstOrDefault()?.AsTensor<float>();
                     if (output is null) return Array.Empty<float>();
 
-                    return MeanPool(output).ToArray();
+                    // P4: 1.12 — MeanPool mit Attention-Mask aufrufen (3D-Index + Mask-Gewichtung)
+                    return MeanPool(output, attentionMask.ToArray());
                 }
             }).ConfigureAwait(false);
         }
@@ -118,22 +119,29 @@ public sealed class LocalEmbeddingProvider : IEmbeddingProvider
 
     /// <summary>
     /// Mean-Pooling über Sequence-Dimension.
+    /// P4: 1.12 — Korrekte 3D-Indexierung [1, seq, dim] + Attention-Mask-Gewichtung.
     /// </summary>
-    private static IEnumerable<float> MeanPool<T>(Tensor<T> tensor) where T : unmanaged
+    private static float[] MeanPool(Tensor<float> tensor, long[]? attentionMask = null)
     {
-        // Tensor shape: [1, seq, dim] — wir mitteln über seq
         var dims = tensor.Dimensions;
-        if (dims.Length != 3) yield break;
+        if (dims.Length != 3) return Array.Empty<float>();
         int seq = dims[1], dim = dims[2];
+        var result = new float[dim];
         for (int d = 0; d < dim; d++)
         {
             float sum = 0;
+            int count = 0;
             for (int s = 0; s < seq; s++)
             {
-                if (tensor[s, d] is float f) sum += f;
+                // Attention-Mask: nur Padding-Token mit 0 gewichten
+                if (attentionMask is not null && s < attentionMask.Length && attentionMask[s] == 0)
+                    continue;
+                sum += tensor[0, s, d];
+                count++;
             }
-            yield return sum / seq;
+            result[d] = count > 0 ? sum / count : 0;
         }
+        return result;
     }
 
     /// <summary>

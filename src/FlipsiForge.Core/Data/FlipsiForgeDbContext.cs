@@ -49,19 +49,23 @@ public class FlipsiForgeDbContext : DbContext
                 Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
                 "FlipsiForge", "flipsiforge.db");
             Directory.CreateDirectory(Path.GetDirectoryName(dbPath)!);
-            optionsBuilder.UseSqlite($"Data Source={dbPath}");
+            // P8: 1.32 — Cache=Shared + CommandTimeout, FK-Enforcement via PRAGMA in SeedAsync
+            optionsBuilder.UseSqlite($"Data Source={dbPath}", o =>
+            {
+                o.CommandTimeout(30);
+            });
         }
     }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        // ScannedFile.Embedding als JSON-kompatiblen String speichern
+        // P2: 1.1 — Embedding-Serialisierung mit InvariantCulture (sonst Komma statt Punkt auf de-DE)
         modelBuilder.Entity<ScannedFile>()
             .Property(f => f.Embedding)
             .HasConversion(
-                v => v != null ? string.Join(',', v) : null,
+                v => v != null ? string.Join(',', v.Select(x => x.ToString(System.Globalization.CultureInfo.InvariantCulture))) : null,
                 v => v != null ? v.Split(',', StringSplitOptions.RemoveEmptyEntries)
-                    .Select(float.Parse).ToArray() : null);
+                    .Select(s => float.Parse(s, System.Globalization.CultureInfo.InvariantCulture)).ToArray() : null);
 
         // AppSettings als Singleton (nur eine Zeile)
         modelBuilder.Entity<AppSettings>().HasData(new AppSettings { Id = 1 });
@@ -75,13 +79,12 @@ public class FlipsiForgeDbContext : DbContext
 
         modelBuilder.Entity<ScannedFile>()
             .HasIndex(f => f.ContentHash);
-
-        // v0.4.0: Farm - PrinterCluster.PrinterIds als JSON speichern
+        // P2: 1.2 — PrinterIds JSON-Konversion ohne null Type-Parameter (wirft sonst ArgumentNullException)
         modelBuilder.Entity<PrinterCluster>()
             .Property(c => c.PrinterIds)
             .HasConversion(
-                v => System.Text.Json.JsonSerializer.Serialize(v, (System.Type)null!),
-                v => System.Text.Json.JsonSerializer.Deserialize<List<int>>(v ?? "[]", (System.Text.Json.JsonSerializerOptions?)null) ?? new());
+                v => System.Text.Json.JsonSerializer.Serialize(v),
+                v => System.Text.Json.JsonSerializer.Deserialize<List<int>>(v ?? "[]") ?? new());
 
         // FarmSettings als Singleton (nur eine Zeile)
         modelBuilder.Entity<FarmSettings>().HasData(new FarmSettings { Id = 1 });

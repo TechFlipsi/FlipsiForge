@@ -185,6 +185,8 @@ public sealed class MockMoonrakerServer : IDisposable
         });
     }
 
+    private static readonly object _wsSendLock = new(); // P8: 1.26 — serialisiert WebSocket Sends
+
     private void BroadcastStatus()
     {
         var status = _sim.GetObjectsQuery("webhooks&extruder&heater_bed&print_stats&virtual_sdcard&display_status");
@@ -198,7 +200,12 @@ public sealed class MockMoonrakerServer : IDisposable
             {
                 if (ws.State != WebSocketState.Open) continue;
                 var bytes = Encoding.UTF8.GetBytes(status);
-                ws.SendAsync(new ArraySegment<byte>(bytes), WebSocketMessageType.Text, true, CancellationToken.None);
+                // P8: 1.26 — WebSocket erlaubt nur einen ausstehenden Send gleichzeitig.
+                // Mit Lock serialisieren damit keine zwei Sends überlappen.
+                lock (_wsSendLock)
+                {
+                    ws.SendAsync(new ArraySegment<byte>(bytes), WebSocketMessageType.Text, true, CancellationToken.None).Wait();
+                }
             }
             catch { }
         }

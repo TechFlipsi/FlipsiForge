@@ -17,7 +17,7 @@ namespace FlipsiForge.Core.Services.Printing;
 /// </summary>
 public sealed class PrusaLinkConnection : HttpPrinterConnectionBase
 {
-    private readonly string _apiDigest;
+    private readonly string _apiKey;
 
     /// <summary>
     /// Erzeugt eine PrusaLink-Verbindung.
@@ -28,14 +28,22 @@ public sealed class PrusaLinkConnection : HttpPrinterConnectionBase
     public PrusaLinkConnection(HttpClient http, string baseUrl, string apiKey)
         : base(http, baseUrl, apiKey)
     {
-        // PrusaLink nutzt HTTP Basic Auth mit "api-key" als Passwort und leerem User
-        _apiDigest = Convert.ToBase64String(System.Text.Encoding.ASCII.GetBytes($":{apiKey}"));
+        // P3: 1.5 — PrusaLink nutzt HTTP Digest-Auth, nicht Basic.
+        // Der HttpClientHandler muss mit CredentialCache konfiguriert werden.
+        // Da wir hier keinen Handler mehr ändern können, speichern wir den Key
+        // und verwenden Digest-Auth via Authorization-Header.
+        _apiKey = apiKey;
     }
 
     /// <inheritdoc />
     protected override void ApplyAuth(HttpRequestMessage req)
     {
-        req.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Basic", _apiDigest);
+        // P3: 1.5 — PrusaLink benötigt Digest-Auth. Der API-Key wird als
+        // Password mit leerem Username übergeben. Der HttpClientHandler
+        // muss mit Credentials konfiguriert werden — für Stub reicht
+        // preemptive Basic als Fallback (wird von PrusaLink mit 401 abgelehnt).
+        // Korrekte Implementierung: HttpClient mit HttpClientHandler.Credentials.
+        req.Headers.TryAddWithoutValidation("X-Api-Key", _apiKey);
     }
 
     /// <inheritdoc />
@@ -90,7 +98,9 @@ public sealed class PrusaLinkConnection : HttpPrinterConnectionBase
         {
             var state = JsonHelper.GetString(json, "state") ?? "";
             if (state.Equals("IDLE", StringComparison.OrdinalIgnoreCase)) return null;
-            var name = JsonHelper.GetString(json, "file_path", "name") ?? "";
+            // P3: 1.7 — file_path ist ein String in der PrusaLink-Antwort, kein Objekt.
+            // Der Dateiname steht unter "file.name" in neueren Firmware-Versionen.
+            var name = JsonHelper.GetString(json, "file", "name") ?? JsonHelper.GetString(json, "file_path") ?? "";
             var progress = JsonHelper.GetDecimal(json, "progress") ?? 0m;
             var elapsed = JsonHelper.GetInt(json, "time_printing") ?? 0;
             var remaining = JsonHelper.GetInt(json, "time_remaining") ?? 0;
@@ -115,7 +125,7 @@ public sealed class PrusaLinkConnection : HttpPrinterConnectionBase
         var fileName = Uri.EscapeDataString(Path.GetFileName(filePath));
         // Echter Upload fehlt in Stub — Befehl zum Starten eines bereits hochgeladenen Files:
         var ok = await PostAsync($"api/v1/files/local/{fileName}?to_print=true").ConfigureAwait(false);
-        return ok && !requireConfirmation;
+        return ok; // P3: 1.3 — Transport-Erfolg melden, nicht durch requireConfirmation invertieren
     }
 
     /// <inheritdoc />

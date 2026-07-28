@@ -77,22 +77,28 @@ public sealed class FileUsageStore
         return e;
     }
 
-    /// <summary>Incrementiert den OpenCount für eine Datei und speichert sofort.</summary>
+    /// <summary>P8: 1.30 — Atomare Read-Modify-Write Operation unter Lock.</summary>
     public static void IncrementOpen(int fileId)
     {
-        var dict = LoadAll();
-        var e = GetOrNew(dict, fileId);
-        e.OpenCount++;
-        e.LastOpened = DateTime.UtcNow;
-        SaveAll(dict);
+        lock (_lock) // P8: 1.30 — gesamte Operation atomar
+        {
+            var dict = LoadAll();
+            var e = GetOrNew(dict, fileId);
+            e.OpenCount++;
+            e.LastOpened = DateTime.UtcNow;
+            SaveAll(dict);
+        }
     }
 
-    /// <summary>Schaltet den Favorit-Status um und speichert sofort.</summary>
+    /// <summary>P8: 1.30 — Atomare Read-Modify-Write Operation unter Lock.</summary>
     public static void ToggleFavorite(int fileId)
     {
-        var dict = LoadAll();
-        var e = GetOrNew(dict, fileId);
-        e.IsFavorite = !e.IsFavorite;
-        SaveAll(dict);
+        lock (_lock) // P8: 1.30 — gesamte Operation atomar
+        {
+            var dict = LoadAll();
+            var e = GetOrNew(dict, fileId);
+            e.IsFavorite = !e.IsFavorite;
+            SaveAll(dict);
+        }
     }
 }

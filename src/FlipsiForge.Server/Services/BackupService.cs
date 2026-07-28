@@ -106,6 +106,9 @@ public sealed class BackupService
         _logger.LogInformation("Restore durchgeführt von {Source}", backupPath);
     }
 
+    /// <summary>Backup-Verzeichnis (public für Path-Traversal-Check im Restore-Endpoint).</summary>
+    public string GetBackupDirPublic() => GetBackupDir();
+
     private string GetBackupDir()
     {
         if (!string.IsNullOrWhiteSpace(_settings.Path))

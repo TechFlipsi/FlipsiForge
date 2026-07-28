@@ -1,4 +1,4 @@
-// FlipsiForge.Server — v0.4.1
+// FlipsiForge.Server — v0.6.0
 // ASP.NET Core 10 Minimal API — Full + Lite Mode
 //
 // v0.2.0 Endpoints:
@@ -15,6 +15,7 @@
 
 using FlipsiForge.Core.Data;
 using FlipsiForge.Core.Models;
+using FlipsiForge.Core.Services.Farm;
 using FlipsiForge.Server.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -25,11 +26,25 @@ using System.Text.Json;
 // === Bootstrap ===
 var builder = WebApplication.CreateBuilder(args);
 
+// P8: 2.5 — HTTPS-Konfiguration aus Settings (vorher ignoriert)
+var httpsEnabled = builder.Configuration.GetValue<bool>("Server:Https", false);
+var httpsCertPath = builder.Configuration.GetValue<string>("Server:HttpsCertPath");
+if (httpsEnabled && !string.IsNullOrEmpty(httpsCertPath) && File.Exists(httpsCertPath))
+{
+    builder.WebHost.ConfigureKestrel(o =>
+    {
+        o.ConfigureHttpsDefaults(h =>
+        {
+            h.ServerCertificate = System.Security.Cryptography.X509Certificates.X509CertificateLoader.LoadCertificateFromFile(httpsCertPath);
+        });
+    });
+}
+
 // Server-Modus aus Konfiguration (Full oder Lite)
 var serverMode = builder.Configuration.GetValue<ServerMode>("Server:Mode", ServerMode.Full);
 var aiEnabled = builder.Configuration.GetValue<bool>("Server:AI", serverMode == ServerMode.Full);
 var webUiEnabled = builder.Configuration.GetValue<bool>("Server:WebUI", serverMode == ServerMode.Full);
-var serverVersion = builder.Configuration.GetValue<string>("Version") ?? "0.2.0";
+var serverVersion = builder.Configuration.GetValue<string>("Version") ?? "0.6.0";
 
 // === DI-Setup ===
 builder.Services.AddDbContext<FlipsiForgeDbContext>();
@@ -55,6 +70,33 @@ builder.Services.AddSingleton<BackupService>();
 builder.Services.AddSingleton<BotMessageStore>();
 
 var app = builder.Build();
+
+// === API-KEY AUTH MIDDLEWARE (P1: 2.1 — Server-Auth) ===
+// Schützt alle /api/* Endpoints außer /api/health.
+// Wenn ApiKey gesetzt ist, muss der Client ihn im Header "X-API-Key" oder Query "?apiKey=" senden.
+app.Use(async (context, next) =>
+{
+    var path = context.Request.Path.Value ?? "";
+    // /api/health ist immer offen (Health-Check ohne Auth)
+    if (path.StartsWith("/api/", StringComparison.OrdinalIgnoreCase) && !path.Equals("/api/health", StringComparison.OrdinalIgnoreCase))
+    {
+        await using var scope = app.Services.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<FlipsiForgeDbContext>();
+        var settings = await GetSettingsAsync(db);
+        if (!string.IsNullOrEmpty(settings.ApiKey))
+        {
+            var provided = context.Request.Headers["X-API-Key"].FirstOrDefault()
+                            ?? context.Request.Query["apiKey"].FirstOrDefault();
+            if (provided != settings.ApiKey)
+            {
+                context.Response.StatusCode = 401;
+                await context.Response.WriteAsJsonAsync(new { error = "Ungültiger oder fehlender API-Key" });
+                return;
+            }
+        }
+    }
+    await next();
+});
 
 // === DB initialisieren + Filament-DB seeden ===
 using (var scope = app.Services.CreateScope())
@@ -116,6 +158,9 @@ app.MapPut("/api/settings", async (FlipsiForgeDbContext db, AppSettings body) =>
 
 app.MapPatch("/api/settings/{field}", async (FlipsiForgeDbContext db, string field, JsonElement body) =>
 {
+    // P8: 1.25 — Id und schreibgeschützte Felder ausschließen
+    if (field.Equals("Id", StringComparison.OrdinalIgnoreCase))
+        return Results.BadRequest(new { error = "Feld 'Id' ist schreibgeschützt" });
     var s = await GetSettingsAsync(db);
     var prop = typeof(AppSettings).GetProperty(field,
         System.Reflection.BindingFlags.IgnoreCase | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
@@ -132,6 +177,19 @@ app.MapPatch("/api/settings/{field}", async (FlipsiForgeDbContext db, string fie
     };
     if (value is not null && prop.PropertyType.IsEnum)
         value = Enum.Parse(prop.PropertyType, value.ToString()!, ignoreCase: true);
+    // P8: 1.25 — Type-Konvertierung für decimal/long/nullable
+    if (value is not null && prop.PropertyType != value.GetType())
+    {
+        try
+        {
+            var targetType = Nullable.GetUnderlyingType(prop.PropertyType) ?? prop.PropertyType;
+            value = Convert.ChangeType(value, targetType);
+        }
+        catch
+        {
+            return Results.BadRequest(new { error = $"Typ-Konvertierung für '{field}' fehlgeschlagen" });
+        }
+    }
     prop.SetValue(s, value);
     await db.SaveChangesAsync();
     return Results.Ok(s);
@@ -650,20 +708,32 @@ app.MapGet("/api/backup/list", async (BackupService backup, CancellationToken ca
 
 app.MapPost("/api/restore", async (BackupService backup, RestoreRequest body, CancellationToken cancellationToken) =>
 {
+    // P1: 2.3 — Path-Traversal-Schutz: Backup-Pfad muss im Backup-Verzeichnis liegen
+    var backupDir = backup.GetBackupDirPublic();
+    var resolvedPath = Path.GetFullPath(body.BackupPath);
+    var resolvedDir = Path.GetFullPath(backupDir);
+    if (!resolvedPath.StartsWith(resolvedDir, StringComparison.OrdinalIgnoreCase))
+        return Results.BadRequest(new { error = "Backup-Pfad muss innerhalb des Backup-Verzeichnisses liegen" });
+    // Nur Dateien mit dem erwarteten Namensschema akzeptieren
+    var fileName = Path.GetFileName(resolvedPath);
+    if (!fileName.StartsWith("flipsiforge-", StringComparison.OrdinalIgnoreCase) && !fileName.StartsWith("pre-restore-", StringComparison.OrdinalIgnoreCase))
+        return Results.BadRequest(new { error = "Dateiname entspricht nicht dem Backup-Schema (flipsiforge-*.db)" });
+
     try
     {
-        await backup.RestoreAsync(body.BackupPath, cancellationToken);
-        return Results.Ok(new { restored = true, path = body.BackupPath, restartRequired = true });
+        await backup.RestoreAsync(resolvedPath, cancellationToken);
+        return Results.Ok(new { restored = true, path = resolvedPath, restartRequired = true });
     }
     catch (Exception ex)
     {
         return Results.Problem(ex.Message, statusCode: 500);
     }
-}).WithSummary("Backup zurückspielen (Body: backupPath)");
+}).WithSummary("Backup zurückspielen (Body: backupPath — muss im Backup-Verzeichnis liegen)");
 
-// === EXPORT (JSON aller Daten) ===
+// === EXPORT (JSON aller Daten — Secrets maskiert, P1: 2.2) ===
 app.MapPost("/api/export", async (FlipsiForgeDbContext db) =>
 {
+    var s = await GetSettingsAsync(db);
     var export = new
     {
         exportedAt = DateTime.UtcNow,
@@ -676,10 +746,34 @@ app.MapPost("/api/export", async (FlipsiForgeDbContext db) =>
         maintenanceRecords = await db.MaintenanceRecords.ToListAsync(),
         scannedFiles = await db.ScannedFiles.ToListAsync(),
         chatMessages = await db.ChatMessages.ToListAsync(),
-        settings = await GetSettingsAsync(db)
+        // Secrets maskieren — niemals API-Keys, Tokens oder Passwörter exportieren
+        settings = new
+        {
+            s.Id, s.AiModel, s.AiEnabled, s.ServerMode, s.WebUiEnabled, s.Language,
+            s.TelegramChatId, s.NextcloudUrl, s.NextcloudUser,
+            s.WatchFolders, s.StartTab, s.Currency, s.DateFormat, s.MinimizeToTray,
+            s.ScanFolders, s.ScanFormats, s.AutoScanOnStart, s.ScanIntervalMinutes,
+            s.DefaultView, s.DefaultSort, s.GenerateThumbnails, s.DetectDuplicates,
+            s.DefaultPrinterId, s.AutoConnectPrinter, s.RequirePrintConfirmation,
+            s.TemperatureUnit, s.WebcamRefreshSeconds, s.FilamentCostTracking,
+            s.DryingLogRetentionDays, s.QrNfcEnabled, s.AiChat, s.AiSearch, s.AiMaintenance,
+            s.AiStreaming, s.ExternalOllamaUrl, s.ModelDownloadPath,
+            s.BotEnabled, s.BotFrequency, s.BotDndStart, s.BotDndEnd, s.BotPosition, s.BotLanguageSameAsApp,
+            s.ServerPort, s.HttpsEnabled, s.HttpsCertPath,
+            s.PushNotifications, s.NotifyPrintComplete, s.NotifyPrintFailed,
+            s.FilamentWarnThresholdG, s.MaintenanceReminderDaysBefore, s.NotificationKind,
+            s.AutoBackupInterval, s.BackupPath, s.LogLevel, s.DebugMode, s.KeepHistoryOnDelete,
+            // Diese Felder werden NICHT exportiert (Secrets):
+            // TelegramBotToken, NextcloudPassword, ExternalOpenAiKey, ExternalAnthropicKey, ApiKey
+            hasApiKey = !string.IsNullOrEmpty(s.ApiKey),
+            hasTelegramToken = !string.IsNullOrEmpty(s.TelegramBotToken),
+            hasNextcloudPassword = !string.IsNullOrEmpty(s.NextcloudPassword),
+            hasExternalOpenAiKey = !string.IsNullOrEmpty(s.ExternalOpenAiKey),
+            hasExternalAnthropicKey = !string.IsNullOrEmpty(s.ExternalAnthropicKey),
+        }
     };
     return Results.Ok(export);
-}).WithSummary("JSON-Export aller DB-Daten");
+}).WithSummary("JSON-Export aller DB-Daten (Secrets maskiert)");
 
 // === CACHE LEEREN ===
 app.MapDelete("/api/cache", () =>
@@ -879,7 +973,7 @@ app.MapGet("/api/farm/batches/{id}/progress", async (FlipsiForgeDbContext db, in
     });
 }).WithSummary("Farm: Batch-Fortschritt");
 
-/// <summary>Bricht einen Batch ab.</summary>
+/// <summary>Bricht einen Batch ab — Pending-Items werden auf Cancelled gesetzt (nicht Failed).</summary>
 app.MapPost("/api/farm/batches/{id}/cancel", async (FlipsiForgeDbContext db, int id) =>
 {
     var batch = await db.Set<PrintBatch>().FindAsync(id);
@@ -887,7 +981,7 @@ app.MapPost("/api/farm/batches/{id}/cancel", async (FlipsiForgeDbContext db, int
     batch.Status = BatchStatus.Cancelled;
     batch.FinishedAt = DateTime.UtcNow;
     var items = await db.Set<BatchItem>().Where(i => i.BatchId == id && i.Status == BatchItemStatus.Pending).ToListAsync();
-    foreach (var item in items) item.Status = BatchItemStatus.Failed;
+    foreach (var item in items) item.Status = BatchItemStatus.Cancelled;
     await db.SaveChangesAsync();
     return Results.Ok(batch);
 }).WithSummary("Farm: Batch abbrechen");
@@ -907,6 +1001,43 @@ app.MapPost("/api/farm/batches/{id}/items", async (FlipsiForgeDbContext db, int 
     return Results.Created($"/api/farm/batches/{id}/items/{item.Id}", item);
 }).WithSummary("Farm: Batch-Item hinzufügen");
 
+/// <summary>
+/// Markiert ein BatchItem als Failed und triggert automatisch Reschedule
+/// wenn AutoRescheduleFailed in den Farm-Einstellungen aktiv ist.
+/// </summary>
+app.MapPost("/api/farm/items/{itemId}/fail", async (FlipsiForgeDbContext db, int itemId) =>
+{
+    var item = await db.Set<BatchItem>().FindAsync(itemId);
+    if (item is null) return Results.NotFound();
+    item.Status = BatchItemStatus.Failed;
+    await db.SaveChangesAsync();
+
+    // Auto-Reschedule versuchen (nur wenn aktiviert — force=false)
+    var scheduler = new AutoSchedulerService(db);
+    var rescheduled = await scheduler.RescheduleFailedAsync(itemId, force: false);
+
+    return Results.Ok(new { item.Id, item.Status, rescheduled, item.RetryCount });
+}).WithSummary("Farm: BatchItem als Failed markieren + Auto-Reschedule");
+
+/// <summary>
+/// Plant ein fehlgeschlagenes BatchItem manuell neu ein (ignoriert AutoRescheduleFailed
+/// und MaxRescheduleRetries — force=true).
+/// </summary>
+app.MapPost("/api/farm/items/{itemId}/reschedule", async (FlipsiForgeDbContext db, int itemId) =>
+{
+    var item = await db.Set<BatchItem>().FindAsync(itemId);
+    if (item is null) return Results.NotFound();
+    if (item.Status != BatchItemStatus.Failed)
+        return Results.BadRequest(new { error = "Item ist nicht im Status Failed" });
+
+    var scheduler = new AutoSchedulerService(db);
+    var success = await scheduler.RescheduleFailedAsync(itemId, force: true);
+
+    return success
+        ? Results.Ok(new { success = true, item.Id, item.Status, item.RetryCount, message = "Item neu eingeplant" })
+        : Results.Ok(new { success = false, item.Id, item.Status, item.RetryCount, message = "Reschedule fehlgeschlagen" });
+}).WithSummary("Farm: BatchItem manuell neu einplanen (force)");
+
 // --- Auto-Scheduling ---
 
 /// <summary>Verteilt Batch-Aufträge auf verfügbare Drucker.</summary>
@@ -915,7 +1046,7 @@ app.MapPost("/api/farm/batches/{id}/schedule", async (FlipsiForgeDbContext db, i
     var batch = await db.Set<PrintBatch>().FindAsync(id);
     if (batch is null) return Results.NotFound();
 
-    // Einfache Scheduling-Logik: Items nach SortOrder, Drucker nach Status
+    // P7: 1.19 — Nutze AutoSchedulerService aus Core statt duplizierter Logik
     var items = await db.Set<BatchItem>()
         .Where(i => i.BatchId == id && i.Status == BatchItemStatus.Pending)
         .OrderBy(i => i.SortOrder)
@@ -932,11 +1063,21 @@ app.MapPost("/api/farm/batches/{id}/schedule", async (FlipsiForgeDbContext db, i
     if (clusterPrinterIds.Count > 0)
         printers = printers.Where(p => clusterPrinterIds.Contains(p.Id)).ToList();
 
+    // P7: 1.19 — Track welche Drucker schon belegt sind (vorher: alle auf denselben Drucker)
+    var assignedPrinterIds = new HashSet<int>();
+    // Bereits zugewiesene Drucker aus existierenden Schedules laden
+    var existingSchedules = await db.Set<FarmSchedule>()
+        .Where(s => s.BatchId == id && (s.Status == FarmScheduleStatus.Scheduled || s.Status == FarmScheduleStatus.Running))
+        .Select(s => s.PrinterId)
+        .ToListAsync();
+    foreach (var pid in existingSchedules) assignedPrinterIds.Add(pid);
+
     var scheduled = 0;
     foreach (var item in items)
     {
-        // Finde einen passenden Drucker (Bauvolumen-Check, idle)
+        // Finde einen passenden Drucker der NOCH NICHT belegt ist
         var printer = printers.FirstOrDefault(p =>
+            !assignedPrinterIds.Contains(p.Id) &&
             p.BuildVolumeX > 0 && p.BuildVolumeY > 0 &&
             p.BuildVolumeZ > 0);
 
@@ -944,6 +1085,7 @@ app.MapPost("/api/farm/batches/{id}/schedule", async (FlipsiForgeDbContext db, i
 
         item.AssignedPrinterId = printer.Id;
         item.Status = BatchItemStatus.Assigned;
+        assignedPrinterIds.Add(printer.Id); // P7: 1.19 — Drucker als belegt markieren
         db.Set<FarmSchedule>().Add(new FarmSchedule
         {
             BatchId = id,
@@ -1011,6 +1153,7 @@ app.MapPut("/api/farm/settings", async (FlipsiForgeDbContext db, FarmSettings up
         settings.PreferSameCluster = updated.PreferSameCluster;
         settings.FailoverOnError = updated.FailoverOnError;
         settings.AutoRescheduleFailed = updated.AutoRescheduleFailed;
+        settings.MaxRescheduleRetries = updated.MaxRescheduleRetries;
         settings.SpaghettiDetectionEnabled = updated.SpaghettiDetectionEnabled;
         settings.SpaghettiDetectionInterval = updated.SpaghettiDetectionInterval;
         settings.NotificationOnFail = updated.NotificationOnFail;

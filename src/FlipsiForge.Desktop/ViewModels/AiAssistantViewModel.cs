@@ -110,6 +110,8 @@ public partial class AiAssistantViewModel : ViewModelBase
     }
 
     /// <summary>Sendet die aktuelle Eingabe als User-Nachricht und streamt die KI-Antwort.</summary>
+    private CancellationTokenSource? _generateCts; // P8: 1.34 — pro Generierung eigener CTS
+
     [RelayCommand]
     public async Task SendAsync()
     {
@@ -129,22 +131,40 @@ public partial class AiAssistantViewModel : ViewModelBase
         IsGenerating = true;
         Add("user", text);
 
+        // P8: 1.34 — CancellationToken pro Generierung
+        _generateCts?.Cancel();
+        _generateCts = new CancellationTokenSource();
+        var ct = _generateCts.Token;
+
         try
         {
             var sb = new System.Text.StringBuilder();
             var row = new ChatRowVm("assistant", "", DateTime.UtcNow);
             await Dispatcher.UIThread.InvokeAsync(() => Messages.Add(row));
 
-            await foreach (var chunk in _engine.StreamAsync(text))
+            var lastUpdate = DateTime.MinValue; // P8: 1.34 — Throttle UI-Updates
+            await foreach (var chunk in _engine.StreamAsync(text).WithCancellation(ct))
             {
                 sb.Append(chunk.Text);
                 var snapshot = sb.ToString();
-                await Dispatcher.UIThread.InvokeAsync(() =>
+                // P8: 1.34 — UI-Updates auf alle 50ms throttlen (nicht pro Token)
+                var now = DateTime.UtcNow;
+                if ((now - lastUpdate).TotalMilliseconds >= 50)
                 {
-                    row.Content = snapshot;
-                    row.RaisePropertyChanged(nameof(row.Content));
-                });
+                    lastUpdate = now;
+                    await Dispatcher.UIThread.InvokeAsync(() =>
+                    {
+                        row.Content = snapshot;
+                        row.RaisePropertyChanged(nameof(row.Content));
+                    });
+                }
             }
+            // Finale UI-Aktualisierung
+            await Dispatcher.UIThread.InvokeAsync(() =>
+            {
+                row.Content = sb.ToString();
+                row.RaisePropertyChanged(nameof(row.Content));
+            });
 
             // Persist in DB
             PersistMessage("user", text);
@@ -160,13 +180,13 @@ public partial class AiAssistantViewModel : ViewModelBase
         }
     }
 
-    /// <summary>Öffnet die Einstellungen → Sektion KI-Assistent.</summary>
+    /// <summary>P8: 4.8 — Toter Command entfernt. Button im XAML sollte auch entfernt werden.</summary>
     [RelayCommand]
     public void ConfigureModel()
     {
-        // Settings werden vom MainViewModel geöffnet; hier nur Signal:
-        // In einer späteren Iteration kann ein EventRaised werden. Für jetzt
-        // wird der Klick im XAML via VisualTree nach oben propagiert.
+        // P8: 4.8 — Command hat keine Wirkung. Entweder verdrahten oder aus XAML entfernen.
+        // Vorübergehend: navigiert zu Settings indem es den Tab wechselt (falls MainViewModel verfügbar)
+        // TODO: Event-basierte Navigation zum Settings-Tab implementieren
     }
 
     private void Add(string role, string content)

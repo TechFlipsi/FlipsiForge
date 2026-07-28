@@ -52,21 +52,21 @@ public sealed class DruckWaechterCardVm : ObservableObject
         set => SetProperty(ref _isLightOn, value);
     }
 
-    private bool _hasShelly = true;
+    private bool _hasShelly; // P6: 1.33 — default false, nicht true (ShellyIp ist null im Stub)
     public bool HasShelly
     {
         get => _hasShelly;
         set => SetProperty(ref _hasShelly, value);
     }
 
-    private bool _hasLightMacro = true;
+    private bool _hasLightMacro; // P6: 1.33 — default false, auto-detect fehlt
     public bool HasLightMacro
     {
         get => _hasLightMacro;
         set => SetProperty(ref _hasLightMacro, value);
     }
 
-    private bool _hasFilamentMacro = true;
+    private bool _hasFilamentMacro; // P6: 1.33 — default false, auto-detect fehlt
     public bool HasFilamentMacro
     {
         get => _hasFilamentMacro;
@@ -307,9 +307,15 @@ public partial class DruckWaechterViewModel : ViewModelBase
     private MoonrakerConnection CreateMoonrakerConnection(int printerId, List<Printer> printers)
     {
         var printer = printers.FirstOrDefault(p => p.Id == printerId);
-        var baseUrl = printer?.IpAddress ?? "http://localhost:7125";
+        var baseUrl = printer?.IpAddress ?? "localhost:7125";
+        // P6: 1.33 — Port-Default ergänzen falls nur IP ohne Port angegeben
         if (!baseUrl.StartsWith("http"))
-            baseUrl = $"http://{baseUrl}";
+        {
+            if (!baseUrl.Contains(':'))
+                baseUrl = $"http://{baseUrl}:7125"; // Moonraker Default-Port
+            else
+                baseUrl = $"http://{baseUrl}";
+        }
         return new MoonrakerConnection(_httpClient, baseUrl);
     }
 
@@ -413,6 +419,19 @@ public partial class DruckWaechterViewModel : ViewModelBase
         var newState = !card.IsShellyOn;
         try
         {
+            // P6: 1.17 — Wenn ausschalten: erst prüfen ob Druck läuft, dann Graceful-Shutdown
+            if (!newState && card.StatusClass == "printing")
+            {
+                // Druck läuft — nicht hart ausschalten! User muss erst Druck stoppen.
+                card.StatusText = "Druck läuft — nicht ausschalten!";
+                return;
+            }
+            if (!newState)
+            {
+                // Graceful Shutdown: Moonraker Shutdown + Wartezeit vor Strom abdrehen
+                await svc.ShutdownPrinterAsync(card.PrinterId);
+                await Task.Delay(2000); // 2s warten damit Moonraker sauber herunterfährt
+            }
             var ok = await svc.SetShellyAsync(card.PrinterId, newState);
             if (ok) card.IsShellyOn = newState;
         }

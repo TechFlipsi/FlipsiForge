@@ -120,7 +120,7 @@ public sealed class MoonrakerConnection : HttpPrinterConnectionBase
         // Für Stub: nur print_start mit Filename. Echter Upload via multipart folgt in v0.3.
         var fileName = Uri.EscapeDataString(Path.GetFileName(filePath));
         var ok = await PostAsync($"printer/print_start?filename={fileName}").ConfigureAwait(false);
-        return ok && !requireConfirmation;
+        return ok; // P3: 1.3 — Transport-Erfolg melden, requireConfirmation nicht invertieren
     }
 
     /// <inheritdoc />

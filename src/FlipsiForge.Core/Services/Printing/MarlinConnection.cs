@@ -54,16 +54,30 @@ public sealed class MarlinConnection : IPrinterConnection
                 {
                     if (_port is null || !_port.IsOpen) return null;
                     _port.WriteLine(command);
-                    // Marlin antwortet mit "ok ..." — wir warten bis zu 3 Sekunden
+                    // P3: 1.4 — Sammle ALLE Antwortzeilen bis "ok", nicht nur die erste.
+                    // M27 antwortet mit "SD printing byte X/Y" oder "Not SD printing",
+                    // gefolgt von "ok". Wenn wir nur auf "ok"/"T:" warten, verlieren wir
+                    // die eigentliche fachliche Information.
+                    var lines = new System.Text.StringBuilder();
                     var deadline = DateTime.UtcNow.AddSeconds(3);
                     while (DateTime.UtcNow < deadline)
                     {
                         var line = _port.ReadLine();
-                        if (line.StartsWith("ok", StringComparison.OrdinalIgnoreCase) ||
-                            line.StartsWith("T:", StringComparison.OrdinalIgnoreCase))
+                        if (line.StartsWith("ok", StringComparison.OrdinalIgnoreCase))
+                        {
+                            // "ok" = Ende der Antwort. Wenn wir fachliche Zeilen
+                            // gesammelt haben, liefere sie zurück; sonst liefere "ok".
+                            var collected = lines.ToString().Trim();
+                            return collected.Length > 0 ? collected : line;
+                        }
+                        // Sammle alle Nicht-ok-Zeilen (M27-Antwort, M105-Temps, etc.)
+                        lines.AppendLine(line);
+                        // M105 antwortet direkt mit "T:..." — das ist die Fachinfo
+                        if (line.StartsWith("T:", StringComparison.OrdinalIgnoreCase))
                             return line;
                     }
-                    return null;
+                    var remaining = lines.ToString().Trim();
+                    return remaining.Length > 0 ? remaining : null;
                 }
             }).ConfigureAwait(false);
         }
@@ -139,13 +153,13 @@ public sealed class MarlinConnection : IPrinterConnection
     }
 
     /// <inheritdoc />
-    public Task<bool> PauseAsync() => SendGcodeRawAsync("M25").ContinueWith(t => t.Result != null, TaskScheduler.Default);
+    public async Task<bool> PauseAsync() => await SendGcodeRawAsync("M25").ConfigureAwait(false) is not null; // P8: 4.1 — async/await statt ContinueWith
 
     /// <inheritdoc />
-    public Task<bool> ResumeAsync() => SendGcodeRawAsync("M24").ContinueWith(t => t.Result != null, TaskScheduler.Default);
+    public async Task<bool> ResumeAsync() => await SendGcodeRawAsync("M24").ConfigureAwait(false) is not null;
 
     /// <inheritdoc />
-    public Task<bool> CancelAsync() => SendGcodeRawAsync("M0").ContinueWith(t => t.Result != null, TaskScheduler.Default);
+    public async Task<bool> CancelAsync() => await SendGcodeRawAsync("M0").ConfigureAwait(false) is not null;
 
     /// <inheritdoc />
     public Task<bool> ConnectAsync()

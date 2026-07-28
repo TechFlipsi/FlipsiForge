@@ -110,11 +110,13 @@ public sealed class OctoPrintConnection : HttpPrinterConnectionBase
     public override async Task<bool> SendGcodeAsync(string filePath, bool requireConfirmation)
     {
         // OctoPrint: POST /api/files/local/<path> { "command": "select", "print": !requireConfirmation }
-        var relPath = Uri.EscapeDataString(filePath.TrimStart('/'));
+        // P3: 1.9 — Pfad segmentweise escapen, nicht als Ganzes (sonst wird / zu %2F)
+        var segments = filePath.TrimStart('/').Split('/');
+        var escapedPath = string.Join('/', segments.Select(Uri.EscapeDataString));
         var body = JsonSerializer.Serialize(new { command = "select", print = !requireConfirmation });
         try
         {
-            using var req = new HttpRequestMessage(HttpMethod.Post, $"{BaseUrl}/api/files/local/{relPath}")
+            using var req = new HttpRequestMessage(HttpMethod.Post, $"{BaseUrl}/api/files/local/{escapedPath}")
             {
                 Content = new StringContent(body, System.Text.Encoding.UTF8, "application/json")
             };
@@ -131,7 +133,7 @@ public sealed class OctoPrintConnection : HttpPrinterConnectionBase
 
     /// <inheritdoc />
     public override async Task<bool> PauseAsync()
-        => await PostJobCommandAsync("pause").ConfigureAwait(false);
+        => await PostJobCommandAsync("pause", action: "pause").ConfigureAwait(false); // P3: 1.10 — explizit action:"pause" senden, sonst togglet es
 
     /// <inheritdoc />
     public override async Task<bool> ResumeAsync()

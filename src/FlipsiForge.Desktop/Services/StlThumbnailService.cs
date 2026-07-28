@@ -169,7 +169,7 @@ public static class StlThumbnailService
     /// <summary>Rendert Vertices als Wireframe/Shader-Bild mit SkiaSharp.</summary>
     private static Bitmap RenderVertices(List<(float x, float y, float z)> vertices, int width, int height)
     {
-        if (vertices.Count == 0) return null;
+        if (vertices.Count == 0) return null!;
 
         // Bounding Box berechnen
         float minX = float.MaxValue, maxX = float.MinValue;
@@ -273,7 +273,7 @@ public static class StlThumbnailService
             if (thumb != null)
             {
                 using var stream = File.Create(cachePath);
-                thumb.Save(stream);
+                thumb.Save(stream, new Avalonia.Media.Imaging.JpegBitmapEncoderOptions { Quality = 100 });
             }
             return thumb;
         }

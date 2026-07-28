@@ -60,7 +60,9 @@ public enum BatchItemStatus
     /// <summary>Erfolgreich abgeschlossen.</summary>
     Completed,
     /// <summary>Druck fehlgeschlagen.</summary>
-    Failed
+    Failed,
+    /// <summary>Vom User abgebrochen (nicht automatisch neu einplanbar).</summary>
+    Cancelled
 }
 
 /// <summary>Status eines Farm-Schedule-Eintrags (Zeitplan).</summary>
@@ -229,10 +231,15 @@ public class BatchItem
     /// <summary>Tatsächlicher Filament-Verbrauch in Gramm.</summary>
     public decimal? ActualFilamentG { get; set; }
 
-    /// <summary>
-    /// Sortier-Reihenfolge innerhalb des Batches (niedriger = früher im Schedule).
-    /// </summary>
+    /// <summary>Sortier-Reihenfolge innerhalb des Batches (niedriger = früher im Schedule).</summary>
     public int SortOrder { get; set; }
+
+    /// <summary>
+    /// Anzahl der automatischen Neuversuche (Reschedules) für dieses Item.
+    /// Wird von <see cref="Services.Farm.AutoSchedulerService.RescheduleFailedAsync"/> inkrementiert.
+    /// Begrenzt durch <see cref="FarmSettings.MaxRescheduleRetries"/>.
+    /// </summary>
+    public int RetryCount { get; set; }
 
     /// <summary>Navigations-Property zum Eltern-Batch (EF Core).</summary>
     public PrintBatch? Batch { get; set; }
@@ -310,8 +317,15 @@ public class FarmSettings
 
     /// <summary>
     /// Wenn true, werden fehlgeschlagene BatchItems automatisch neu zugewiesen.
+    /// Standardmäßig deaktiviert — für Einzelanwender irrelevant, nützlich für Druckfarmen.
     /// </summary>
-    public bool AutoRescheduleFailed { get; set; } = true;
+    public bool AutoRescheduleFailed { get; set; } = false;
+
+    /// <summary>
+    /// Maximale Anzahl automatischer Neuversuche pro BatchItem bevor es endgültig als Failed gilt.
+    /// Nur relevant wenn <see cref="AutoRescheduleFailed"/> aktiv ist. Default 3.
+    /// </summary>
+    public int MaxRescheduleRetries { get; set; } = 3;
 
     /// <summary>
     /// Spaghetti-Detection via Kamera-KI aktiviert.

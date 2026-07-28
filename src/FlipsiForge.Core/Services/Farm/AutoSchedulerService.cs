@@ -111,6 +111,7 @@ public sealed class AutoSchedulerService
 
             return assigned;
         }
+        catch (OperationCanceledException) { throw; } // P8: 1.20 — Cancellation durchreichen
         catch
         {
             // Defensiv: bei DB-Fehler 0 zurückgeben statt Exception zu werfen
@@ -176,12 +177,26 @@ public sealed class AutoSchedulerService
                 if (cluster is null || cluster.PrinterIds.Count == 0)
                     return new List<Printer>(); // Cluster nicht gefunden → leer
 
+                // P8: 1.21 — Cluster-Regeln beachten: Reserved = kein Auto-Scheduling
+                if (cluster.ClusterType == ClusterType.Reserved)
+                    return new List<Printer>();
+
                 var clusterPrinterIds = new HashSet<int>(cluster.PrinterIds);
                 result = result.Where(p => clusterPrinterIds.Contains(p.Id));
             }
 
+            // P8: 1.21 — MaxActivePrinters aus FarmSettings beachten
+            var farmSettings = await GetSettingsAsync(cancellationToken).ConfigureAwait(false);
+            if (farmSettings.MaxConcurrentPrints > 0)
+            {
+                var currentActive = scheduledPrinterIds.Count;
+                if (currentActive >= farmSettings.MaxConcurrentPrints)
+                    return new List<Printer>();
+            }
+
             return result.ToList();
         }
+        catch (OperationCanceledException) { throw; } // P8: 1.20
         catch
         {
             return new List<Printer>();
@@ -246,6 +261,7 @@ public sealed class AutoSchedulerService
             await _db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
             return true;
         }
+        catch (OperationCanceledException) { throw; } // P8: 1.20
         catch
         {
             return false;
@@ -257,18 +273,25 @@ public sealed class AutoSchedulerService
     /// <see cref="FarmSettings.AutoRescheduleFailed"/> aktiv ist.
     /// Setzt das Item zurück auf <see cref="BatchItemStatus.Pending"/> und ruft
     /// <see cref="ScheduleBatchAsync"/> für den Eltern-Batch auf.
+    /// Respektiert <see cref="FarmSettings.MaxRescheduleRetries"/> — nach Erreichen
+    /// des Limits bleibt das Item auf <see cref="BatchItemStatus.Failed"/>.
     /// </summary>
     /// <param name="batchItemId">ID des fehlgeschlagenen Items.</param>
     /// <param name="cancellationToken">Abbrechungs-Token.</param>
-    /// <returns>true wenn neu eingeplant wurde, false wenn nicht aktiviert oder Fehler.</returns>
+    /// <param name="force">Wenn true: ignoriert <see cref="FarmSettings.AutoRescheduleFailed"/>
+    /// und <see cref="FarmSettings.MaxRescheduleRetries"/> — für manuelles Reschedule.</param>
+    /// <returns>true wenn neu eingeplant wurde, false wenn nicht aktiviert, Limit erreicht oder Fehler.</returns>
     public async Task<bool> RescheduleFailedAsync(
         int batchItemId,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        bool force = false)
     {
         try
         {
             var settings = await GetSettingsAsync(cancellationToken).ConfigureAwait(false);
-            if (!settings.AutoRescheduleFailed) return false;
+
+            // Auto-Reschedule deaktiviert? Nur force überspringt das.
+            if (!force && !settings.AutoRescheduleFailed) return false;
 
             var item = await _db.BatchItems
                 .FirstOrDefaultAsync(i => i.Id == batchItemId, cancellationToken)
@@ -276,9 +299,14 @@ public sealed class AutoSchedulerService
             if (item is null) return false;
             if (item.Status != BatchItemStatus.Failed) return false;
 
+            // Retry-Limit prüfen (nur bei auto, nicht bei force)
+            if (!force && settings.MaxRescheduleRetries > 0 && item.RetryCount >= settings.MaxRescheduleRetries)
+                return false;
+
             // Item zurücksetzen (bereits gedruckte Exemplare behalten)
             item.Status = BatchItemStatus.Pending;
             item.AssignedPrinterId = null;
+            item.RetryCount++;
             // PrintedQuantity bleibt unverändert — schon fertige Exemplare nicht neu drucken
 
             await _db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
@@ -291,6 +319,7 @@ public sealed class AutoSchedulerService
 
             return true;
         }
+        catch (OperationCanceledException) { throw; } // P8: 1.20
         catch
         {
             return false;
@@ -343,6 +372,7 @@ public sealed class AutoSchedulerService
 
             return (total, completed, failed, activePrinters, remaining);
         }
+        catch (OperationCanceledException) { throw; } // P8: 1.20
         catch
         {
             return (0, 0, 0, 0, 0);

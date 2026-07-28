@@ -1,4 +1,4 @@
-name: Build Windows Installer + Portable
+name: Build Windows Installer + Portable + Server
 
 on:
   release:
@@ -19,45 +19,105 @@ jobs:
         with:
           dotnet-version: '10.0.300'
 
-      # === Installer Version (self-contained, single-file) ===
       - name: Publish Desktop (win-x64, self-contained)
         run: |
           dotnet publish src/FlipsiForge.Desktop/FlipsiForge.Desktop.csproj `
             -c Release -r win-x64 --self-contained true `
             -p:PublishSingleFile=true -p:PublishTrimmed=false `
-            -p:IncludeNativeLibrariesForSelfExtract=true `
             -o dist/win-desktop
+
+      - name: Publish Server Full (win-x64, self-contained)
+        run: |
+          dotnet publish src/FlipsiForge.Server/FlipsiForge.Server.csproj `
+            -c Release -r win-x64 --self-contained true `
+            -p:PublishSingleFile=true -p:PublishTrimmed=false `
+            -o dist/win-server-full
+
+      - name: Publish Server Lite (win-x64, self-contained)
+        run: |
+          dotnet publish src/FlipsiForge.Server/FlipsiForge.Server.csproj `
+            -c Release -r win-x64 --self-contained true `
+            -p:PublishSingleFile=true -p:PublishTrimmed=false `
+            -o dist/win-server-lite
+
+      - name: Configure Server Lite appsettings
+        shell: pwsh
+        run: |
+          $lite = @{
+            "Version" = "0.6.0"
+            "Logging" = @{
+              "LogLevel" = @{
+                "Default" = "Information"
+                "Microsoft.AspNetCore" = "Warning"
+              }
+            }
+            "Server" = @{
+              "Mode" = "Lite"
+              "AI" = $false
+              "WebUI" = $false
+            }
+            "AI" = @{
+              "ModelChoice" = "Auto"
+              "ModelPath" = ""
+              "Streaming" = $false
+            }
+            "Bot" = @{
+              "Enabled" = $false
+              "Frequency" = "Normal"
+            }
+            "Backup" = @{
+              "AutoInterval" = "off"
+              "Path" = ""
+            }
+          }
+          $lite | ConvertTo-Json -Depth 10 | Set-Content -Path dist/win-server-lite/appsettings.json -Encoding UTF8
 
       - name: Install Inno Setup
         run: choco install innosetup -y
 
-      - name: Compile .exe Installer
+      - name: Compile Desktop Installer .exe
         run: iscc installer/flipsiforge.iss
 
-      # === Portable Version (.zip — kein Installer, einfach entpacken) ===
-      - name: Create Portable .zip
-        run: |
-          dotnet publish src/FlipsiForge.Desktop/FlipsiForge.Desktop.csproj `
-            -c Release -r win-x64 --self-contained true `
-            -p:PublishSingleFile=true -p:PublishTrimmed=false `
-            -p:IncludeNativeLibrariesForSelfExtract=true `
-            -o dist/win-portable
-          Compress-Archive -Path dist\win-portable\* -DestinationPath dist\FlipsiForge-0.5.1-win-x64-portable.zip -Force
+      - name: Create Desktop Portable zip
+        run: Compress-Archive -Path dist\win-desktop\* -DestinationPath dist\FlipsiForge-Desktop-0.6.0-win-x64-portable.zip
 
-      # === Upload to GitHub Release ===
-      - name: Upload .exe Installer to GitHub Release
+      - name: Create Server Full zip
+        run: Compress-Archive -Path dist\win-server-full\* -DestinationPath dist\FlipsiForge-Server-Full-0.6.0-win-x64.zip
+
+      - name: Create Server Lite zip
+        run: Compress-Archive -Path dist\win-server-lite\* -DestinationPath dist\FlipsiForge-Server-Lite-0.6.0-win-x64.zip
+
+      - name: Upload Desktop Installer to GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ github.event.release.tag_name || 'v0.5.1' }}
+          tag_name: ${{ github.event.release.tag_name || 'v0.6.0' }}
           files: |
-            dist/FlipsiForge-0.5.1-win-x64-setup.exe
-            dist/FlipsiForge-0.5.1-win-x64-portable.zip
+            dist/FlipsiForge-*-win-x64-setup.exe
+            dist/FlipsiForge-Desktop-*-win-x64-portable.zip
+            dist/FlipsiForge-Server-Full-*-win-x64.zip
+            dist/FlipsiForge-Server-Lite-*-win-x64.zip
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Upload Artifacts (fallback)
+      - name: Upload Desktop Installer as Artifact (fallback)
         uses: actions/upload-artifact@v4
         with:
-          name: FlipsiForge-win-x64-builds
-          path: |
-            dist/FlipsiForge-0.5.1-win-x64-setup.exe
-            dist/FlipsiForge-0.5.1-win-x64-portable.zip
+          name: FlipsiForge-win-x64-setup
+          path: dist/FlipsiForge-*-win-x64-setup.exe
+
+      - name: Upload Desktop Portable as Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: FlipsiForge-Desktop-win-x64-portable
+          path: dist/FlipsiForge-Desktop-*-win-x64-portable.zip
+
+      - name: Upload Server Full as Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: FlipsiForge-Server-Full-win-x64
+          path: dist/FlipsiForge-Server-Full-*-win-x64.zip
+
+      - name: Upload Server Lite as Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: FlipsiForge-Server-Lite-win-x64
+          path: dist/FlipsiForge-Server-Lite-*-win-x64.zip

@@ -25,7 +25,7 @@ namespace FlipsiForge.Core.Services.AI;
 ///
 /// Alle Public-Methoden sind robust gegen fehlende Dlls und fehlende Modell-Dateien.
 /// </summary>
-public sealed class OnnxGenAiChatEngine : AiChatEngineBase
+public sealed class OnnxGenAiChatEngine : AiChatEngineBase, IDisposable // P8: 4.2 — IDisposable für Model/Tokenizer
 {
     private Model? _model;
     private Tokenizer? _tokenizer;
@@ -115,61 +115,65 @@ public sealed class OnnxGenAiChatEngine : AiChatEngineBase
         lock (_lock) { tokenizer = _tokenizer; model = _model; }
         if (tokenizer is null || model is null) yield break;
 
-        // Alles in try/catch kapseln, aber yield muss außerhalb des catch-Blocks erfolgen.
-        // Daher sammeln wir Fehler als out-Variable und yield-en nach dem try.
-        string? errorMessage = null;
-        var tokenQueue = new Queue<string>();
+        // P4: 1.11 — Echtes Streaming via Channel<string>.
+        // Producer = Generierungs-Task, Consumer = dieser async iterator.
+        // Tokens werden SOFORT yieldiert, nicht erst nach kompletter Generierung.
+        var channel = System.Threading.Channels.Channel.CreateBounded<string>(256);
+        var writer = channel.Writer;
+        var reader = channel.Reader;
 
-        try
+        // Producer-Task startet die Generierung und schreibt Tokens in den Channel
+        _ = Task.Run(async () =>
         {
-            var prompt = BuildFullPrompt(history, userMessage);
-            using var generatorParams = new GeneratorParams(model);
-            // Sampling-Optionen für Gemma 3
-            generatorParams.SetSearchOption("max_length", 1024);
-            generatorParams.SetSearchOption("temperature", 0.7);
-            generatorParams.SetSearchOption("top_p", 0.9);
-
-            var sequences = tokenizer.Encode(prompt);
-            using var generator = new Generator(model, generatorParams);
-            generator.AppendTokenSequences(sequences);
-
-            using var stream = tokenizer.CreateStream();
-
-            while (!generator.IsDone())
+            try
             {
-                cancellationToken.ThrowIfCancellationRequested();
-                generator.GenerateNextToken();
-                var nextTokens = generator.GetNextTokens();
-                if (nextTokens.Length == 0) break;
-                var lastToken = nextTokens[0];
-                var decoded = stream.Decode(lastToken);
-                if (!string.IsNullOrEmpty(decoded))
-                    tokenQueue.Enqueue(decoded);
+                var prompt = BuildFullPrompt(history, userMessage);
+                using var generatorParams = new GeneratorParams(model);
+                generatorParams.SetSearchOption("max_length", 1024);
+                generatorParams.SetSearchOption("temperature", 0.7);
+                generatorParams.SetSearchOption("top_p", 0.9);
+
+                var sequences = tokenizer.Encode(prompt);
+                using var generator = new Generator(model, generatorParams);
+                generator.AppendTokenSequences(sequences);
+
+                using var stream = tokenizer.CreateStream();
+
+                while (!generator.IsDone())
+                {
+                    if (cancellationToken.IsCancellationRequested) break;
+                    generator.GenerateNextToken();
+                    var nextTokens = generator.GetNextTokens();
+                    if (nextTokens.Length == 0) break;
+                    var decoded = stream.Decode(nextTokens[0]);
+                    if (!string.IsNullOrEmpty(decoded))
+                        await writer.WriteAsync(decoded, cancellationToken).ConfigureAwait(false);
+                }
             }
-        }
-        catch (DllNotFoundException)
-        {
-            lock (_lock) { _model = null; _tokenizer = null; }
-            errorMessage = NotLoadedHint;
-        }
-        catch (OperationCanceledException)
-        {
-            // Abbruch durch Caller — ruhig beenden
-        }
-        catch (Exception ex)
-        {
-            errorMessage = $"[KI-Fehler: {ex.Message}]";
-        }
+            catch (DllNotFoundException)
+            {
+                lock (_lock) { _model = null; _tokenizer = null; }
+                await writer.WriteAsync(NotLoadedHint, cancellationToken).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException)
+            {
+                // Abbruch — ruhig beenden
+            }
+            catch (Exception ex)
+            {
+                try { await writer.WriteAsync($"[KI-Fehler: {ex.Message}]", cancellationToken).ConfigureAwait(false); } catch { }
+            }
+            finally
+            {
+                writer.TryComplete();
+            }
+        }, cancellationToken);
 
-        // Außerhalb des try-Blocks: Tokens yield-en
-        while (tokenQueue.Count > 0)
+        // Consumer: Tokens aus dem Channel lesen und sofort yieldieren
+        await foreach (var token in reader.ReadAllAsync(cancellationToken).ConfigureAwait(false))
         {
-            yield return tokenQueue.Dequeue();
-            await Task.Yield();
+            yield return token;
         }
-
-        if (errorMessage is not null)
-            yield return errorMessage;
     }
 
     /// <inheritdoc />
@@ -194,6 +198,18 @@ public sealed class OnnxGenAiChatEngine : AiChatEngineBase
         catch (Exception ex)
         {
             return $"[KI-Fehler: {ex.Message}]";
+        }
+    }
+
+    /// <summary>P8: 4.2 — IDisposable: Model und Tokenizer freigeben.</summary>
+    public void Dispose()
+    {
+        lock (_lock)
+        {
+            _tokenizer?.Dispose();
+            _model?.Dispose();
+            _tokenizer = null;
+            _model = null;
         }
     }
 }

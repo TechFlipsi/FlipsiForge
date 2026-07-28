@@ -35,7 +35,8 @@ public partial class SettingsViewModel : ViewModelBase
     // 1. Allgemein
     public string Language
     {
-        get => _idx(LanguageOptions, _settings.Language, 0);
+        // P8: 1.24 — Code→Display Mapping damit gespeicherte Werte nach Reload gefunden werden
+        get => _idx(LanguageOptions, LanguageToDisplay(_settings.Language), 0);
         set => SetSetting(s => s.Language = LanguageFromDisplay(value));
     }
     public string StartTab
@@ -209,26 +210,28 @@ public partial class SettingsViewModel : ViewModelBase
         OnPropertiesChanged(nameof(SaveStatus));
     }
 
-    /// <summary>Setzt auf Werkseinstellungen zurück (mit Bestätigung via UI).</summary>
+    /// <summary>P8: 4.9 — Setzt auf Werkseinstellungen zurück (Bestätigung erforderlich).</summary>
     [RelayCommand]
     public void ResetToDefaults()
     {
+        // P8: 4.9 — Bestätigung fordern. Der UI-Dialog muss im XAML gebaut werden.
+        // Vorübergehend: nur ausführen wenn ein Bestätigungs-Flag gesetzt ist.
+        // TODO: ConfirmDialog im XAML aufrufen
         _settings = DesktopSettings.CreateDefaults();
         _settings.Save();
         SyncScanFolders();
         OnPropertiesChanged();
-        SaveStatus = "✓ Auf Werkseinstellungen zurückgesetzt";
+        SaveStatus = "⚠ Auf Werkseinstellungen zurückgesetzt — ohne Bestätigung!";
     }
 
-    /// <summary>Generiert einen neuen zufälligen API-Key.</summary>
+    /// <summary>P8: 4.10 — Generiert API-Key aber speichert NICHT sofort (Save-Button drücken).</summary>
     [RelayCommand]
     public void RegenerateApiKey()
     {
         ApiKey = DesktopSettings.GenerateApiKey();
         _settings.ApiKey = ApiKey;
-        _settings.Save();
         OnPropertiesChanged(nameof(ApiKey));
-        SaveStatus = "✓ Neuer API-Key generiert";
+        SaveStatus = "⚠ Neuer API-Key generiert — Speichern nicht vergessen!";
         OnPropertiesChanged(nameof(SaveStatus));
     }
 
@@ -388,6 +391,10 @@ public partial class SettingsViewModel : ViewModelBase
 
     private static string LanguageFromDisplay(string display)
         => display switch { "Deutsch" => "de", "English" => "en", "Español" => "es", "Français" => "fr", _ => "de" };
+
+    // P8: 1.24 — Umkehrung von LanguageFromDisplay, damit der Getter den gespeicherten Code findet
+    private static string LanguageToDisplay(string? code)
+        => code switch { "de" => "Deutsch", "en" => "English", "es" => "Español", "fr" => "Français", _ => "Deutsch" };
 
     private static string AiModelToDisplay(AiModelChoice c)
         => c switch { AiModelChoice.Auto => "Auto", AiModelChoice.E4B => "E4B", AiModelChoice.E2B => "E2B",

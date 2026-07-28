@@ -23,11 +23,17 @@ public class Printer
     public decimal TotalPrintHours { get; set; }
     public string? Notes { get; set; }
 
-    // === DruckWächter / Shelly Integration ===
-    /// <summary>IP-Adresse des Shelly-Geräts das diesen Drucker schaltet (z.B. "192.168.178.60"). Null = kein Shelly zugewiesen.</summary>
+    // P8: 1.35 — Credential-Felder für Protokoll-spezifische Authentifizierung
+    /// <summary>API-Key für OctoPrint / PrusaLink.</summary>
+    public string? ApiKey { get; set; }
+    /// <summary>Access-Code für Bambu Lab (LAN-Modus, 8 Zeichen).</summary>
+    public string? BambuAccessCode { get; set; }
+    /// <summary>Seriennummer für Bambu Lab (Device-Topic).</summary>
+    public string? BambuSerial { get; set; }
+    /// <summary>Shelly-IP für DruckWächter (pro Drucker).</summary>
     public string? ShellyIp { get; set; }
-    /// <summary>Shelly Switch-Kanal-ID (Shelly Plus 1PM = 0, default 0).</summary>
-    public int ShellySwitchId { get; set; } = 0;
+    /// <summary>Shelly Switch-Kanal-ID (default 0).</summary>
+    public int ShellySwitchId { get; set; }
 }
 
 /// <summary>Eine Filament-Spule im Inventar.</summary>
@@ -49,12 +55,8 @@ public class Spool
     public string? QrCode { get; set; }
     public string? NfcTag { get; set; }
     public string? Notes { get; set; }
-
-    // === v0.5.0 Erweiterungen: Druck-Einstellungen (Auto-Fill aus FilamentBrandSpec) ===
-    /// <summary>Empfohlene Drucktemperatur in °C (Auto-Fill aus Marken-Profil, editierbar).</summary>
-    public int RecommendedHotendTemp { get; set; }
-    /// <summary>Empfohlene Bett-Temperatur in °C (Auto-Fill aus Marken-Profil, editierbar).</summary>
-    public int RecommendedBedTemp { get; set; }
+    public int? RecommendedHotendTemp { get; set; }
+    public int? RecommendedBedTemp { get; set; }
 }
 
 /// <summary>Gescannte 3D-Druck-Datei.</summary>

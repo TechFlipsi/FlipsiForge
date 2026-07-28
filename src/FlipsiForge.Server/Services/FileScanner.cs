@@ -74,10 +74,19 @@ public sealed class FileScanner
             }
 
             result.ScannedFolders.Add(folder);
+            // P8: 1.31 — EnumerationOptions mit IgnoreInaccessible statt try/catch auf EnumerateFiles
+            // (EnumerateFiles ist lazy — UnauthorizedAccessException tritt erst während der Iteration auf)
+            var enumOpts = new EnumerationOptions
+            {
+                IgnoreInaccessible = true,
+                RecurseSubdirectories = true,
+                ReturnSpecialDirectories = false
+            };
+
             IEnumerable<string> files;
             try
             {
-                files = Directory.EnumerateFiles(folder, "*.*", SearchOption.AllDirectories);
+                files = Directory.EnumerateFiles(folder, "*.*", enumOpts);
             }
             catch (Exception ex) when (ex is UnauthorizedAccessException or DirectoryNotFoundException)
             {

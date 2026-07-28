@@ -136,7 +136,7 @@ public sealed class AiEnhancedSearchService : ISearchService
             string base64Image;
             using (var memStream = new System.IO.MemoryStream())
             {
-                thumb.Save(memStream);
+                thumb.Save(memStream, new Avalonia.Media.Imaging.JpegBitmapEncoderOptions { Quality = 100 });
                 base64Image = Convert.ToBase64String(memStream.ToArray());
             }
 

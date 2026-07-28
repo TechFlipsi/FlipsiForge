@@ -59,8 +59,13 @@ public abstract class HttpPrinterConnectionBase : IPrinterConnection
     /// <inheritdoc />
     public virtual Task<bool> ResumeAsync() => Task.FromResult(false);
 
+    /// <summary>P8: 1.27 — Protokoll-spezifischer Health-Endpoint für ConnectAsync.</summary>
+    protected virtual string GetHealthEndpoint() => "server/info"; // Default: Moonraker
+
     /// <inheritdoc />
     public virtual Task<bool> CancelAsync() => Task.FromResult(false);
+
+    /// <inheritdoc />
 
     /// <inheritdoc />
     public virtual async Task<bool> ConnectAsync()
@@ -68,8 +73,12 @@ public abstract class HttpPrinterConnectionBase : IPrinterConnection
         try
         {
             using var cts = new CancellationTokenSource(DefaultTimeout);
-            // Pingen via /api/connection o.ä. — Basisklasse macht nur einen Head-Request
-            using var resp = await Http.GetAsync(BaseUrl, cts.Token).ConfigureAwait(false);
+            // P8: 1.27 — Protokoll-spezifischen Health-Endpoint abfragen statt "/".
+            // Moonraker: /server/info, OctoPrint: /api/version, PrusaLink: /api/v1/status.
+            // Die Basisklasse versucht /server/info als Default (Moonraker-kompatibel).
+            // Subklassen können dies überschreiben.
+            var healthPath = GetHealthEndpoint();
+            using var resp = await Http.GetAsync($"{BaseUrl}/{healthPath.TrimStart('/')}", cts.Token).ConfigureAwait(false);
             IsConnectedField = resp.IsSuccessStatusCode;
             return IsConnectedField;
         }
@@ -138,7 +147,8 @@ public abstract class HttpPrinterConnectionBase : IPrinterConnection
     }
 }
 
-/// <summary>Helper für JSON-Parser — defensive Extraktion von JsonElement-Werten.</summary>
+/// <summary>Helper für JSON-Parser — defensive Extraktion von JsonElement-Werten.
+/// P8: 1.8 — ValueKind-Check vor TryGetProperty (sonst InvalidOperationException bei Nicht-Objekt-Zwischenelementen).</summary>
 internal static class JsonHelper
 {
     public static decimal? GetDecimal(JsonElement el, params string[] path)
@@ -146,6 +156,7 @@ internal static class JsonHelper
         var cur = el;
         foreach (var key in path)
         {
+            if (cur.ValueKind != JsonValueKind.Object) return null; // P8: 1.8
             if (!cur.TryGetProperty(key, out cur)) return null;
         }
         return cur.ValueKind == JsonValueKind.Number ? cur.GetDecimal() : null;
@@ -162,6 +173,7 @@ internal static class JsonHelper
         var cur = el;
         foreach (var key in path)
         {
+            if (cur.ValueKind != JsonValueKind.Object) return null; // P8: 1.8
             if (!cur.TryGetProperty(key, out cur)) return null;
         }
         return cur.ValueKind == JsonValueKind.String ? cur.GetString() : null;

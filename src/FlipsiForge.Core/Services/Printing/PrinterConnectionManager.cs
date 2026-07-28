@@ -37,12 +37,16 @@ public sealed class PrinterConnectionManager : IAsyncDisposable
     /// <exception cref="NotSupportedException">Wenn das Protocol nicht unterstützt wird.</exception>
     public IPrinterConnection GetConnection(Printer printer)
     {
-        if (_connections.TryGetValue(printer.Id, out var existing))
-            return existing;
+        // P8: 1.28 — GetOrAdd mit Lock statt TryGetValue → Create → Set (Race Condition)
+        lock (_connections)
+        {
+            if (_connections.TryGetValue(printer.Id, out var existing))
+                return existing;
 
-        var conn = CreateConnection(printer);
-        _connections[printer.Id] = conn;
-        return conn;
+            var conn = CreateConnection(printer);
+            _connections[printer.Id] = conn;
+            return conn;
+        }
     }
 
     /// <summary>
@@ -97,14 +101,12 @@ public sealed class PrinterConnectionManager : IAsyncDisposable
         _connections.Clear();
     }
 
-    /// <summary>Synchrone Variante von DisconnectAllAsync für einfache Aufrufe.</summary>
+    /// <summary>P8: 1.29 — Sync-over-async entfernt. Aufrufer MUSS async aufrufen.</summary>
     public void DisconnectAll()
     {
-        try
-        {
-            DisconnectAllAsync().GetAwaiter().GetResult();
-        }
-        catch { /* ignore — wird pro-Connection geloggt */ }
+        // P8: 1.29 — .GetAwaiter().GetResult() ist sync-over-async = Deadlock-Risiko im UI-Kontext.
+        // Stattdessen: fire-and-forget mit try/catch (Aufrufer sollte DisconnectAllAsync nutzen).
+        _ = Task.Run(async () => { try { await DisconnectAllAsync().ConfigureAwait(false); } catch { } });
     }
 
     /// <inheritdoc />

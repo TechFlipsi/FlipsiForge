@@ -5,7 +5,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <ApplicationManifest>app.manifest</ApplicationManifest>
-    <Version>0.5.1</Version>
+    <Version>0.6.0</Version>
     <Company>TechFlipsi</Company>
     <Authors>Fabian Kirchweger</Authors>
     <Product>FlipsiForge</Product>
@@ -24,8 +24,6 @@
       <PrivateAssets Condition="'$(Configuration)' != 'Debug'">All</PrivateAssets>
     </PackageReference>
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
-    <PackageReference Include="SkiaSharp" Version="3.119.4" />
-    <PackageReference Include="SkiaSharp.NativeAssets.Linux" Version="3.119.4" />
   </ItemGroup>
 
   <ItemGroup>
@@ -33,10 +31,6 @@
   </ItemGroup>
 
   <ItemGroup>
-  <AvaloniaResource Include="Assets\**\*" />
-  </ItemGroup>
-
-  <ItemGroup>
-  <None Update="Assets\flipsiforge.ico" CopyToOutputDirectory="PreserveNewest" />
+    <AvaloniaResource Include="Assets\**\*" />
   </ItemGroup>
 </Project>
