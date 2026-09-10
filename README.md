@@ -4,6 +4,16 @@
 
 FlipsiForge is a cross-platform 3D printing management tool that handles files, printers, filament, model discovery, and print statistics in one unified application. Available as a **desktop app** (Windows + Linux) with an optional **headless server backend** (any Linux, Raspberry Pi to VPS).
 
+## ⬇️ Download
+
+| Variante | Download |
+|----------|----------|
+| 🪟 **Desktop Windows** | [**Setup-Installer (.exe)**](https://github.com/TechFlipsi/FlipsiForge/releases/download/v0.6.0/FlipsiForge-0.6.0-win-x64-setup.exe) · [Portable (.zip)](https://github.com/TechFlipsi/FlipsiForge/releases/download/v0.6.0/FlipsiForge-Desktop-0.6.0-win-x64-portable.zip) |
+| 🐧 **Desktop Linux** | [.tar.gz](https://github.com/TechFlipsi/FlipsiForge/releases/download/v0.6.0/FlipsiForge-Desktop-linux-x64.tar.gz) |
+| 🖥️ **Server (Headless)** | [Server-Full Win](https://github.com/TechFlipsi/FlipsiForge/releases/download/v0.6.0/FlipsiForge-Server-Full-0.6.0-win-x64.zip) · [Server-Full Linux](https://github.com/TechFlipsi/FlipsiForge/releases/download/v0.6.0/FlipsiForge-Server-Full-linux-x64.tar.gz) · [Server-Lite Win](https://github.com/TechFlipsi/FlipsiForge/releases/download/v0.6.0/FlipsiForge-Server-Lite-0.6.0-win-x64.zip) · [Server-Lite Linux](https://github.com/TechFlipsi/FlipsiForge/releases/download/v0.6.0/FlipsiForge-Server-Lite-linux-x64.tar.gz) |
+
+**[Alle Releases →](https://github.com/TechFlipsi/FlipsiForge/releases)** — Klipper/Moonraker, OctoPrint, Bambu & Shelly-Unterstützung
+
 ## Status
 
 📦 **v0.3.0 released** — DruckWächter Tab (Shelly + Moonraker Integration ohne HA), KI-Integration verifiziert, Windows Installer gebaut.
