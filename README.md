@@ -451,7 +451,7 @@ server:
 - **Logo**: "TECH" weiß + "FLIPSI" orange — selbes Logo wie Homepage
 - **Branding**: TechFlipsi family product
 - **Software-Standard**: Avalonia UI + Installer/Portable + GPL-3.0 + 13 Sprachen i18n
-- **Website cross-link**: techflipsi.kirchweger.de/geraete.html
+- **Website cross-link**: techflipsi.kirchweger.de/3ddruck/
 - **Community**: Öffentlich, Issues/PRs willkommen (wie FlipsiColor)
 
 ### Design System (wie techflipsi.kirchweger.de)
